@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Multitrack">
+        <file>Multitrack.png</file>
+    </qresource>
+</RCC>
