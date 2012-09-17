@@ -4,7 +4,7 @@
 
 #include <QtCore>
 #include <QtGui>
-
+#include <utility>
 
 /** OPENCV INCLUDES**/
 #if defined(WIN32) && !defined(linux)
@@ -105,9 +105,11 @@ public:
     double getRotationAngle(int idx=-1);
     void getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB>& modelPts, int idx=-1);
     bool isBirthFrame;
-    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<PointCloud<PointXYZRGB> > modelPTS_clouds,
+    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > modelPTS_clouds,
                                           int areaThreshold,  int separateThreshold, int matchDThresh,
                                           int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST);
+
+    int identify (PointCloud<PointXYZRGB> dataPTS_cloud, vector<pair<PointCloud<PointXYZRGB>, QString> > modelgroup);
 
     int icp_maxIter;
     double icp_transformationEpsilon;
@@ -119,15 +121,19 @@ public:
     int getFrameIndexOfLastUpdate() { return birthFrameIndex + absoluteTransforms.size()-1; }
     void end() { deathFrameIndex = birthFrameIndex + absoluteTransforms.size()-1; }
     bool isActive() { return deathFrameIndex > 0; }
-    int getID() { return id; }
+    int getID() { return IDnum; }
     bool wasBirthed() { return isBirthable; }
     int getNumberOfContinuousZombieFrames() { return numberOfContinuousZombieFrames; }
     int birthFrameIndex;
     int frameIndex;
     int deathFrameIndex;
-    int id;
+    int IDnum;
+    QString modelType;
+    int modelIndex;
     double matchDistanceThreshold;
     double nukeDistanceThreshold; // used when a neighborhood of pts close to a model point is nuked
+
+    float recentFitness;
 
 //    Correspondences stuff
     void estimateKeypoints (const PointCloud<PointXYZ>::Ptr &src,
@@ -171,7 +177,9 @@ private:
     std::vector<Eigen::Matrix4f> absoluteTransforms; // vector of absolute transformation matrices State = T_x * I where x is any state //TODO update this
 
     //ICP alignment
-    Eigen::Matrix4f updateTransformPCL(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
+    Eigen::Matrix4f update2DTransformPCL(pcl::PointCloud<pcl::PointXY> data_cloud,pcl::PointCloud<pcl::PointXY> model_cloud);
+    Eigen::Matrix4f updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
+//        Eigen::Matrix4f updateTransformPCL(pcl::PointCloud<PointT> data_cloud,pcl::PointCloud<PointT> model_cloud);
 
     double matchScore;
     bool didConverge;

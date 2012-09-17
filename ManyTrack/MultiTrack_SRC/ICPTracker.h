@@ -25,10 +25,10 @@ class ICPTracker
 {
 
 public:
-    ICPTracker(float fps, QString bgImagepath,  QString modelImagepath, QString maskImagepath,  Ui::MultitrackClass uiPass);
+    ICPTracker(float fps, QString bgImagepath,  QString modelFolderpath, QString maskImagepath,  Ui::MultitrackClass uiPass);
     ~ICPTracker();
 
-
+QString mFolderPath;
     void updateImage(Mat img) { image = img; }
     void track(Mat img, int timeIndex);
     Mat getBackgroundImage() { return bgImage; }
@@ -44,7 +44,7 @@ public:
     void setResolutionFraction(int t) {
         resolutionFractionMultiplier = t;
         bgSubImageGraySmall.create(bgImage.rows / resolutionFractionMultiplier, bgImage.cols/ resolutionFractionMultiplier, CV_8UC3);//TODO get correct type
-        model_clouds_orig=loadModelPoints(modelImages);
+        model_clouds_orig=loadModelClouds(mFolderPath);
 
     }
     void setMatchDistanceThreshold(int t){
@@ -57,13 +57,15 @@ public:
     void outputInteractionsReport();
     void outputBTF(QString projectdirectory,QString icpprojectname);
     void setVideoShowing(bool showing) { isVideoShowing = showing; }
-    void setContourTracking(bool cTracking) { isContourTracking = cTracking;	model_clouds_orig=loadModelPoints(modelImages); }
+    void setContourTracking(bool cTracking) { isContourTracking = cTracking;	model_clouds_orig=loadModelClouds(mFolderPath); }
 
     bool showSearchRadius;
     bool showRemovalRadii;
     bool showModel;
     bool showTrails;
     bool showBox;
+
+    double colorRegScale;
 
     std::vector<Track*> activeTracks;
     std::vector<Track*> inActiveTracks;
@@ -89,6 +91,9 @@ private:
     Mat maskImageGray;
     Mat modelImage;
     vector<Mat> modelImages;
+    //Store Models as a combination of their Pointcloud and their identifying string
+    vector<pair <PointCloud<PointXYZRGB> , QString> > ModelPairs;
+
     Point modelDimensions;
     bool isVideoShowing;
     bool isContourTracking;
@@ -97,7 +102,9 @@ private:
     int maxModelDimension;
 
     std::vector<Point> dataPts;
-   vector< pcl::PointCloud<pcl::PointXYZRGB> > model_clouds_orig;
+   vector< pair< pcl::PointCloud<pcl::PointXYZRGB>, QString > > model_clouds_orig;
+
+
     pcl::PointCloud<pcl::PointXYZRGB> data_cloud;
 
 
@@ -105,7 +112,12 @@ private:
     int modelTOdataThreshold;
     int trackDeathThreshold;
     int separationThreshold;
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB> > loadModelPoints(vector<Mat> imgBGRAlist);
+    std::vector< pair<pcl::PointCloud<pcl::PointXYZRGB>,QString> > loadModelClouds(QString mPath);
+
+vector<pair<Mat, QString> > modelFilesToMAT(QString modelFolderPath);
+pcl::PointCloud<pcl::PointXYZRGB> loadModelPoints(Mat imgBGRA);
+
+
     int frameIndex;
     int trackToBlobDistanceThreshold;
     void drawTrackResult(Mat img);

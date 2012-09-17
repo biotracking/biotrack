@@ -2,9 +2,10 @@
 
 
 
-ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelImagepath, QString maskImagepath, Ui::MultitrackClass uiPass)
+ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, QString maskImagepath, Ui::MultitrackClass uiPass)
 {
 
+    mFolderPath = modelFolderpath;
     uiICP=uiPass;
     thefps=fps;
 
@@ -52,19 +53,18 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelImagepath, Q
 
         maskImage.release();
     }
-vector<Mat> modelImagestoset;
-    // load model image
-    modelImage = imread(modelImagepath.toStdString(),-1); //flags of zero means force grayscale load
-    modelImagestoset.push_back(modelImage);
-    modelImagestoset.push_back(imread("/media/New Volume/VideoTo Track/Sample_Tracking/Abstract_Calibration/alphaYPBW_653_440_97.png",-1));//TODO not make this hardcoded and ugly!
-    modelImages=modelImagestoset;
-    model_clouds_orig = loadModelPoints(modelImages);
 
-    qDebug()<< "Model cloud after load:" << model_clouds_orig.size();
-    //qDebug()<< "model cloud new:" << model_cloud_orig.points[1] << " :::model cloud old: ";
+    //Load list of modelfiles, turn them into a paired vector of MATS
+
+    model_clouds_orig = loadModelClouds(mFolderPath  );
+
+    qDebug()<< "Number of Models loaded:" << model_clouds_orig.size();
 
     trackToBlobDistanceThreshold = 0;
     trackDeathThreshold=20;
+
+    colorRegScale=uiICP.colorRegSpinBox->value();
+
 
 }
 
@@ -105,7 +105,7 @@ void ICPTracker::track(Mat img, int timeIndex)
 
     Track* track;
 
-   vector< pcl::PointCloud<pcl::PointXYZRGB> > currentTrackModelPoints;
+   vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > currentTrackModelPoints;
     currentTrackModelPoints = model_clouds_orig;
 
 
@@ -241,7 +241,7 @@ void ICPTracker::track(Mat img, int timeIndex)
                 temp_data_cloud.push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
                 temp_data_cloud.back().x=                                              x*resolutionFractionMultiplier;
                 temp_data_cloud.back().y=                                              y*resolutionFractionMultiplier;
-                temp_data_cloud.back().z=   pixvalHue; //0;
+                temp_data_cloud.back().z=   pixvalHue*colorRegScale; //0;
 
 
             }
@@ -450,7 +450,7 @@ void ICPTracker::drawTrackResult(Mat img)
 
     {
         //Start off with a fresh copy of the modelcloud
-        model_cloudtodraw = model_clouds_orig[0];
+        model_cloudtodraw = model_clouds_orig[0].first;
 
 
 
@@ -557,6 +557,9 @@ void ICPTracker::drawTrackResult(Mat img)
         sprintf(label, "%d", activeTracks[i]->getID());
         cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
+        //Write the name of the model used
+        //NOT WORKING --> cv::putText(trackResultImage,ModelPairs.at(activeTracks[i]->modelIndex).second.toStdString(), Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
+
 
 
     }
@@ -578,8 +581,43 @@ void ICPTracker::drawTrackResult(Mat img)
     return;
 }
 
+/**
+  Takes in a path to a folder, and loads all the png "model" files into Mats
+
+  **/
+vector< pair<Mat, QString> > ICPTracker::modelFilesToMAT(QString modelFolderPath){
+
+    QDir myDir( modelFolderPath);
+    QStringList filters;
+    filters<<"*.png";
+    myDir.setNameFilters(filters);
+
+    vector< pair<Mat, QString> > output;
 
 
+//    int index=0;
+//    QRegExp rx("_.*.btf");
+
+    QStringList list = myDir.entryList(filters);
+    for (QStringList::iterator it = list.begin(); it != list.end(); ++it) {
+        pair<Mat, QString> modelAndPath;
+        QString fullpath;
+        QString current = *it;
+
+        qDebug()<<current<<" current modelFile   "<<current;
+            fullpath = modelFolderPath+"/"+current;
+Mat modelImg;
+modelImg =imread(fullpath.toStdString(),-1); //flags of zero means force grayscale load
+        modelAndPath.first = modelImg;
+        modelAndPath.second=current;
+output.push_back(modelAndPath);
+
+            }
+
+return output;
+
+
+}
 /**
  * Given a binary image for a model target,
  * extract and store the x,y coordinates in a
@@ -587,129 +625,150 @@ void ICPTracker::drawTrackResult(Mat img)
  *Store these in a pointcloud too!
  *
  */
-std::vector<pcl::PointCloud<pcl::PointXYZRGB> > ICPTracker::loadModelPoints(vector<Mat> imgBGRAlist)
+pcl::PointCloud<pcl::PointXYZRGB> ICPTracker::loadModelPoints(Mat imgBGRA)
 {
     Point coordinate;
+    Mat imgBGRAsmall;
+    cv::resize(imgBGRA,imgBGRAsmall,Size(),1./resolutionFractionMultiplier,1./resolutionFractionMultiplier, INTER_NEAREST);
+    modelDimensions.x = imgBGRAsmall.cols*resolutionFractionMultiplier;
+    modelDimensions.y = imgBGRAsmall.rows*resolutionFractionMultiplier;
+    Mat imgBGR;
+    cvtColor(imgBGRAsmall, imgBGR,CV_BGRA2BGR); //Drop Alpha
+    Mat imgHSV;
 
-    vector< PointCloud<PointXYZRGB> > modelClouds;
+    cvtColor(imgBGR, imgHSV,CV_BGR2HSV); //Get HSV
+
+    pcl::PointCloud<pcl::PointXYZ> loadmodel_cloud;// (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB> loadmodelXYZRGB_cloud;
+
+    int minX=DBL_MAX;
+    int maxX=0;
+    int minY=DBL_MAX;
+    int maxY=0;
+
+    ///// New type of looping
+    int irows=imgBGRAsmall.rows; // number of lines
+    int icols = imgBGRAsmall.cols; // number of columns
+
+    int BGRAistep = imgBGRAsmall.step;
+    int BGRAielemsize = imgBGRAsmall.elemSize();
+
+    int HSVistep = imgHSV.step;
+    int HSVielemsize= imgHSV.elemSize();
+
+    uchar pixvalAlpha = 0;
+    uchar pixvalcolorR = 0;
+    uchar pixvalcolorG = 0;
+    uchar pixvalcolorB = 0;
+    uchar pixvalGray = 0;
+    uchar pixvalHue = 0;
+
+
+    //Functions //Fancy Define
+#define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
+
+colorRegScale=uiICP.colorRegSpinBox->value();
+    pcl::PointCloud<pcl::PointXYZRGB> temp_model_cloud;
+
+    for (int y=0; y < irows; y++)
+    {
+        for (int x=0; x < icols; x++)
+        {
+            //           pixvalAlpha = imgBGRAsmall.at<Vec4b>(y,x)[3];//Alpha Channel gives information about target location, everything else is just random
+
+            pixvalAlpha=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,3);
+            pixvalcolorB=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,0);
+            pixvalcolorG=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,1);
+            pixvalcolorR=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,2);
+            //           pixvalGray=aPixel(uchar, imgsmallgray.data,gistep,gielemsize,x,y,1);
+            pixvalHue=aPixel(uchar, imgHSV.data,HSVistep,HSVielemsize,x,y,0);
+
+
+
+            // qDebug()<<"RGB  "<<pixvalcolorR <<"  "<<pixvalcolorG;
+
+
+
+            //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
+            if (pixvalAlpha > 2)
+            {
+                coordinate.x = x*resolutionFractionMultiplier;
+                coordinate.y = y*resolutionFractionMultiplier;
+
+                temp_model_cloud.push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
+                temp_model_cloud.back().x=                                              x*resolutionFractionMultiplier;
+                temp_model_cloud.back().y=                                              y*resolutionFractionMultiplier;
+                temp_model_cloud.back().z=   pixvalHue*colorRegScale; //0;
+
+
+            }
+        }
+    }
+
+
+
+
+                    if(coordinate.x<minX) minX=coordinate.x;
+                    if(coordinate.y<minY) minY=coordinate.y;
+                    if(coordinate.x>maxX) maxX=coordinate.x;
+                    if(coordinate.y>maxY) maxY=coordinate.y;
+
+
+
+
+    //   qDebug()<<loadmodelXYZRGB_cloud.back().x<<"   Y "<<loadmodelXYZRGB_cloud.back().y <<"   RGB "<<r <<"   written red "<<loadmodelXYZRGB_cloud.back().r
+    //<<"  max X, Max Y, minx , minY "<<maxX<< "  "<<maxY<< "  "<<minX<< "  "<<minY;
+
+
+
+    loadmodelXYZRGB_cloud=temp_model_cloud;
+
+
+    //TODO, store model width and height with the super vector
+    int trueModelwidth;
+    int trueModelheight;
+    trueModelwidth=maxX;
+    if(maxX<abs(minX)) trueModelwidth=minX;
+
+    trueModelheight=maxY;
+    if(maxY<abs(minY)) trueModelheight=minY;
+
+    trueModelwidth=abs(trueModelwidth*2);
+    trueModelheight=abs(trueModelheight*2);
+    qDebug()<<" modx width "<<trueModelwidth<<"   modHeight "<<trueModelheight;
+
+    //    maxModelDimension = modelImage.rows > modelImage.cols ? modelImage.rows : modelImage.cols; //Old method uses image shape
+    maxModelDimension = trueModelwidth > trueModelheight ? trueModelwidth : trueModelheight; //new method uses actual image image shape
+
+    return loadmodelXYZRGB_cloud;
+
+}
+
+/**
+ * Given a folder of BGRA images for a model target,
+ * extract and store the x,y coordinates in a
+ * vector of pairs of Pointclouds and Stringnames.
+ *
+ */
+vector<pair <PointCloud<PointXYZRGB> , QString> > ICPTracker::loadModelClouds(QString mPath)
+{
+
+   vector< pair<Mat, QString> > BGRA_plist=  modelFilesToMAT(mPath);
+
+vector<pair <PointCloud<PointXYZRGB> , QString> >  modelClouds;
 
     if(isContourTracking){//todo fix! This program runs the loader before loading the settings or something, and can switch contourtracking on!
         // imgAlpha = runContourDetection(imgAlpha);
     }
 
     //Load the correct pixels for each model
-    for(int i; i<imgBGRAlist.size();i++){
-        Mat imgBGRAsmall;
-        cv::resize(imgBGRAlist[i],imgBGRAsmall,Size(),1./resolutionFractionMultiplier,1./resolutionFractionMultiplier, INTER_NEAREST);
-        modelDimensions.x = imgBGRAsmall.cols*resolutionFractionMultiplier;
-        modelDimensions.y = imgBGRAsmall.rows*resolutionFractionMultiplier;
-        Mat imgBGR;
-        cvtColor(imgBGRAsmall, imgBGR,CV_BGRA2BGR); //Drop Alpha
-        Mat imgHSV;
+    for(int i; i<BGRA_plist.size();i++){
+        pair <PointCloud<PointXYZRGB> , QString> cloudAndString;
 
-        cvtColor(imgBGR, imgHSV,CV_BGR2HSV); //Get HSV
+        cloudAndString.second=BGRA_plist[i].second;
+        cloudAndString.first = loadModelPoints(BGRA_plist[i].first);
 
-        pcl::PointCloud<pcl::PointXYZ> loadmodel_cloud;// (new pcl::PointCloud<pcl::PointXYZ>);
-        pcl::PointCloud<pcl::PointXYZRGB> loadmodelXYZRGB_cloud;
-
-        int minX=DBL_MAX;
-        int maxX=0;
-        int minY=DBL_MAX;
-        int maxY=0;
-
-        ///// New type of looping
-        int irows=imgBGRAsmall.rows; // number of lines
-        int icols = imgBGRAsmall.cols; // number of columns
-
-        int BGRAistep = imgBGRAsmall.step;
-        int BGRAielemsize = imgBGRAsmall.elemSize();
-
-        int HSVistep = imgHSV.step;
-        int HSVielemsize= imgHSV.elemSize();
-
-        uchar pixvalAlpha = 0;
-        uchar pixvalcolorR = 0;
-        uchar pixvalcolorG = 0;
-        uchar pixvalcolorB = 0;
-        uchar pixvalGray = 0;
-        uchar pixvalHue = 0;
-
-
-        //Functions //Fancy Define
-#define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
-
-
-        pcl::PointCloud<pcl::PointXYZRGB> temp_data_cloud;
-
-        for (int y=0; y < irows; y++)
-        {
-            for (int x=0; x < icols; x++)
-            {
-                //           pixvalAlpha = imgBGRAsmall.at<Vec4b>(y,x)[3];//Alpha Channel gives information about target location, everything else is just random
-
-                pixvalAlpha=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,3);
-                pixvalcolorB=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,0);
-                pixvalcolorG=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,1);
-                pixvalcolorR=aPixel(uchar,imgBGRAsmall.data,BGRAistep,BGRAielemsize,x,y,2);
-                //           pixvalGray=aPixel(uchar, imgsmallgray.data,gistep,gielemsize,x,y,1);
-                pixvalHue=aPixel(uchar, imgHSV.data,HSVistep,HSVielemsize,x,y,0);
-
-
-
-                // qDebug()<<"RGB  "<<pixvalcolorR <<"  "<<pixvalcolorG;
-
-
-
-                //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
-                if (pixvalAlpha > 2)
-                {
-                    coordinate.x = x*resolutionFractionMultiplier;
-                    coordinate.y = y*resolutionFractionMultiplier;
-
-                    temp_data_cloud.push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
-                    temp_data_cloud.back().x=                                              x*resolutionFractionMultiplier;
-                    temp_data_cloud.back().y=                                              y*resolutionFractionMultiplier;
-                    temp_data_cloud.back().z=   pixvalHue; //0;
-
-
-                }
-            }
-        }
-
-
-
-
-                        if(coordinate.x<minX) minX=coordinate.x;
-                        if(coordinate.y<minY) minY=coordinate.y;
-                        if(coordinate.x>maxX) maxX=coordinate.x;
-                        if(coordinate.y>maxY) maxY=coordinate.y;
-
-
-
-
-        //   qDebug()<<loadmodelXYZRGB_cloud.back().x<<"   Y "<<loadmodelXYZRGB_cloud.back().y <<"   RGB "<<r <<"   written red "<<loadmodelXYZRGB_cloud.back().r
-        //<<"  max X, Max Y, minx , minY "<<maxX<< "  "<<maxY<< "  "<<minX<< "  "<<minY;
-
-
-
-        loadmodelXYZRGB_cloud=temp_data_cloud;
-
-        int trueModelwidth;
-        int trueModelheight;
-        trueModelwidth=maxX;
-        if(maxX<abs(minX)) trueModelwidth=minX;
-
-        trueModelheight=maxY;
-        if(maxY<abs(minY)) trueModelheight=minY;
-
-        trueModelwidth=abs(trueModelwidth*2);
-        trueModelheight=abs(trueModelheight*2);
-        qDebug()<<" modx width "<<trueModelwidth<<"   modHeight "<<trueModelheight;
-
-        //    maxModelDimension = modelImage.rows > modelImage.cols ? modelImage.rows : modelImage.cols; //Old method uses image shape
-        maxModelDimension = trueModelwidth > trueModelheight ? trueModelwidth : trueModelheight; //new method uses actual image image shape
-
-        modelClouds.push_back(temp_data_cloud);
+        modelClouds.push_back(cloudAndString);
     }
     //   return loadmodel_cloud;
 

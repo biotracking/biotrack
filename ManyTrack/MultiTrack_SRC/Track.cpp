@@ -4,19 +4,22 @@
 
 
 
-Track::Track(int index, pcl::PointXYZRGB initTranslation, int identification, double matchDThresh,int sepThresh, int resFracMultiplier)
+Track::Track(int index, pcl::PointXYZRGB initTranslation, int instanceID, double matchDThresh,int sepThresh, int resFracMultiplier)
 {
     resolutionFracMultiplier = resFracMultiplier;
     frameIndex = index;
     birthFrameIndex = index;
     deathFrameIndex = 0;
-    id = identification;
+    IDnum = instanceID;
     initialTranslation = initTranslation;
     matchDistanceThreshold = matchDThresh;
     nukeDistanceThreshold = sepThresh;
     numberOfContinuousZombieFrames = 0;
     isBirthable = false;
     isBirthFrame=true;
+
+    //initialize in case of no matching to models
+    QString modelType="none";
 
 }
 
@@ -30,7 +33,7 @@ Track::~Track()
  * to transforms vector and registration transformation from
  * the track's birth frame to absoluteTransforms vector.
  */
-pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector< pcl::PointCloud<pcl::PointXYZRGB> > modelPTS_clouds,
+pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<pair<PointCloud<PointXYZRGB>, QString> > modelPTS_clouds,
                                              int modelTODataThreshold, int separateThreshold, int matchDThresh,
                                              int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST)
 {
@@ -50,7 +53,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
     T.setIdentity();
 
 
-    double birthAssociationsThreshold = modelPTS_clouds[0].size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
+    double birthAssociationsThreshold = modelPTS_clouds[0].first.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
 
     double healthyAssociationsThreshold = birthAssociationsThreshold*.4; //Still healthy with 40 percent of a whole model
 
@@ -59,6 +62,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
     {
 
         isBirthFrame=true; // Try out Doing extra work aligning the objects if it is the very first frame
+        //Determine what model this creature should use
+        modelIndex= identify(dataPTS_cloud,modelPTS_clouds);
 
 
     }
@@ -69,27 +74,13 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
     }
 
-    //ID TEST
-
-    qDebug()<<" Cloud 0";
-    modelToProcess_cloud = modelPTS_clouds[0];
-
-    // Find transformation from the orgin that will optimize a match between model and target
-    T=   updateTransformPCL(dataPTS_cloud, modelToProcess_cloud);
-
-    qDebug()<<" Cloud 1";
-    modelToProcess_cloud = modelPTS_clouds[1];
-
-    // Find transformation from the orgin that will optimize a match between model and target
-    T=   updateTransformPCL(dataPTS_cloud, modelToProcess_cloud);
-
-    qDebug()<<"end ID testing";
-    //END ID TEST
 
 
 
 
-    modelToProcess_cloud = modelPTS_clouds[0];
+
+
+    modelToProcess_cloud = modelPTS_clouds[modelIndex].first;
 
     //leave open for other possible ICP methods
     bool doPCL=true;
@@ -99,11 +90,24 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {
 
+            //STRIP 3D data
+            PointCloud<PointXY> dataPTS_cloud2D;
+            copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
+            PointCloud<PointXY> modelPTS_cloud2D;
+            copyPointCloud(modelToProcess_cloud,modelPTS_cloud2D);
+
+                     PointCloud<PointXYZRGB> dataPTS_cloudStripped;
+                     copyPointCloud(dataPTS_cloud2D,dataPTS_cloudStripped);
+
+                     PointCloud<PointXYZRGB> modelPTS_cloudStripped;
+                     copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
 
 
 
             // Find transformation from the orgin that will optimize a match between model and target
-            T=   updateTransformPCL(dataPTS_cloud, modelToProcess_cloud);
+            T=   updateTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped);
+
+
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
 
         }
@@ -154,9 +158,9 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
             /// For Debugging we can visualize the Pointcloud
             pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
           //  copyPointCloud(modelPTS_cloud,)
-            transformPointCloud(modelPTS_clouds[0],modelPTS_clouds[0],T);
+            transformPointCloud(modelPTS_clouds[modelIndex].first,modelPTS_clouds[modelIndex].first,T);
 
-            pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[0]));
+            pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].first));
 
             pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
             viewer.showCloud(dataPTS_cloud_ptr);
@@ -214,6 +218,41 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
 }
 
+/**
+  Loop over container of pairs of model clouds and string identifiers
+
+  transform each
+
+  find the one with the best fit
+
+  choose this one as the identity
+
+
+  **/
+
+int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > modelgroup){
+
+    float fit=DBL_MAX;
+    int identity=0;
+    for (int i=0; i<modelgroup.size();i++){
+
+        qDebug()<<"Model Cloud "<<modelgroup[i].second<<"  idx "<<i;
+
+//        vector< pair<PointCloud<pcl::PointXYZRGB>, QString> >
+        PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[i].first;
+                 updateTransformPCLRGB(dataPTS_cloud, modelTOIdentify);
+                 if(recentFitness<fit){
+                     fit = recentFitness;
+                  identity = i;
+                 }
+
+
+    }
+    qDebug()<<"end ID testing, selected value was: "+modelgroup[identity].second;
+
+    return identity;
+
+}
 
 
 /**
@@ -227,7 +266,10 @@ void Track::transformCloud(pcl::PointCloud<pcl::PointXYZRGB> modelPTS_cloud, Eig
 
 
 
-Eigen::Matrix4f Track::updateTransformPCL(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud){
+
+
+
+Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud){
 
     Eigen::Matrix4f ET;
     Matrix4f guess,guess180;
@@ -346,19 +388,15 @@ Eigen::Matrix4f Track::updateTransformPCL(pcl::PointCloud<pcl::PointXYZRGB> data
 
     ET=icp.getFinalTransformation();
 
+    recentFitness = icp.getFitnessScore();
 
-    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<icp.getFitnessScore()<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
     qDebug();
 
     matchScore = icp.getFitnessScore();
     didConverge = icp.hasConverged();
 
 
-
-    /// TEST CORRESPONDENCES
-
-
-    //END TEST
 
 
     if(isBirthFrame ){
@@ -380,6 +418,9 @@ Eigen::Matrix4f Track::updateTransformPCL(pcl::PointCloud<pcl::PointXYZRGB> data
 
         icp2.align(Final, guess180);
 
+        if(icp2.getFitnessScore()<recentFitness){
+            recentFitness=icp2.getFitnessScore();
+        }
         qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
         qDebug();
 
@@ -394,10 +435,6 @@ Eigen::Matrix4f Track::updateTransformPCL(pcl::PointCloud<pcl::PointXYZRGB> data
     return ET;
 
 }
-
-
-
-
 
 
 double Track::getX(int idx)

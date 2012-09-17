@@ -9,7 +9,7 @@ Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
     trackerChecked=false;
     nopath="(none selected)";
     bgpath=nopath;
-    modelpath=nopath;
+    modelfolder=nopath;
     maskpath=nopath;
     videopath=nopath;
     projectSaveDirectory="";
@@ -209,7 +209,7 @@ void Multitrack::saveBTF()
 
 void Multitrack::bgThresholdSpinValueChanged(int value)
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath){
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath){
         ui.bgSubThresholdSpinBox->setValue(value);
         icpTracker->setBgSubThreshold(ui.bgSubThresholdSpinBox->value());
     }
@@ -218,7 +218,7 @@ void Multitrack::bgThresholdSpinValueChanged(int value)
 
 void Multitrack::blobBirthAreaThresholdValueChanged()
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath)
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         if(ui.blobBirthAreaThresholdSpinBox->value() > 0){
             icpTracker->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
         }
@@ -226,22 +226,22 @@ void Multitrack::blobBirthAreaThresholdValueChanged()
 
 void Multitrack::resolutionFractionValueChanged()
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath)
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setResolutionFraction(ui.resolutionSpinBox->value());
 }
 void Multitrack::trackdistanceValueChanged()
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath)
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
 }
 void Multitrack::trackDeathValueChanged()
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath)
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setTrackDeathThreshold(ui.trackdeathSpinBox->value());
 }
 void Multitrack::separationValueChanged()
 {
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath)
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setSeparationThreshold(ui.separationSpinBox->value());
 }
 
@@ -326,11 +326,11 @@ bool Multitrack::checkreadytoPlay()
         notprepared= notprepared+"   Video Source<br>";
     if (bgpath==nopath)
         notprepared= notprepared+"   Background Image <br>";
-    if (modelpath==nopath)
+    if (modelfolder==nopath)
         notprepared= notprepared+"   Model Image <br>";
 
 
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath){
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath){
 
         loadNewTracker();
 
@@ -396,16 +396,22 @@ void Multitrack::loadVideoFile()
 void Multitrack::loadModelFile()
 {
     /* select a directory using file dialog */
-    modelpath = QFileDialog::getOpenFileName (this, tr("Open Model File"),lastpath, tr("Images (*png *.jpg)"));
-    if (modelpath.isNull() == false )
+
+
+       modelfolder = QFileDialog::getExistingDirectory(this, tr("Select Model File Folder"),lastpath);
+
+
+    /*OLD select a single file*/
+//    modelpath = QFileDialog::getOpenFileName (this, tr("Open Model File"),lastpath, tr("Images (*png *.jpg)"));
+    if (modelfolder.isNull() == false )
     {
-        lastpath=modelpath;
-        ui.modelFile->setText("..."+modelpath.right(50));
+        lastpath=modelfolder;
+        ui.modelFile->setText("..."+modelfolder.right(50));
 
     }
     else{
-        modelpath=nopath;
-        ui.modelFile->setText(modelpath.right(50));
+        modelfolder=nopath;
+        ui.modelFile->setText(modelfolder.right(50));
     }
     loadNewTracker();
 }
@@ -529,8 +535,8 @@ void Multitrack::loadSettings(){
         videopath= settings.value("videopath1",nopath).toString();
         ui.videoFile->setText("..."+videopath.right(50));
 
-        modelpath= settings.value("modelpath1",nopath).toString();
-        ui.modelFile->setText("..."+modelpath.right(50));
+        modelfolder= settings.value("modelpath1",nopath).toString();
+        ui.modelFile->setText("..."+modelfolder.right(50));
 
         projectSaveDirectory= settings.value("projpath1","").toString();
         if(projectSaveDirectory==""){
@@ -577,7 +583,7 @@ void Multitrack::saveSettings(){
         settings.setValue("bgpath1",bgpath);
         settings.setValue("videopath1",videopath);
         settings.setValue("maskpath1",maskpath);
-        settings.setValue("modelpath1",modelpath);
+        settings.setValue("modelpath1",modelfolder);
 
         settings.setValue("projpath1",projectSaveDirectory);
 
@@ -622,7 +628,7 @@ void Multitrack::writeSettings()
     settings.setValue("bgpath1",bgpath);
     settings.setValue("videopath1",videopath);
     settings.setValue("maskpath1",maskpath);
-    settings.setValue("modelpath1",modelpath);
+    settings.setValue("modelpath1",modelfolder);
 
     settings.setValue("projpath1",projectSaveDirectory);
 
@@ -673,8 +679,8 @@ void Multitrack::readSettings()
     videopath= settings.value("videopath1",nopath).toString();
     ui.videoFile->setText("..."+videopath.right(50));
 
-    modelpath= settings.value("modelpath1",nopath).toString();
-    ui.modelFile->setText("..."+modelpath.right(50));
+    modelfolder= settings.value("modelpath1",nopath).toString();
+    ui.modelFile->setText("..."+modelfolder.right(50));
 
     projectSaveDirectory= settings.value("projpath1","").toString();
     if(projectSaveDirectory==""){
@@ -709,7 +715,7 @@ completedTracking=false;
     //Open all Image Assets and check to see if they are OK before creating a new ICPTRACKER object
     if(trackerCheck()){
         //All items checked out OK continue!
-        icpTracker = new ICPTracker(vidFPS,bgpath,modelpath,maskpath, ui);
+        icpTracker = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
         icpTracker->showModel=ui.modelViewcheckBox->isChecked();
         icpTracker->showRemovalRadii=ui.separationViewCheck->isChecked();
@@ -767,11 +773,11 @@ bool Multitrack::trackerCheck(){
         notprepared= notprepared+"   Video Source<br>";
     if (bgpath==nopath)
         notprepared= notprepared+"   Background Image <br>";
-    if (modelpath==nopath)
+    if (modelfolder==nopath)
         notprepared= notprepared+"   Model Image <br>";
 
 
-    if (bgpath!=nopath && videopath!=nopath && modelpath!=nopath){
+    if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath){
 
 
 
@@ -829,14 +835,29 @@ bool Multitrack::trackerCheck(){
 
     }
 
+    //TODO check model in better way
+    QDir myDir( modelfolder);
+
+    QStringList filters;
+    filters<<"*.png";
+    myDir.setNameFilters(filters);
+
+    QStringList list = myDir.entryList(filters);
+    qDebug()<<list;
     // load model image
-    modelImage = imread(modelpath.toStdString()); //zero means force grayscale load
+    if(list.isEmpty()){
+
+        error=error+"MODEL Path is not a directory<br>";
+
+    }
+    else{
+    modelImage = imread(modelfolder.toStdString()+"/"+list.at(0).toStdString()); //zero means force grayscale load
     if(modelImage.empty()){
         error=error+"MODEL File is missing/empty or broken<br>";
         ui.imageLabel->setText(fonttemplate.arg( colour, error ));
         everythingok=false;
     }
-
+}
 
 
     //check that BG.size==video.size==mask.size

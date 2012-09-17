@@ -37,7 +37,8 @@ public:
     ~Multitrack();
 	QString projectSaveDirectory;
 		QString videopath;
-		QString modelpath;
+
+        QString modelfolder;
 		QString maskpath;
 		QString bgpath;
 		QString nopath;

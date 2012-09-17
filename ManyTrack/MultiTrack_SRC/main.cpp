@@ -23,9 +23,8 @@ Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Syst
 
 /**
 
-  Converted all PointXYZ to point XYZRGB
 
-  TODO- figure out 0,0 error //POSSIBLE SOLUTIONS - unlimted search range
+  TODO- figure out 0,0 error //POSSIBLE SOLUTIONS - unlimted search range, shiftedness of pixels in bad code?
 
   **/
 
