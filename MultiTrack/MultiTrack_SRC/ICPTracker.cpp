@@ -188,9 +188,9 @@ void ICPTracker::track(Mat img, int timeIndex)
     {
         for (int x=0; x < icols; x++)
         {
-            pixval=aPixel(uchar,bgSubImageGraySmall.data,istep,ielemsize,x,y,1);
+            pixval=aPixel(uchar,bgSubImageGraySmall.data,istep,ielemsize,x,y,0);
 
-            //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
+            //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,0);
             if (pixval > 40)
             {
                 temp_data_cloud.push_back(pcl::PointXYZ(
