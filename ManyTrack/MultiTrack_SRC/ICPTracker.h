@@ -86,7 +86,6 @@ private:
     Mat bgSubImage;
     Mat bgSubImageGray;
     Mat bgSubImageGraySmall;
-    Mat bgSubImageGraySmallScratch;
     Mat trackResultImage;
     Mat maskImageGray;
     Mat modelImage;

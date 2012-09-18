@@ -37,7 +37,6 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
 
     //NOTE, resize NEEEEEEDS floats in the scale factor or else it FAILS!
     cv::resize(bgSubImageGray,bgSubImageGraySmall,Size(),1./resolutionFractionMultiplier,1./resolutionFractionMultiplier);
-    bgSubImageGraySmallScratch.copyTo(bgSubImageGraySmall);
 
     //make mask conditional
     if(maskImagepath.isNull() || maskImagepath=="(none selected)"){
@@ -81,7 +80,6 @@ ICPTracker::~ICPTracker()
     bgSubImage.release();
     bgSubImageGray.release();
     bgSubImageGraySmall.release();
-    bgSubImageGraySmallScratch.release();
     trackResultImage.release();
 
 
@@ -159,7 +157,6 @@ void ICPTracker::track(Mat img, int timeIndex)
     Mat imgsmallHSV;
     cvtColor(imgsmall,imgsmallHSV,CV_BGR2HSV);
 
-    //bgSubImageGraySmall.copyTo(bgSubImageGraySmallScratch);
 
     /// examine our subtraction to make sure we are doing things correctly
     //    namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
@@ -340,7 +337,6 @@ void ICPTracker::track(Mat img, int timeIndex)
     {
         //Show what the computer actually sees (at 1/resolution)
         //!!!! Change to have user control size of screen!)
-        cv::resize(bgSubImageGraySmallScratch, bgSubImageGray, Size(bgSubImageGray.cols,bgSubImageGray.rows)); //TODO problematic
         cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
         if (uiICP.display_pushButton->isChecked())
         {
@@ -417,7 +413,7 @@ void ICPTracker::alphaBlendBGRA(const Mat& src1, const Mat& src2, Mat& dst)
 void ICPTracker::drawTrackResult(Mat img)
 {
 
-    int font = FONT_HERSHEY_SCRIPT_SIMPLEX;
+    int font = FONT_HERSHEY_PLAIN;
     double fontscale=1;
     //    int thickness = 40;
     char label[10];
@@ -450,7 +446,7 @@ void ICPTracker::drawTrackResult(Mat img)
 
     {
         //Start off with a fresh copy of the modelcloud
-        model_cloudtodraw = model_clouds_orig[0].first;
+        model_cloudtodraw = model_clouds_orig[activeTracks[i]->modelIndex].first;
 
 
 
@@ -555,12 +551,11 @@ void ICPTracker::drawTrackResult(Mat img)
         ///Draw ID Label Text
         //////////////
         sprintf(label, "%d", activeTracks[i]->getID());
-        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
+//        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
         //Write the name of the model used
-        //NOT WORKING --> cv::putText(trackResultImage,ModelPairs.at(activeTracks[i]->modelIndex).second.toStdString(), Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
-
-
+        //NOT WORKING -->
+        cv::putText(trackResultImage, model_clouds_orig[activeTracks[i]->modelIndex].second.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,0,255));
 
     }
 
