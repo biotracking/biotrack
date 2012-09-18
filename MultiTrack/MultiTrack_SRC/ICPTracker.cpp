@@ -183,6 +183,9 @@ void ICPTracker::track(Mat img, int timeIndex)
     //        data_cloud.is_dense = false; // should be true?
     //        data_cloud.points.resize (data_cloud.width * data_cloud.height);
     pcl::PointCloud<pcl::PointXYZ> temp_data_cloud;
+//    temp_data_cloud.clear();
+//    temp_data_cloud.width = icols;
+//    temp_data_cloud.height = irows;
 
     for (int y=0; y < irows; y++)
     {
@@ -557,6 +560,9 @@ Mat tempImg;
    int maxX=0;
    int minY=DBL_MAX;
    int maxY=0;
+
+//   loadmodelXYZRGB_cloud.width= tempImg.cols;
+//   loadmodelXYZRGB_cloud.height=tempImg.rows;
 
     for (int y=0; y < tempImg.rows; y++)
     {

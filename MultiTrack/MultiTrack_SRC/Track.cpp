@@ -437,9 +437,25 @@ pcl::PointCloud<pcl::PointXYZ> Track::removeClosestDataCloudPoints(pcl::PointClo
 
     float point_radius = distanceThreshold;
 
+    PointCloud<pcl::PointXYZ> point_cloud_for_return;
+    point_cloud_for_return.reserve(point_cloud_for_reduction.size());
+
     // K nearest neighbor search with Radius
 
     if(point_cloud_for_reduction.size()>1){
+
+        bool *marked= new bool[point_cloud_for_reduction.size()];
+        memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
+//        for(uint q=0; q< point_cloud_for_reduction.size(); q++){
+//            marked[q]=false;
+
+//        }
+
+        pcl:: PointCloud<PointXYZ>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZ> (point_cloud_for_reduction));
+
+
+        kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
+
 
         // iterate over points in model and remove those points within a certain distance
         for (unsigned int c=0; c < removal_Cloud.size(); c++)
@@ -448,10 +464,7 @@ pcl::PointCloud<pcl::PointXYZ> Track::removeClosestDataCloudPoints(pcl::PointClo
             if(point_cloud_for_reduction.size()<2){
                 break;
             }
-            pcl:: PointCloud<PointXYZ>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZ> (point_cloud_for_reduction));
 
-
-            kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
 
             pcl::PointXYZ searchPoint;
 
@@ -464,7 +477,9 @@ pcl::PointCloud<pcl::PointXYZ> Track::removeClosestDataCloudPoints(pcl::PointClo
             {
                 for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i){
                     if(point_cloud_for_reduction.size()>0) ///NOTE CHANGED FROM > 1
-                        point_cloud_for_reduction.erase(point_cloud_for_reduction.begin()+pointIdxRadiusSearch[i]);// point_cloud_for_reduction.points[ pointIdxRadiusSearch[i] ]
+
+                    marked[pointIdxRadiusSearch[i]]=true;
+//                        point_cloud_for_reduction.erase(point_cloud_for_reduction.begin()+pointIdxRadiusSearch[i]);// point_cloud_for_reduction.points[ pointIdxRadiusSearch[i] ]
                 }
             }
 
@@ -473,14 +488,22 @@ pcl::PointCloud<pcl::PointXYZ> Track::removeClosestDataCloudPoints(pcl::PointClo
 
 
 
-        if(point_cloud_for_reduction.size()<1){
+        for(uint q=0; q< point_cloud_for_reduction.size(); q++){
+            if(!marked[q]){
+                point_cloud_for_return.push_back(point_cloud_for_reduction.at(q));
+//                point_cloud_for_return.at(q) = point_cloud_for_reduction.at(q);
+
+            }
 
         }
 
+
+
+        delete[] marked;
     }
 
     //point_cloud_for_reduction.resize();
-    return point_cloud_for_reduction;
+    return point_cloud_for_return;
 
 }
 
