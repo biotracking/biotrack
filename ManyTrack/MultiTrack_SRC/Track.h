@@ -78,7 +78,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 #include <QDebug>
-#include "ui_multitrack.h"
+//#include "ui_multitrack.h"
 
 using namespace cv;
 using namespace std;
@@ -101,6 +101,8 @@ public:
 
     double getX(int idx=-1);
     double getY(int idx=-1);
+    pair <Point,double> getXYT(int idx=-1);
+
     double getScale(int idx=-1);
     double getRotationAngle(int idx=-1);
     void getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB>& modelPts, int idx=-1);
@@ -166,7 +168,7 @@ public:
                            Eigen::Matrix4f &transform);
 
 private:
-    Ui::MultitrackClass uitrack;
+    //Ui::MultitrackClass uitrack;
 
     pcl::PointXYZRGB initialTranslation;
     std::vector<Eigen::Matrix4f> transforms; // vector of incremental transformation matrices State = T_n * (T_n-1 * ... T_2 * T_1) * I

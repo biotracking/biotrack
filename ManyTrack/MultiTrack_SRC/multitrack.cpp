@@ -80,6 +80,7 @@ Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
     connect(ui.actionLoad_Defaults, SIGNAL(triggered()), this, SLOT(loadDefaults()));
     connect(ui.actionSave_All, SIGNAL(triggered()), this, SLOT(saveSettings()));
 
+    ui.visualizationLabel->setAttribute(Qt::WA_TranslucentBackground);
     readSettings();
 
     loadNewTracker();
@@ -109,7 +110,20 @@ void Multitrack::timerEvent(QTimerEvent*) {
             icpTracker->track(img, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
             if(ui.display_pushButton->isChecked()){
 
-            updateImage(icpTracker->getTrackResultImage());
+            updateImage(img);
+
+            Mat qImgARGB;
+            qImgARGB = icpTracker->getTrackResultImage();
+            QImage qimage;
+            qimage = QImage((const uchar*)qImgARGB.data, qImgARGB.cols, qImgARGB.rows,qImgARGB.step, QImage::Format_ARGB32);
+            qimage = qimage.rgbSwapped();
+            qimage = qimage.scaled(displayWidth, displayHeight);
+        //    qimage = qimage.scaled(displayWidth, displayHeight);
+
+            ui.visualizationLabel->setPixmap(QPixmap::fromImage(qimage));
+
+
+
             }
         }
         updateStatusBar();
@@ -306,15 +320,18 @@ void Multitrack::toggleBlobsView()
     }
 }
 
-void Multitrack::updateImage(Mat cvimage)
+void Multitrack::updateImage(Mat dataimage)
 {
-    qimage = QImage((const uchar*)cvimage.data, cvimage.cols, cvimage.rows, QImage::Format_RGB888);
+
+
+    qimage = QImage((const uchar*)dataimage.data, dataimage.cols, dataimage.rows, QImage::Format_RGB888);
     qimage = qimage.rgbSwapped();
 
     qimage = qimage.scaled(displayWidth, displayHeight);
    // qimage = qimage.scaledToWidth(displayWidth);
 
     imageLabel->setPixmap(QPixmap::fromImage(qimage));
+
 
     return;
 }
@@ -609,7 +626,7 @@ void Multitrack::closeEvent(QCloseEvent *event)
 
 void Multitrack::writeSettings()
 {
-    QSettings settings("Biotracking", "MultiTrack");
+    QSettings settings("Biotracking", "ManyTrack");
 
     //SpinBoxes
     settings.setValue("bgsubthresh", ui.bgSubThresholdSpinBox->value());
@@ -645,7 +662,7 @@ void Multitrack::writeSettings()
 
 void Multitrack::readSettings()
 {
-    QSettings settings("Biotracking", "MultiTrack");
+    QSettings settings("Biotracking", "ManyTrack");
 
     //settings.beginGroup("MainWindow");
     //SpinBoxes
@@ -914,6 +931,7 @@ void Multitrack::on_displaycomboBox_currentIndexChanged(int index)
 
 
               imageLabel->resize(displayWidth,displayHeight);
+                   ui.visualizationLabel->resize(ui.imageLabel->size());
                    if(trackerChecked){
 
                        updateImage(icpTracker->getTrackResultImage());
@@ -1022,4 +1040,11 @@ void Multitrack::on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1)
 {
     if(trackerChecked||isPlaying)
         icpTracker->Ticp_euclideanDistance=arg1;
+}
+
+void Multitrack::on_visualizationcheckBox_toggled(bool checked)
+{
+    if (checked)
+ ui.visualizationLabel->raise();
+    else ui.visualizationLabel->lower();
 }

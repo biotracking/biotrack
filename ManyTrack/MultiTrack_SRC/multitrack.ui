@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1222</width>
-    <height>816</height>
+    <width>1197</width>
+    <height>872</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -797,7 +797,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>71</y>
+         <y>99</y>
          <width>688</width>
          <height>498</height>
         </rect>
@@ -850,7 +850,30 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
+       <widget class="QLabel" name="visualizationLabel">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>451</width>
+          <height>241</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Visualization Overlay</string>
+        </property>
+       </widget>
       </widget>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QCheckBox" name="visualizationcheckBox">
+      <property name="text">
+       <string>Visualization</string>
+      </property>
      </widget>
     </item>
    </layout>
@@ -861,7 +884,7 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1222</width>
+     <width>1197</width>
      <height>25</height>
     </rect>
    </property>

@@ -5,6 +5,7 @@
 ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, QString maskImagepath, Ui::MultitrackClass uiPass)
 {
 
+
     mFolderPath = modelFolderpath;
     uiICP=uiPass;
     thefps=fps;
@@ -27,6 +28,14 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
     // TODO: move into load function
     //Load background image
     bgImage = imread(bgImagepath.toStdString());
+
+    //Make visual overlay transparent
+   QImage qimage = QImage((const uchar*)bgImage.data, bgImage.cols, bgImage.rows, QImage::Format_ARGB32);
+
+    QPixmap transparent(qimage.size());
+    // Do transparency
+    transparent.fill(Qt::transparent);
+    uiICP.visualizationLabel->setPixmap(transparent);
 
 
     //Create useful copies of other images
@@ -560,6 +569,12 @@ void ICPTracker::drawTrackResult(Mat img)
     }
 
 
+    Mat qImgARGB;
+    cvtColor(trackResultImage,qImgARGB,CV_BGRA2RGBA);
+
+
+
+
     //Todo find  better way of overlaying images using alpha channels
 
 
@@ -573,6 +588,7 @@ void ICPTracker::drawTrackResult(Mat img)
 
     cvtColor(trackResultImage,trackResultImage,CV_BGRA2BGR);
 
+    trackResultImage = qImgARGB;
     return;
 }
 

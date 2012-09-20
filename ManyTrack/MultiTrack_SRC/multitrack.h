@@ -90,7 +90,7 @@ private:
 	bool isPlaying;
     bool isVideoShowing;
     QString statusMessage;
-    void updateImage(Mat img);
+    void updateImage(Mat dataimage);
 	void updateStatusBar();
 	void messageToStatusBar(QString message);
     Mat updateFrame();
@@ -150,6 +150,7 @@ private slots:
      void on_ICP_MaxIterspinBox_valueChanged(int arg1);
      void on_ICP_TransEpsilondoubleSpinBox_valueChanged(double arg1);
      void on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1);
+     void on_visualizationcheckBox_toggled(bool checked);
 };
 
 #endif // MULTITRACK_H

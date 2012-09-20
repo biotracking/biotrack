@@ -165,6 +165,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
             pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
             viewer.showCloud(dataPTS_cloud_ptr);
 
+
         int sw=0;
                     while (!viewer.wasStopped())
                     {
@@ -451,6 +452,55 @@ double Track::getY(int idx)
     return T(1,3);
 }
 
+pair <Point,double> Track::getXYT(int idx){
+    //cout << " --- Get Rotations --- " << endl;
+pair <Point,double> returnInfo;
+    if (idx < 0) idx = frameIndex;
+    Eigen::Matrix4f T = absoluteTransforms[idx-birthFrameIndex-1];
+    float theta;
+
+    //Manually create a cloud and shift
+    pcl::PointCloud<pcl::PointXYZ>  standardcloud;
+
+
+
+
+    // make the angle match convention of pointing down X axis = 0 degrees, poiting down positive y axis = 90 degrees
+
+    pcl::PointXYZ p1,p2;
+    p1.x=0; p1.y=0;
+    p2.x=100; p2.y=0;
+
+    standardcloud.push_back(p1);
+    standardcloud.push_back(p2);
+    // transformCloud(standardcloud, T);
+    pcl::transformPointCloud(standardcloud,standardcloud, T);
+
+    theta = atan2((float)(standardcloud.points[1].y-standardcloud.points[0].y), (float)(standardcloud.points[1].x-standardcloud.points[0].x)); // changed this function to make consistent
+    //  cout << " The manually translated angle in degrees : " <<theta*180/3.14157 << endl;
+
+    /* I don't know why this doesn't work for angles between 240 and 360
+    Eigen::Matrix3f m;
+     m = T.topLeftCorner(3,3);
+     AngleAxisf aa(m);
+
+     cout << " The aa axis : " << aa.axis() << endl;
+     cout << " The aa angle in degrees : " <<aa.angle()*180/3.14157 << endl;
+
+     theta=aa.angle();
+     cout << " --- END Get Rotations --- " << endl;
+*/
+    Point pointXY;
+    pointXY.x=standardcloud.points[0].x;
+    pointXY.y=standardcloud.points[0].y;
+
+    returnInfo.first= pointXY;
+
+    returnInfo.second = theta;
+    return returnInfo;
+
+}
+
 double Track::getScale(int idx)
 {
     // TODO: remove or handle transformation with a scale DOF
@@ -527,65 +577,89 @@ void Track::getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB> &modelPts, int i
  */
 pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::PointCloud<pcl::PointXYZRGB> point_cloud_for_reduction,pcl::PointCloud<pcl::PointXYZRGB> removal_Cloud, int distanceThreshold){
 
+        //NOTE: you cannot feed a KNN searcher clouds with 1 or fewer datapoints!
 
-    //NOTE: you cannot feed a KNN searcher clouds with 1 or fewer datapoints!
+        //KDTREE SEARCH
 
-    //KDTREE SEARCH
+        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+        // Neighbors within radius search
 
-    pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
-    // Neighbors within radius search
+        std::vector<int> pointIdxRadiusSearch;
+        std::vector<float> pointRadiusSquaredDistance;
 
-    std::vector<int> pointIdxRadiusSearch;
-    std::vector<float> pointRadiusSquaredDistance;
+        float point_radius = distanceThreshold;
 
-    float point_radius = distanceThreshold;
+        PointCloud<pcl::PointXYZRGB> point_cloud_for_return;
+        point_cloud_for_return.reserve(point_cloud_for_reduction.size());
 
-    // K nearest neighbor search with Radius
+        // K nearest neighbor search with Radius
 
-    if(point_cloud_for_reduction.size()>1){
+        if(point_cloud_for_reduction.size()>1){
 
-        // iterate over points in model and remove those points within a certain distance
-        for (unsigned int c=0; c < removal_Cloud.size(); c++)
-        {
+            bool *marked= new bool[point_cloud_for_reduction.size()];
+            memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
+    //        for(uint q=0; q< point_cloud_for_reduction.size(); q++){
+    //            marked[q]=false;
 
-            if(point_cloud_for_reduction.size()<2){
-                break;
-            }
+    //        }
+
             pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_for_reduction));
 
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
 
-            pcl::PointXYZRGB searchPoint;
 
-            searchPoint.x = removal_Cloud.points[c].x;
-            searchPoint.y = removal_Cloud.points[c].y;
-            searchPoint.z = removal_Cloud.points[c].z;
-
-            // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
-            if ( kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+            // iterate over points in model and remove those points within a certain distance
+            for (unsigned int c=0; c < removal_Cloud.size(); c++)
             {
-                for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i){
-                    if(point_cloud_for_reduction.size()>1)
-                        point_cloud_for_reduction.erase(point_cloud_for_reduction.begin()+pointIdxRadiusSearch[i]);// point_cloud_for_reduction.points[ pointIdxRadiusSearch[i] ]
+
+                if(point_cloud_for_reduction.size()<2){
+                    break;
                 }
+
+
+                pcl::PointXYZRGB searchPoint;
+
+                searchPoint.x = removal_Cloud.points[c].x;
+                searchPoint.y = removal_Cloud.points[c].y;
+                searchPoint.z = removal_Cloud.points[c].z;
+
+                // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
+                if ( kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
+                {
+                    for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i){
+                        if(point_cloud_for_reduction.size()>0) ///NOTE CHANGED FROM > 1
+
+                        marked[pointIdxRadiusSearch[i]]=true;
+    //                        point_cloud_for_reduction.erase(point_cloud_for_reduction.begin()+pointIdxRadiusSearch[i]);// point_cloud_for_reduction.points[ pointIdxRadiusSearch[i] ]
+                    }
+                }
+
+
             }
 
 
+
+            for(uint q=0; q< point_cloud_for_reduction.size(); q++){
+                if(!marked[q]){
+                    point_cloud_for_return.push_back(point_cloud_for_reduction.at(q));
+    //                point_cloud_for_return.at(q) = point_cloud_for_reduction.at(q);
+
+                }
+
+            }
+
+
+
+            delete[] marked;
         }
 
-
-
-        if(point_cloud_for_reduction.size()<1){
-
-        }
+        //point_cloud_for_reduction.resize();
+        return point_cloud_for_return;
 
     }
 
-    //point_cloud_for_reduction.resize();
-    return point_cloud_for_reduction;
 
-}
 
 
 
