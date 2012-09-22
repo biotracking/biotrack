@@ -292,6 +292,46 @@ void ICPTracker::track(Mat img, int timeIndex)
     //  Each point gets assigned a track
     for (uint i=0; i < data_cloud.size()-1 -(model_clouds_orig.size() * .01 * modelTOdataThreshold) ; i++) //Assumption, can't have a model if there are fewer points than deemed birthable anyway    //Assumption Won't have a model with a single point
     {
+
+        /** //Ignore crap points
+        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+                // Neighbors within radius search
+
+                std::vector<int> pointIdxRadiusSearch;
+                std::vector<float> pointRadiusSquaredDistance;
+
+                float point_radius = uiICP.trackdistanceSpinBox->value();
+
+                pcl:: PointCloud<PointXYZRGB>::Ptr data_ptr (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
+
+                kdtree.setInputCloud (data_ptr); //Needs to have more than 1 data pt or segfault
+                pcl::PointXYZRGB searchPoint;
+                //Ignore points that have no good stuff around them
+
+                for (int q=i; q<data_cloud.size();q++){
+
+                searchPoint.x = data_cloud.points[i].x;
+                searchPoint.y = data_cloud.points[i].y;
+                searchPoint.z = data_cloud.points[i].z;
+
+                // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
+                 kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance);
+
+                 if(pointIdxRadiusSearch.size ()<(model_clouds_orig.size() * .01 * modelTOdataThreshold)){
+//ignore and go to next point
+                 }
+                 else{
+                     break;
+                 }
+}
+
+/**/
+
+
+
+
+
         if(data_cloud.size()<1) //This seems redundant, TODO remove
         {
             break;
@@ -1076,3 +1116,5 @@ Mat ICPTracker::runContourDetection(Mat img){
 
 
 }
+
+

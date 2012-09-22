@@ -307,7 +307,8 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
         // Set the max correspondence distance (e.g., correspondences with higher distances will be ignored)
 
-              icp.setMaxCorrespondenceDistance (DBL_MAX);
+//              icp.setMaxCorrespondenceDistance (DBL_MAX);
+              icp.setMaxCorrespondenceDistance (matchDistanceThreshold);
 
         // Set the maximum number of iterations (criterion 1)
         icp.setMaximumIterations (icp_maxIter*3);  //Timeout
@@ -326,7 +327,7 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
         //        icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unless it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
-        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
+//        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 
 
         /// Create Guess For Birthframe
@@ -345,8 +346,8 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
         // Set the max correspondence distance (e.g., correspondences with higher distances will be ignored)
 
         //Currently thinking that there should be no max distance, because with noisy data, erroneous points take chunks out of good detections
-//              icp.setMaxCorrespondenceDistance (matchDistanceThreshold);
-        icp.setMaxCorrespondenceDistance (DBL_MAX);
+              icp.setMaxCorrespondenceDistance (matchDistanceThreshold);
+//        icp.setMaxCorrespondenceDistance (DBL_MAX);
 
 
         // Set the maximum number of iterations (criterion 1)
@@ -372,7 +373,7 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
         // icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
 
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
-        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
+//        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 
         /// Create Guess For Latterframes
         // use last transformation added
@@ -808,7 +809,8 @@ computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
   copyPointCloud<PointXYZ, PointNormal> (*keypoints_src, s);
   copyPointCloud<Normal, PointNormal> (normals_src, s);
   copyPointCloud<PointXYZ, PointNormal> (*keypoints_tgt, t);
-  copyPointCloud<Normal, PointNormal> (normals_tgt, t);*/
+  copyPointCloud<Normal, PointNormal> (normals_tgt, t);
+*/
 
 
 
