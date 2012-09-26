@@ -30,6 +30,9 @@ INCLUDEPATH +=  "/usr/local/include/pcl-1.6/" \
                  "/usr/include/eigen3/" \
                  "/usr/include/openni/" \
                  "/usr/include/vtk-5.8/" \
+          "/usr/lib/libvtkCommon.so.5.8"
+
+
 
 LIBS += -lpcl_common \
          -lpcl_io \
@@ -40,7 +43,16 @@ LIBS += -lpcl_common \
          -lpcl_segmentation \
          -lpcl_search \
          -lpcl_surface \
-         -lpcl_keypoints
+         -lpcl_keypoints \
+# This stuff is for visualization
+          "/usr/lib/libvtkCommon.so.5.8" \
+          "/usr/lib/libvtkFiltering.so.5.8" \
+          "/usr/lib/libvtkRendering.so.5.8" \
+          "/usr/lib/libvtkGraphics.so.5.8"
+
+
+
+
 ##use the below command when deploying
 
 #  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN/libs
@@ -77,7 +89,6 @@ HEADERS  += \
     Track.h \
     ICPTracker.h \
     multitrack.h
-
 
 FORMS    += multitrack.ui
 

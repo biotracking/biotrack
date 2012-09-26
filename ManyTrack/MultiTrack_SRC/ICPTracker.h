@@ -9,6 +9,9 @@
 #include "Track.h"
 #include <QString>
 #include <QDir>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
 
 #include "ui_multitrack.h"
 
@@ -129,19 +132,23 @@ pcl::PointCloud<pcl::PointXYZRGB> loadModelPoints(Mat imgBGRA);
     Mat runContourDetection(Mat img);
     int resolutionFractionMultiplier;
 
+//    boost::shared_ptr<pcl::visualization::CloudViewer> cMviewer;
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
-    /** Sample Struct
-    //	typedef struct TargetBlob
-    //	{
-    //		Mat Blobmat;
-    //        Point centroid;
-    //        std::vector<Point> pts;
-    //		bool isMatched;
-    //	}
-    //	TargetBlob;
-    //	std::vector<TargetBlob> blobs;
+     //   pcl::visualization::CloudViewer viewer("Cloud Viewer");
 
-    **/
+
+
+    typedef struct model
+    {
+        Mat img;
+        Point centroid;
+        pcl::PointCloud<pcl::PointXYZRGB> cloud;
+        QString name;
+
+    }
+    model;
+    std::vector<model> models;
 
 protected:
 

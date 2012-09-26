@@ -2,6 +2,41 @@
 
 
 
+void
+viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
+{
+//    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
+    viewerT.setBackgroundColor (1.0, 0.5, 1.0);
+//    viewerT->updatePointCloud(data_cloud_PTR,"datacloud");
+
+    pcl::PointXYZ o;
+    o.x = 1.0;
+    o.y = 0;
+    o.z = 0;
+//    viewerT.addSphere (o, 0.25, "sphere", 0);
+   qDebug()<< "i only run once";
+
+
+
+}
+
+boost::shared_ptr<pcl::visualization::PCLVisualizer> simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
+{
+  // --------------------------------------------
+  // -----Open 3D viewer and add point cloud-----
+  // --------------------------------------------
+    //This pops open a new cloud everytime
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 40, 0);
+  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+  viewer->addCoordinateSystem (1.0);
+  viewer->initCameraParameters ();
+  return (viewer);
+}
+
+
 ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, QString maskImagepath, Ui::MultitrackClass uiPass)
 {
 
@@ -73,7 +108,19 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
 
     colorRegScale=uiICP.colorRegSpinBox->value();
 
+  /**/  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
+  viewer2->setBackgroundColor (0, 0, 0);
+//  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+//  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+  viewer2->addCoordinateSystem (1.0);
+  viewer2->initCameraParameters ();
+  viewer = viewer2;
+  pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
+    viewer->addPointCloud<pcl::PointXYZRGB> (data_cloud_PTR, "datacloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "datacloud");
+/**/
 }
 
 ICPTracker::~ICPTracker()
@@ -110,10 +157,13 @@ ICPTracker::~ICPTracker()
 void ICPTracker::track(Mat img, int timeIndex)
 {
 
+
+
     Track* track;
 
    vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > currentTrackModelPoints;
     currentTrackModelPoints = model_clouds_orig;
+
 
 
     /////////////////////////
@@ -253,8 +303,11 @@ void ICPTracker::track(Mat img, int timeIndex)
             }
         }
     }
-
     data_cloud = temp_data_cloud;
+    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
+    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
+
 
 
     /// End Big Loop
@@ -283,6 +336,12 @@ void ICPTracker::track(Mat img, int timeIndex)
 
     qDebug()<<" data cloud Pts left over after existing tracks have removed data "<<data_cloud.size();
 
+
+
+      //  viewer->spinOnce(100);
+
+
+
     /////////////////////////
     // add new tracks
     /////////////////////////
@@ -292,45 +351,6 @@ void ICPTracker::track(Mat img, int timeIndex)
     //  Each point gets assigned a track
     for (uint i=0; i < data_cloud.size()-1 -(model_clouds_orig.size() * .01 * modelTOdataThreshold) ; i++) //Assumption, can't have a model if there are fewer points than deemed birthable anyway    //Assumption Won't have a model with a single point
     {
-
-        /** //Ignore crap points
-        pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
-                // Neighbors within radius search
-
-                std::vector<int> pointIdxRadiusSearch;
-                std::vector<float> pointRadiusSquaredDistance;
-
-                float point_radius = uiICP.trackdistanceSpinBox->value();
-
-                pcl:: PointCloud<PointXYZRGB>::Ptr data_ptr (new pcl::PointCloud<PointXYZRGB> (data_cloud));
-
-
-                kdtree.setInputCloud (data_ptr); //Needs to have more than 1 data pt or segfault
-                pcl::PointXYZRGB searchPoint;
-                //Ignore points that have no good stuff around them
-
-                for (int q=i; q<data_cloud.size();q++){
-
-                searchPoint.x = data_cloud.points[i].x;
-                searchPoint.y = data_cloud.points[i].y;
-                searchPoint.z = data_cloud.points[i].z;
-
-                // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
-                 kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance);
-
-                 if(pointIdxRadiusSearch.size ()<(model_clouds_orig.size() * .01 * modelTOdataThreshold)){
-//ignore and go to next point
-                 }
-                 else{
-                     break;
-                 }
-}
-
-/**/
-
-
-
-
 
         if(data_cloud.size()<1) //This seems redundant, TODO remove
         {
@@ -398,18 +418,27 @@ void ICPTracker::track(Mat img, int timeIndex)
     return;
 }
 
-//void ICPTracker::
-//viewerOneOff (pcl::visualization::PCLVisualizer& viewer)
-//{
-//    viewer.setBackgroundColor (1.0, 0.5, 1.0);
-//    pcl::PointXYZ o;
-//    o.x = 1.0;
-//    o.y = 0;
-//    o.z = 0;
-//    viewer.addSphere (o, 0.25, "sphere", 0);
-//    std::cout << "i only run once" << std::endl;
 
-//}
+
+
+
+
+/*
+
+void
+viewerPsycho (pcl::visualization::PCLVisualizer& viewer)
+{
+    static unsigned count = 0;
+    std::stringstream ss;
+    ss << "Once per viewer loop: " << count++;
+    viewer.removeShape ("text", 0);
+    viewer.addText (ss.str(), 200, 300, "text", 0);
+
+    //FIXME: possible race condition here:
+    user_data++;
+}
+  */
+
 
 
 template<typename T>
@@ -537,7 +566,7 @@ void ICPTracker::drawTrackResult(Mat img)
         //////////////
         if(showBox){
             RotatedRect boundRect( RotatedRect(Point2f(activeTracks[i]->getX(),activeTracks[i]->getY()),
-                                               Size(modelImage.cols,modelImage.rows),
+                                               Size(maxModelDimension,maxModelDimension),
                                                activeTracks[i]->getRotationAngle() * 180 / 3.1415926
 
                                                ));
@@ -743,12 +772,13 @@ colorRegScale=uiICP.colorRegSpinBox->value();
             //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
             if (pixvalAlpha > 2)
             {
-                coordinate.x = x*resolutionFractionMultiplier;
-                coordinate.y = y*resolutionFractionMultiplier;
+
+                coordinate.x = x*resolutionFractionMultiplier - modelDimensions.x/2; // center //scale back into full res coordinates
+                coordinate.y = y*resolutionFractionMultiplier - modelDimensions.y/2; // center
 
                 temp_model_cloud.push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
-                temp_model_cloud.back().x=                                              x*resolutionFractionMultiplier;
-                temp_model_cloud.back().y=                                              y*resolutionFractionMultiplier;
+                temp_model_cloud.back().x=                                          x*resolutionFractionMultiplier - modelDimensions.x/2;
+                temp_model_cloud.back().y=                                       y*resolutionFractionMultiplier - modelDimensions.y/2;
                 temp_model_cloud.back().z=   pixvalHue*colorRegScale; //0;
 
 

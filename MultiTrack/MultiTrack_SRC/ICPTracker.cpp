@@ -245,14 +245,17 @@ void ICPTracker::track(Mat img, int timeIndex)
     //  Each point gets assigned a track
     for (uint i=0; i < data_cloud.size()-1 -(model_cloud_orig.size() * .01 * modelTOdataThreshold) ; i++) //Assumption, can't have a model if there are fewer points than deemed birthable anyway    //Assumption Won't have a model with a single point
     {
+
+
         if(data_cloud.size()<1) //This seems redundant, TODO remove
         {
             break;
         }
 
+        qDebug()<<"---Add new Tracks Loop: datacloud.size= "<<data_cloud.size();
         currentTrackModelPoints = model_cloud_orig;
-        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, trackToBlobDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
-        data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, trackToBlobDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, trackToBlobDistanceThreshold,separationThreshold, resolutionFractionMultiplier);
+        data_cloud =  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, trackToBlobDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
         {
             activeTracks.push_back(track);
@@ -625,8 +628,7 @@ Mat tempImg;
         }
     }
 
-     trueModelwidth;
-     trueModelheight;
+
     trueModelwidth=maxX;
     if(maxX<abs(minX)) trueModelwidth=minX;
 

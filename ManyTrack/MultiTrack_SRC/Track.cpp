@@ -155,7 +155,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
 
 
-            /// For Debugging we can visualize the Pointcloud
+         /**  /// For Debugging we can visualize the Pointcloud
             pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
           //  copyPointCloud(modelPTS_cloud,)
             transformPointCloud(modelPTS_clouds[modelIndex].first,modelPTS_clouds[modelIndex].first,T);
@@ -164,7 +164,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
             pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
             viewer.showCloud(dataPTS_cloud_ptr);
-
 
         int sw=0;
                     while (!viewer.wasStopped())
