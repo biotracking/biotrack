@@ -5,17 +5,17 @@
 void
 viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
 {
-//    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+    //    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
     viewerT.setBackgroundColor (1.0, 0.5, 1.0);
-//    viewerT->updatePointCloud(data_cloud_PTR,"datacloud");
+    //    viewerT->updatePointCloud(data_cloud_PTR,"datacloud");
 
     pcl::PointXYZ o;
     o.x = 1.0;
     o.y = 0;
     o.z = 0;
-//    viewerT.addSphere (o, 0.25, "sphere", 0);
-   qDebug()<< "i only run once";
+    //    viewerT.addSphere (o, 0.25, "sphere", 0);
+    qDebug()<< "i only run once";
 
 
 
@@ -23,17 +23,17 @@ viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
 
 boost::shared_ptr<pcl::visualization::PCLVisualizer> simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
 {
-  // --------------------------------------------
-  // -----Open 3D viewer and add point cloud-----
-  // --------------------------------------------
+    // --------------------------------------------
+    // -----Open 3D viewer and add point cloud-----
+    // --------------------------------------------
     //This pops open a new cloud everytime
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-  viewer->setBackgroundColor (0, 40, 0);
-  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
-  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-  viewer->addCoordinateSystem (1.0);
-  viewer->initCameraParameters ();
-  return (viewer);
+    viewer->setBackgroundColor (0, 40, 0);
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+    viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+    viewer->addCoordinateSystem (1.0);
+    viewer->initCameraParameters ();
+    return (viewer);
 }
 
 
@@ -65,7 +65,7 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
     bgImage = imread(bgImagepath.toStdString());
 
     //Make visual overlay transparent
-   QImage qimage = QImage((const uchar*)bgImage.data, bgImage.cols, bgImage.rows, QImage::Format_ARGB32);
+    QImage qimage = QImage((const uchar*)bgImage.data, bgImage.cols, bgImage.rows, QImage::Format_ARGB32);
 
     QPixmap transparent(qimage.size());
     // Do transparency
@@ -99,28 +99,30 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
 
     //Load list of modelfiles, turn them into a paired vector of MATS
 
-    model_clouds_orig = loadModelClouds(mFolderPath  );
+    //    model_clouds_orig = loadModelClouds(mFolderPath  );
+    models.clear();
+    models = loadModelClouds(mFolderPath);
 
-    qDebug()<< "Number of Models loaded:" << model_clouds_orig.size();
+    qDebug()<< "Number of Models loaded:" << models.size();
 
     trackToBlobDistanceThreshold = 0;
     trackDeathThreshold=20;
 
     colorRegScale=uiICP.colorRegSpinBox->value();
 
-  /**/  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+    /**/  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
-  viewer2->setBackgroundColor (0, 0, 0);
-//  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
-//  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
-  viewer2->addCoordinateSystem (1.0);
-  viewer2->initCameraParameters ();
-  viewer = viewer2;
-  pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+    viewer2->setBackgroundColor (0, 0, 0);
+    //  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
+    //  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "sample cloud");
+    viewer2->addCoordinateSystem (1.0);
+    viewer2->initCameraParameters ();
+    viewer = viewer2;
+    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
     viewer->addPointCloud<pcl::PointXYZRGB> (data_cloud_PTR, "datacloud");
     viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "datacloud");
-/**/
+    /**/
 }
 
 ICPTracker::~ICPTracker()
@@ -154,15 +156,11 @@ ICPTracker::~ICPTracker()
 
 
 
-void ICPTracker::track(Mat img, int timeIndex)
+void ICPTracker::track(Mat scene_img, int timeIndex)
 {
-
-
-
     Track* track;
-
-   vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > currentTrackModelPoints;
-    currentTrackModelPoints = model_clouds_orig;
+    vector<Model> currentTrackModelPoints;
+    currentTrackModelPoints = models;
 
 
 
@@ -181,7 +179,7 @@ void ICPTracker::track(Mat img, int timeIndex)
 
     // bg subtraction
 
-    absdiff(img, bgImage,bgSubImage);
+    absdiff(scene_img, bgImage,bgSubImage);
 
     cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray //NOTE!!!! Never do a cvtColor(img,img, CVBGR2GRAY). if src and dst are same you get ERRORS!
     cv::threshold(bgSubImageGray,bgSubImageGray,bgsubstractionThreshold,255,CV_THRESH_BINARY);
@@ -210,7 +208,7 @@ void ICPTracker::track(Mat img, int timeIndex)
     cv::resize(bgSubImageGray, bgSubImageGraySmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier);
 
     Mat imgsmall;
-    cv::resize(img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
+    cv::resize(scene_img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
     Mat imgsmallgray;
     cvtColor(imgsmall,imgsmallgray,CV_BGR2GRAY);
     Mat imgsmallHSV;
@@ -328,7 +326,7 @@ void ICPTracker::track(Mat img, int timeIndex)
     for (uint i=0; i < activeTracks.size(); i++)
     {
 
-        currentTrackModelPoints = model_clouds_orig;
+        currentTrackModelPoints = models;
 
         data_cloud=  activeTracks[i]->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,trackToBlobDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
 
@@ -338,7 +336,7 @@ void ICPTracker::track(Mat img, int timeIndex)
 
 
 
-      //  viewer->spinOnce(100);
+    //  viewer->spinOnce(100);
 
 
 
@@ -349,15 +347,14 @@ void ICPTracker::track(Mat img, int timeIndex)
     //  dpoints associated with tracks were removed in previous update step
     //  Now we will add new tracks for remaining points
     //  Each point gets assigned a track
-    for (uint i=0; i < data_cloud.size()-1 -(model_clouds_orig.size() * .01 * modelTOdataThreshold) ; i++) //Assumption, can't have a model if there are fewer points than deemed birthable anyway    //Assumption Won't have a model with a single point
+    for (uint i=0; i < data_cloud.size()-1 -(fewestNumofModelPoints * .01 * modelTOdataThreshold) ; i++) //Assumption, can't have a model birthed if there are fewer points than deemed birthable by even the smallest model   //Assumption Won't have a model with a single point
     {
-
         if(data_cloud.size()<1) //This seems redundant, TODO remove
         {
             break;
         }
 
-        currentTrackModelPoints = model_clouds_orig;
+        currentTrackModelPoints = models;
         track = new Track(timeIndex, data_cloud.points[i], numOfTracks, trackToBlobDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
         data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, trackToBlobDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
@@ -400,7 +397,7 @@ void ICPTracker::track(Mat img, int timeIndex)
     data_cloud.clear();
     if (isVideoShowing && uiICP.display_pushButton->isChecked())
     {
-        drawTrackResult(img);
+        drawTrackResult(scene_img);
     }
     else
     {
@@ -504,7 +501,7 @@ void ICPTracker::drawTrackResult(Mat img)
 
 
 
-    pcl::PointCloud<pcl::PointXYZRGB> model_cloudtodraw;
+    Model model_cloudtodraw;
 
 
     int trackLineLength = 200;
@@ -524,11 +521,11 @@ void ICPTracker::drawTrackResult(Mat img)
 
     {
         //Start off with a fresh copy of the modelcloud
-        model_cloudtodraw = model_clouds_orig[activeTracks[i]->modelIndex].first;
+        model_cloudtodraw = models[activeTracks[i]->modelIndex];
 
 
 
-        activeTracks[i]->getTemplatePoints(model_cloudtodraw); //translates the points
+        activeTracks[i]->getTemplatePoints(model_cloudtodraw.cloud); //translates the points
 
         //  qDebug()<<"ModelCloud Size for drawing after getTemplate"<<model_cloudtodraw.size();
 
@@ -566,7 +563,7 @@ void ICPTracker::drawTrackResult(Mat img)
         //////////////
         if(showBox){
             RotatedRect boundRect( RotatedRect(Point2f(activeTracks[i]->getX(),activeTracks[i]->getY()),
-                                               Size(maxModelDimension,maxModelDimension),
+                                               Size(models.at(activeTracks[i]->modelIndex).width,models.at(activeTracks[i]->modelIndex).height),
                                                activeTracks[i]->getRotationAngle() * 180 / 3.1415926
 
                                                ));
@@ -609,7 +606,7 @@ void ICPTracker::drawTrackResult(Mat img)
                 circleradius =3;
             }
             // draw template
-            for (uint j=0; j < model_cloudtodraw.size(); j++)
+            for (uint j=0; j < model_cloudtodraw.cloud.size(); j++)
             {
                 //cvSet2D(trackResultImage, pts[j].y, pts[j].x, CV_BGR(255,255,255));
 
@@ -618,10 +615,10 @@ void ICPTracker::drawTrackResult(Mat img)
                 /////////////
 
                 if(showRemovalRadii){
-                    cv::circle(trackResultImage,Point(model_cloudtodraw.points[j].x, model_cloudtodraw.points[j].y),separationThreshold,Scalar(70,70,70,100),1);
+                    cv::circle(trackResultImage,Point(model_cloudtodraw.cloud.points[j].x, model_cloudtodraw.cloud.points[j].y),separationThreshold,Scalar(70,70,70,100),1);
                 }
                 //Made model colored green for better visibility
-                cv::circle(trackResultImage,Point(model_cloudtodraw.points[j].x, model_cloudtodraw.points[j].y),circleradius,Scalar(red,green,2,200),-1);
+                cv::circle(trackResultImage,Point(model_cloudtodraw.cloud.points[j].x, model_cloudtodraw.cloud.points[j].y),circleradius,Scalar(red,green,2,200),-1);
             }
         }//End Draw ICP Template
 
@@ -629,11 +626,11 @@ void ICPTracker::drawTrackResult(Mat img)
         ///Draw ID Label Text
         //////////////
         sprintf(label, "%d", activeTracks[i]->getID());
-//        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
+        //        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
         //Write the name of the model used
         //NOT WORKING -->
-        cv::putText(trackResultImage, model_clouds_orig[activeTracks[i]->modelIndex].second.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,0,255));
+        cv::putText(trackResultImage, models[activeTracks[i]->modelIndex].name.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,0,255));
 
     }
 
@@ -647,15 +644,15 @@ void ICPTracker::drawTrackResult(Mat img)
     //Todo find  better way of overlaying images using alpha channels
 
 
-    Mat imgBGRA;
-    cvtColor(img,imgBGRA,CV_BGR2BGRA);
+//    Mat imgBGRA;
+//    cvtColor(img,imgBGRA,CV_BGR2BGRA);
     //    cvtColor(trackResultImage,trackResultImage,CV_BGR2BGRA);
 
-    alphaBlendBGRA<uchar>(imgBGRA,trackResultImage,trackResultImage);
+//    alphaBlendBGRA<uchar>(imgBGRA,trackResultImage,trackResultImage);
     //    addWeighted(trackResultImage,1,imgBGRA,.5,0,trackResultImage);
     //   add(trackResultImage,imgBGRA, trackResultImage);
 
-    cvtColor(trackResultImage,trackResultImage,CV_BGRA2BGR);
+//    cvtColor(trackResultImage,trackResultImage,CV_BGRA2BGR);
 
     trackResultImage = qImgARGB;
     return;
@@ -665,51 +662,53 @@ void ICPTracker::drawTrackResult(Mat img)
   Takes in a path to a folder, and loads all the png "model" files into Mats
 
   **/
-vector< pair<Mat, QString> > ICPTracker::modelFilesToMAT(QString modelFolderPath){
+vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
 
     QDir myDir( modelFolderPath);
     QStringList filters;
     filters<<"*.png";
     myDir.setNameFilters(filters);
 
-    vector< pair<Mat, QString> > output;
+    vector<Model> output;
 
 
-//    int index=0;
-//    QRegExp rx("_.*.btf");
+    //    int index=0;
+    //    QRegExp rx("_.*.btf"); //Todo get just PNG files
 
     QStringList list = myDir.entryList(filters);
     for (QStringList::iterator it = list.begin(); it != list.end(); ++it) {
-        pair<Mat, QString> modelAndPath;
+        Model imgAndPath;
         QString fullpath;
         QString current = *it;
 
         qDebug()<<current<<" current modelFile   "<<current;
-            fullpath = modelFolderPath+"/"+current;
-Mat modelImg;
-modelImg =imread(fullpath.toStdString(),-1); //flags of zero means force grayscale load
-        modelAndPath.first = modelImg;
-        modelAndPath.second=current;
-output.push_back(modelAndPath);
+        fullpath = modelFolderPath+"/"+current;
+        Mat modelImg;
+        modelImg =imread(fullpath.toStdString(),-1); //flags of zero means force grayscale load
+        imgAndPath.img = modelImg;
+        imgAndPath.name=current;
+        imgAndPath.filepath=fullpath;
 
-            }
+        output.push_back(imgAndPath);
 
-return output;
+    }
+
+    return output;
 
 
 }
 /**
- * Given a binary image for a model target,
- * extract and store the x,y coordinates in a
- * vector of pairs.
- *Store these in a pointcloud too!
+ * Given an alpha-segmented image for a model target,
+ * extract and store the x,y coordinates in a pointcloud
  *
  */
-pcl::PointCloud<pcl::PointXYZRGB> ICPTracker::loadModelPoints(Mat imgBGRA)
+Model ICPTracker::loadModelPoints(Model modelBGRAimg)
 {
+    Model outputModelWCloud = modelBGRAimg;
     Point coordinate;
     Mat imgBGRAsmall;
-    cv::resize(imgBGRA,imgBGRAsmall,Size(),1./resolutionFractionMultiplier,1./resolutionFractionMultiplier, INTER_NEAREST);
+    cv::resize(modelBGRAimg.img,imgBGRAsmall,Size(),1./resolutionFractionMultiplier,1./resolutionFractionMultiplier, INTER_NEAREST);
+    Point modelDimensions;
     modelDimensions.x = imgBGRAsmall.cols*resolutionFractionMultiplier;
     modelDimensions.y = imgBGRAsmall.rows*resolutionFractionMultiplier;
     Mat imgBGR;
@@ -747,7 +746,7 @@ pcl::PointCloud<pcl::PointXYZRGB> ICPTracker::loadModelPoints(Mat imgBGRA)
     //Functions //Fancy Define
 #define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
 
-colorRegScale=uiICP.colorRegSpinBox->value();
+    colorRegScale=uiICP.colorRegSpinBox->value();
     pcl::PointCloud<pcl::PointXYZRGB> temp_model_cloud;
 
     for (int y=0; y < irows; y++)
@@ -786,24 +785,18 @@ colorRegScale=uiICP.colorRegSpinBox->value();
         }
     }
 
+    if(fewestNumofModelPoints>temp_model_cloud.size()) fewestNumofModelPoints=temp_model_cloud.size();
 
+    if(largestNumofModelPoints<temp_model_cloud.size()) largestNumofModelPoints = temp_model_cloud.size();
 
+    qDebug()<<"fewestNumofModel "<<fewestNumofModelPoints<< "  largest  "<<largestNumofModelPoints;
+    outputModelWCloud.cloud=temp_model_cloud;
 
-                    if(coordinate.x<minX) minX=coordinate.x;
-                    if(coordinate.y<minY) minY=coordinate.y;
-                    if(coordinate.x>maxX) maxX=coordinate.x;
-                    if(coordinate.y>maxY) maxY=coordinate.y;
-
-
-
-
-    //   qDebug()<<loadmodelXYZRGB_cloud.back().x<<"   Y "<<loadmodelXYZRGB_cloud.back().y <<"   RGB "<<r <<"   written red "<<loadmodelXYZRGB_cloud.back().r
-    //<<"  max X, Max Y, minx , minY "<<maxX<< "  "<<maxY<< "  "<<minX<< "  "<<minY;
-
-
-
-    loadmodelXYZRGB_cloud=temp_model_cloud;
-
+    //Figure out dimensions
+    if(coordinate.x<minX) minX=coordinate.x;
+    if(coordinate.y<minY) minY=coordinate.y;
+    if(coordinate.x>maxX) maxX=coordinate.x;
+    if(coordinate.y>maxY) maxY=coordinate.y;
 
     //TODO, store model width and height with the super vector
     int trueModelwidth;
@@ -817,45 +810,45 @@ colorRegScale=uiICP.colorRegSpinBox->value();
     trueModelwidth=abs(trueModelwidth*2);
     trueModelheight=abs(trueModelheight*2);
     qDebug()<<" modx width "<<trueModelwidth<<"   modHeight "<<trueModelheight;
+    outputModelWCloud.width=trueModelwidth;
+    outputModelWCloud.height=trueModelheight;
 
-    //    maxModelDimension = modelImage.rows > modelImage.cols ? modelImage.rows : modelImage.cols; //Old method uses image shape
+
+    int maxModelDimension;
     maxModelDimension = trueModelwidth > trueModelheight ? trueModelwidth : trueModelheight; //new method uses actual image image shape
+    outputModelWCloud.maxDimension=maxModelDimension;
 
-    return loadmodelXYZRGB_cloud;
+
+
+    return outputModelWCloud;
 
 }
 
 /**
  * Given a folder of BGRA images for a model target,
  * extract and store the x,y coordinates in a
- * vector of pairs of Pointclouds and Stringnames.
+ * vector of "model" structures.
  *
  */
-vector<pair <PointCloud<PointXYZRGB> , QString> > ICPTracker::loadModelClouds(QString mPath)
+std::vector<Model> ICPTracker::loadModelClouds(QString mPath)
 {
+    fewestNumofModelPoints=DBL_MAX;
+    largestNumofModelPoints = 0;
 
-   vector< pair<Mat, QString> > BGRA_plist=  modelFilesToMAT(mPath);
+    vector<Model> BGRA_Name_and_Paths;
+    BGRA_Name_and_Paths =  modelFilesToMAT(mPath);
 
-vector<pair <PointCloud<PointXYZRGB> , QString> >  modelClouds;
 
     if(isContourTracking){//todo fix! This program runs the loader before loading the settings or something, and can switch contourtracking on!
         // imgAlpha = runContourDetection(imgAlpha);
     }
 
-    //Load the correct pixels for each model
-    for(int i; i<BGRA_plist.size();i++){
-        pair <PointCloud<PointXYZRGB> , QString> cloudAndString;
-
-        cloudAndString.second=BGRA_plist[i].second;
-        cloudAndString.first = loadModelPoints(BGRA_plist[i].first);
-
-        modelClouds.push_back(cloudAndString);
+    //Load the data for each model
+    for(int i; i<BGRA_Name_and_Paths.size();i++){
+        BGRA_Name_and_Paths.at(i) = loadModelPoints(BGRA_Name_and_Paths.at(i)); //Adds cloud and dimensional data to the Model
     }
-    //   return loadmodel_cloud;
 
-//    return loadmodelXYZRGB_cloud;
-    return modelClouds;
-
+    return BGRA_Name_and_Paths;
 }
 
 

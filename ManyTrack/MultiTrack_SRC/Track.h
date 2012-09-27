@@ -85,6 +85,19 @@ using namespace std;
 using namespace pcl;
 using namespace Eigen;
 
+typedef struct Model
+{
+    Mat img;
+    Point centroid;
+    pcl::PointCloud<pcl::PointXYZRGB> cloud;
+    QString name;
+    QString filepath;
+    int width;
+    int height;
+    int maxDimension;
+
+}
+Model;
 
 /**
  * This class is responsible for managing the state of an ant
@@ -99,6 +112,8 @@ public:
     Track(int index, pcl::PointXYZRGB initTranslation, int identification, double matchDThresh,int sepThresh, int resFracMultiplier);
     ~Track();
 
+
+
     double getX(int idx=-1);
     double getY(int idx=-1);
     pair <Point,double> getXYT(int idx=-1);
@@ -107,11 +122,11 @@ public:
     double getRotationAngle(int idx=-1);
     void getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB>& modelPts, int idx=-1);
     bool isBirthFrame;
-    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > modelPTS_clouds,
+    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector<Model> modelPTS_clouds,
                                           int areaThreshold,  int separateThreshold, int matchDThresh,
                                           int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST);
 
-    int identify (PointCloud<PointXYZRGB> dataPTS_cloud, vector<pair<PointCloud<PointXYZRGB>, QString> > modelgroup);
+    int identify (PointCloud<PointXYZRGB> dataPTS_cloud, vector<Model> modelgroup);
 
     int icp_maxIter;
     double icp_transformationEpsilon;

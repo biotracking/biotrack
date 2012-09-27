@@ -18,7 +18,6 @@
 
 
 
-
 /**
  * This is the main tracker class.
  It takes in a set of file paths, analyzes video and perfoms tracking.
@@ -31,9 +30,13 @@ public:
     ICPTracker(float fps, QString bgImagepath,  QString modelFolderpath, QString maskImagepath,  Ui::MultitrackClass uiPass);
     ~ICPTracker();
 
+
+    std::vector<Model> models;
+int fewestNumofModelPoints;
+int largestNumofModelPoints;
 QString mFolderPath;
     void updateImage(Mat img) { image = img; }
-    void track(Mat img, int timeIndex);
+    void track(Mat scene_img, int timeIndex);
     Mat getBackgroundImage() { return bgImage; }
     Mat getBackgroundSubImage() { return bgSubImage; }
     Mat getTrackResultImage() { return trackResultImage; }
@@ -47,7 +50,7 @@ QString mFolderPath;
     void setResolutionFraction(int t) {
         resolutionFractionMultiplier = t;
         bgSubImageGraySmall.create(bgImage.rows / resolutionFractionMultiplier, bgImage.cols/ resolutionFractionMultiplier, CV_8UC3);//TODO get correct type
-        model_clouds_orig=loadModelClouds(mFolderPath);
+        models=loadModelClouds(mFolderPath);
 
     }
     void setMatchDistanceThreshold(int t){
@@ -60,7 +63,7 @@ QString mFolderPath;
     void outputInteractionsReport();
     void outputBTF(QString projectdirectory,QString icpprojectname);
     void setVideoShowing(bool showing) { isVideoShowing = showing; }
-    void setContourTracking(bool cTracking) { isContourTracking = cTracking;	model_clouds_orig=loadModelClouds(mFolderPath); }
+    void setContourTracking(bool cTracking) { isContourTracking = cTracking;	models=loadModelClouds(mFolderPath); }
 
     bool showSearchRadius;
     bool showRemovalRadii;
@@ -96,15 +99,14 @@ private:
     //Store Models as a combination of their Pointcloud and their identifying string
     vector<pair <PointCloud<PointXYZRGB> , QString> > ModelPairs;
 
-    Point modelDimensions;
+//    Point modelDimensions;
     bool isVideoShowing;
     bool isContourTracking;
     float thefps;
 
-    int maxModelDimension;
 
-    std::vector<Point> dataPts;
-   vector< pair< pcl::PointCloud<pcl::PointXYZRGB>, QString > > model_clouds_orig;
+//    std::vector<Point> dataPts;
+//   vector< pair< pcl::PointCloud<pcl::PointXYZRGB>, QString > > model_clouds_orig;
 
 
     pcl::PointCloud<pcl::PointXYZRGB> data_cloud;
@@ -114,10 +116,10 @@ private:
     int modelTOdataThreshold;
     int trackDeathThreshold;
     int separationThreshold;
-    std::vector< pair<pcl::PointCloud<pcl::PointXYZRGB>,QString> > loadModelClouds(QString mPath);
+    std::vector<Model> loadModelClouds(QString mPath);
 
-vector<pair<Mat, QString> > modelFilesToMAT(QString modelFolderPath);
-pcl::PointCloud<pcl::PointXYZRGB> loadModelPoints(Mat imgBGRA);
+vector<Model> modelFilesToMAT(QString modelFolderPath);
+Model loadModelPoints(Model modelBGRAimg);
 
 
     int frameIndex;
@@ -139,16 +141,7 @@ pcl::PointCloud<pcl::PointXYZRGB> loadModelPoints(Mat imgBGRA);
 
 
 
-    typedef struct model
-    {
-        Mat img;
-        Point centroid;
-        pcl::PointCloud<pcl::PointXYZRGB> cloud;
-        QString name;
 
-    }
-    model;
-    std::vector<model> models;
 
 protected:
 

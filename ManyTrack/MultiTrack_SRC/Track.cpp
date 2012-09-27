@@ -33,7 +33,7 @@ Track::~Track()
  * to transforms vector and registration transformation from
  * the track's birth frame to absoluteTransforms vector.
  */
-pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<pair<PointCloud<PointXYZRGB>, QString> > modelPTS_clouds,
+pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<Model> modelPTS_clouds,
                                              int modelTODataThreshold, int separateThreshold, int matchDThresh,
                                              int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST)
 {
@@ -53,7 +53,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
     T.setIdentity();
 
 
-    double birthAssociationsThreshold = modelPTS_clouds[0].first.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
+    double birthAssociationsThreshold = modelPTS_clouds[0].cloud.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
 
     double healthyAssociationsThreshold = birthAssociationsThreshold*.4; //Still healthy with 40 percent of a whole model
 
@@ -80,7 +80,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
 
 
-    modelToProcess_cloud = modelPTS_clouds[modelIndex].first;
+    modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
     //leave open for other possible ICP methods
     bool doPCL=true;
@@ -230,16 +230,16 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
   **/
 
-int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector< pair<PointCloud<pcl::PointXYZRGB>, QString> > modelgroup){
+int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgroup){
 
     float fit=DBL_MAX;
     int identity=0;
     for (int i=0; i<modelgroup.size();i++){
 
-        qDebug()<<"Model Cloud "<<modelgroup[i].second<<"  idx "<<i;
+        qDebug()<<"Model Cloud "<<modelgroup[i].name<<"  idx "<<i;
 
 //        vector< pair<PointCloud<pcl::PointXYZRGB>, QString> >
-        PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[i].first;
+        PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[i].cloud;
                  updateTransformPCLRGB(dataPTS_cloud, modelTOIdentify);
                  if(recentFitness<fit){
                      fit = recentFitness;
@@ -248,7 +248,7 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector< pair<PointClo
 
 
     }
-    qDebug()<<"end ID testing, selected value was: "+modelgroup[identity].second;
+    qDebug()<<"end ID testing, selected value was: "+modelgroup[identity].name;
 
     return identity;
 
