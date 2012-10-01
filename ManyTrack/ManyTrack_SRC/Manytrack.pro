@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-TARGET = MultiTrack
+TARGET = Manytrack
 TEMPLATE = app
 
 
@@ -81,17 +81,18 @@ win32-*{
 }
 
 SOURCES += main.cpp\
-        multitrack.cpp \
+        Manytrack.cpp \
     Track.cpp \
     ICPTracker.cpp
 
 HEADERS  += \
     Track.h \
     ICPTracker.h \
-    multitrack.h
+    Manytrack.h
 
-FORMS    += multitrack.ui
+FORMS    += Manytrack.ui
 
-RESOURCES += multitrack.qrc
+RESOURCES += \
+    Manytrack.qrc
 
 

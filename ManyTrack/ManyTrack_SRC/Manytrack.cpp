@@ -1,7 +1,7 @@
-#include "multitrack.h"
+#include "Manytrack.h"
 
 
-Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
+Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
     : QMainWindow(parent, flags)
 {
 
@@ -17,7 +17,7 @@ Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
 
     ui.setupUi(this);
 
-    setWindowIcon(QIcon("Multitrack.png"));
+    setWindowIcon(QIcon("Manytrack.png"));
 
 
     imageData = NULL;
@@ -93,7 +93,7 @@ Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
 
 }
 
-Multitrack::~Multitrack()
+Manytrack::~Manytrack()
 {
 
     capture.release(); // Gives closing errors sometimes
@@ -102,7 +102,7 @@ Multitrack::~Multitrack()
 
 }
 
-void Multitrack::timerEvent(QTimerEvent*) {
+void Manytrack::timerEvent(QTimerEvent*) {
     if (!isPlaying){ return;}
     else{
         Mat img = updateFrame();
@@ -130,7 +130,7 @@ void Multitrack::timerEvent(QTimerEvent*) {
     }
 }
 
-Mat Multitrack::updateFrame()
+Mat Manytrack::updateFrame()
 {
     Mat img;
     // if the current frame is less than total frames minus 1 (because one starts at 0) , keep analysing
@@ -167,7 +167,7 @@ Mat Multitrack::updateFrame()
 
 }
 
-void Multitrack::updateStatusBar()
+void Manytrack::updateStatusBar()
 {
     int curframe = (int)capture.get(CV_CAP_PROP_POS_FRAMES);
 
@@ -193,12 +193,12 @@ void Multitrack::updateStatusBar()
 
 }
 
-void Multitrack::messageToStatusBar(QString message)
+void Manytrack::messageToStatusBar(QString message)
 {
     statusBar()->showMessage(tr(message.toAscii()));
 }
 
-void Multitrack::nextFrame()
+void Manytrack::nextFrame()
 {
     Mat img = updateFrame();
     updateImage(img);
@@ -206,14 +206,14 @@ void Multitrack::nextFrame()
 }
 
 
-void Multitrack::saveHTMLinteractions()
+void Manytrack::saveHTMLinteractions()
 {
     messageToStatusBar("saving interaction report...");
     icpTracker->outputInteractionsReport();
     messageToStatusBar("done saving interaction report");
 }
 
-void Multitrack::saveBTF()
+void Manytrack::saveBTF()
 {
     messageToStatusBar("saving BTF report...");
     icpTracker->outputBTF(projectSaveDirectory,ui.projectsavename->text());
@@ -221,7 +221,7 @@ void Multitrack::saveBTF()
     messageToStatusBar(messageo.toAscii());
 }
 
-void Multitrack::bgThresholdSpinValueChanged(int value)
+void Manytrack::bgThresholdSpinValueChanged(int value)
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath){
         ui.bgSubThresholdSpinBox->setValue(value);
@@ -230,7 +230,7 @@ void Multitrack::bgThresholdSpinValueChanged(int value)
 }
 
 
-void Multitrack::blobBirthAreaThresholdValueChanged()
+void Manytrack::blobBirthAreaThresholdValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         if(ui.blobBirthAreaThresholdSpinBox->value() > 0){
@@ -238,28 +238,28 @@ void Multitrack::blobBirthAreaThresholdValueChanged()
         }
 }
 
-void Multitrack::resolutionFractionValueChanged()
+void Manytrack::resolutionFractionValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setResolutionFraction(ui.resolutionSpinBox->value());
 }
-void Multitrack::trackdistanceValueChanged()
+void Manytrack::trackdistanceValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
 }
-void Multitrack::trackDeathValueChanged()
+void Manytrack::trackDeathValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setTrackDeathThreshold(ui.trackdeathSpinBox->value());
 }
-void Multitrack::separationValueChanged()
+void Manytrack::separationValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
         icpTracker->setSeparationThreshold(ui.separationSpinBox->value());
 }
 
-void Multitrack::toggleStopButton()
+void Manytrack::toggleStopButton()
 {
     if (isPlaying)
     {
@@ -306,7 +306,7 @@ void Multitrack::toggleStopButton()
 
 }
 
-void Multitrack::toggleBlobsView()
+void Manytrack::toggleBlobsView()
 {
     if(ui.subtractioncheckBox->isChecked())
 
@@ -320,7 +320,7 @@ void Multitrack::toggleBlobsView()
     }
 }
 
-void Multitrack::updateImage(Mat dataimage)
+void Manytrack::updateImage(Mat dataimage)
 {
 
 
@@ -336,7 +336,7 @@ void Multitrack::updateImage(Mat dataimage)
     return;
 }
 
-bool Multitrack::checkreadytoPlay()
+bool Manytrack::checkreadytoPlay()
 {
     QString notprepared="<b>Not Ready!</b>  <br><br><i>Please choose a...</i> <br>";
     if (videopath==nopath)
@@ -373,7 +373,7 @@ bool Multitrack::checkreadytoPlay()
 }
 
 
-void Multitrack::loadBackgroundFile()
+void Manytrack::loadBackgroundFile()
 {
     /* select a directory using file dialog */
     bgpath = QFileDialog::getOpenFileName (this, tr("Open Background File"),lastpath, tr("Images (*png *.jpg)"));
@@ -394,10 +394,10 @@ void Multitrack::loadBackgroundFile()
 
 }
 
-void Multitrack::loadVideoFile()
+void Manytrack::loadVideoFile()
 {
     /* select a directory using file dialog */
-    videopath = QFileDialog::getOpenFileName (this, tr("Open Video File"),lastpath, tr("Multitrack Video (*.avi *.mov *.mpg *.mpeg)"));
+    videopath = QFileDialog::getOpenFileName (this, tr("Open Video File"),lastpath, tr("Manytrack Video (*.avi *.mov *.mpg *.mpeg)"));
     if ( videopath.isNull() == false )
     {
         lastpath=videopath;
@@ -410,7 +410,7 @@ void Multitrack::loadVideoFile()
     loadNewTracker();
 }
 
-void Multitrack::loadModelFile()
+void Manytrack::loadModelFile()
 {
     /* select a directory using file dialog */
 
@@ -433,7 +433,7 @@ void Multitrack::loadModelFile()
     loadNewTracker();
 }
 
-void Multitrack::chooseMaskFile()
+void Manytrack::chooseMaskFile()
 {
     /* select a directory using file dialog */
     maskpath = QFileDialog::getOpenFileName (this, tr("Open Mask File"),lastpath, tr("Images (*png *.jpg)"));
@@ -449,7 +449,7 @@ void Multitrack::chooseMaskFile()
     loadNewTracker();
 }
 
-void Multitrack::toggleContourTracking()
+void Manytrack::toggleContourTracking()
 {
     //Switch on an off using the entire detection or just the contour ridges
     if(ui.contourTrackingcheckBox->isChecked()){
@@ -465,7 +465,7 @@ void Multitrack::toggleContourTracking()
 }
 
 
-void Multitrack::chooseProjectDirectory()
+void Manytrack::chooseProjectDirectory()
 {
     //Dialog to choose where to save
     /* select a directory using file dialog */
@@ -494,7 +494,7 @@ void Multitrack::chooseProjectDirectory()
 
 
 
-void Multitrack::loadDefaults(){
+void Manytrack::loadDefaults(){
     ///Bring in nice defaults for people
     //SpinBoxes
     ui.bgSubThresholdSpinBox->setValue(55);
@@ -509,7 +509,7 @@ void Multitrack::loadDefaults(){
 
 }
 
-void Multitrack::loadSettings(){
+void Manytrack::loadSettings(){
 
     if(isPlaying){
         toggleStopButton();
@@ -519,7 +519,7 @@ void Multitrack::loadSettings(){
     if ( loadsetpath.isNull() == false )
     {
         QSettings settings(loadsetpath,QSettings::IniFormat);
-        //QSettings settings("Biotracking", "Multitrack");
+        //QSettings settings("Biotracking", "Manytrack");
 
         //SpinBoxes
         ui.bgSubThresholdSpinBox->setValue(settings.value("bgsubthresh",ui.bgSubThresholdSpinBox->value()).toInt());
@@ -572,7 +572,7 @@ void Multitrack::loadSettings(){
 
 //Save all values to a single file for easy loading and reloading
 
-void Multitrack::saveSettings(){
+void Manytrack::saveSettings(){
     if(isPlaying){
         toggleStopButton();
     }
@@ -617,14 +617,14 @@ void Multitrack::saveSettings(){
 
 //Save all settings to Operating system on close
 //TODO make it work again
-void Multitrack::closeEvent(QCloseEvent *event)
+void Manytrack::closeEvent(QCloseEvent *event)
 {
 
     writeSettings();
 
 }
 
-void Multitrack::writeSettings()
+void Manytrack::writeSettings()
 {
     QSettings settings("Biotracking", "ManyTrack");
 
@@ -660,7 +660,7 @@ void Multitrack::writeSettings()
 
 }
 
-void Multitrack::readSettings()
+void Manytrack::readSettings()
 {
     QSettings settings("Biotracking", "ManyTrack");
 
@@ -718,7 +718,7 @@ void Multitrack::readSettings()
 
 
 
-void Multitrack::icpReset(){
+void Manytrack::icpReset(){
 
     capture.release();
     delete imageData;
@@ -726,7 +726,7 @@ void Multitrack::icpReset(){
     loadNewTracker();
 
 }
-void Multitrack::loadNewTracker(){
+void Manytrack::loadNewTracker(){
 
 completedTracking=false;
     //Open all Image Assets and check to see if they are OK before creating a new ICPTRACKER object
@@ -776,7 +776,7 @@ completedTracking=false;
     }
 }
 
-bool Multitrack::trackerCheck(){
+bool Manytrack::trackerCheck(){
     bool everythingok=true;
 
     QString error="ERROR:  ";
@@ -898,7 +898,7 @@ bool Multitrack::trackerCheck(){
 
 /*   Change Viewing preferences for display screen */
 
-void Multitrack::on_displaycomboBox_currentIndexChanged(int index)
+void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
 {        displayWidth = ui.scrollArea->width() -20;
          displayHeight = ui.scrollArea->height()-20;
 
@@ -940,109 +940,109 @@ void Multitrack::on_displaycomboBox_currentIndexChanged(int index)
 
 }
 
-void Multitrack::on_trackDistanceViewCheck_toggled(bool checked)
+void Manytrack::on_trackDistanceViewCheck_toggled(bool checked)
 {
     if(trackerChecked||isPlaying)
         icpTracker->showSearchRadius = checked;
 }
 
-void Multitrack::on_modelViewcheckBox_toggled(bool checked)
+void Manytrack::on_modelViewcheckBox_toggled(bool checked)
 {
     if(trackerChecked||isPlaying)
         icpTracker->showModel = checked;
 }
 
-void Multitrack::on_showTrailscheckBox_toggled(bool checked)
+void Manytrack::on_showTrailscheckBox_toggled(bool checked)
 {
     if(trackerChecked||isPlaying)
         icpTracker->showTrails= checked;
 }
 
-void Multitrack::on_showBoxcheckBox_toggled(bool checked)
+void Manytrack::on_showBoxcheckBox_toggled(bool checked)
 {
     if(trackerChecked||isPlaying)
         icpTracker->showBox = checked;
 }
 
-void Multitrack::on_separationViewCheck_toggled(bool checked)
+void Manytrack::on_separationViewCheck_toggled(bool checked)
 {
     if(trackerChecked||isPlaying)
         icpTracker->showRemovalRadii = checked;
 }
 
-void Multitrack::on_bgSubThresholdSpinBox_valueChanged(int arg1)
+void Manytrack::on_bgSubThresholdSpinBox_valueChanged(int arg1)
 {
 
     ui.bgsubSlider->setValue(arg1);
 }
 
-void Multitrack::on_bgsubSlider_sliderMoved(int position)
+void Manytrack::on_bgsubSlider_sliderMoved(int position)
 {
     ui.bgSubThresholdSpinBox->setValue(position);
 }
 
-void Multitrack::on_blobBirthAreaThresholdSpinBox_valueChanged(int arg1)
+void Manytrack::on_blobBirthAreaThresholdSpinBox_valueChanged(int arg1)
 {
     ui.matchSlider->setValue(arg1);
 }
 
-void Multitrack::on_matchSlider_sliderMoved(int position)
+void Manytrack::on_matchSlider_sliderMoved(int position)
 {
     ui.blobBirthAreaThresholdSpinBox->setValue(position);
 }
 
-void Multitrack::on_trackdeathSpinBox_valueChanged(int arg1)
+void Manytrack::on_trackdeathSpinBox_valueChanged(int arg1)
 {
     ui.deathSlider->setValue(arg1);
 }
 
-void Multitrack::on_deathSlider_sliderMoved(int position)
+void Manytrack::on_deathSlider_sliderMoved(int position)
 {
     ui.trackdeathSpinBox->setValue(position);
 }
 
-void Multitrack::on_separationSpinBox_valueChanged(int arg1)
+void Manytrack::on_separationSpinBox_valueChanged(int arg1)
 {
     ui.separationSlider->setValue(arg1);
 }
-void Multitrack::on_separationSlider_sliderMoved(int position)
+void Manytrack::on_separationSlider_sliderMoved(int position)
 {
     ui.separationSpinBox->setValue(position);
 }
 
 
 
-void Multitrack::on_trackdistanceSpinBox_valueChanged(int arg1)
+void Manytrack::on_trackdistanceSpinBox_valueChanged(int arg1)
 {
     ui.searchSlider->setValue(arg1);
 }
 
-void Multitrack::on_searchSlider_sliderMoved(int position)
+void Manytrack::on_searchSlider_sliderMoved(int position)
 {
     ui.trackdistanceSpinBox->setValue(position);
 }
 
 //ICP Spin Boxes
 
-void Multitrack::on_ICP_MaxIterspinBox_valueChanged(int arg1)
+void Manytrack::on_ICP_MaxIterspinBox_valueChanged(int arg1)
 {
     if(trackerChecked)
         icpTracker->Ticp_maxIter=arg1;
 }
 
-void Multitrack::on_ICP_TransEpsilondoubleSpinBox_valueChanged(double arg1)
+void Manytrack::on_ICP_TransEpsilondoubleSpinBox_valueChanged(double arg1)
 {
     if(trackerChecked||isPlaying)
         icpTracker->Ticp_transformationEpsilon=arg1;
 }
 
-void Multitrack::on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1)
+void Manytrack::on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1)
 {
     if(trackerChecked||isPlaying)
         icpTracker->Ticp_euclideanDistance=arg1;
 }
 
-void Multitrack::on_visualizationcheckBox_toggled(bool checked)
+void Manytrack::on_visualizationcheckBox_toggled(bool checked)
 {
     if (checked)
  ui.visualizationLabel->raise();

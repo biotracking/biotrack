@@ -13,7 +13,7 @@
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
 
-#include "ui_multitrack.h"
+#include "ui_Manytrack.h"
 
 
 
@@ -27,7 +27,7 @@ class ICPTracker
 {
 
 public:
-    ICPTracker(float fps, QString bgImagepath,  QString modelFolderpath, QString maskImagepath,  Ui::MultitrackClass uiPass);
+    ICPTracker(float fps, QString bgImagepath,  QString modelFolderpath, QString maskImagepath,  Ui::ManytrackClass uiPass);
     ~ICPTracker();
 
 
@@ -85,7 +85,7 @@ QString mFolderPath;
 
 
 private:
-    Ui::MultitrackClass uiICP;
+    Ui::ManytrackClass uiICP;
     int numOfTracks;
     Mat bgImage;
     Mat image;

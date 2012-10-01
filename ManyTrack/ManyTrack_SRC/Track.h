@@ -78,7 +78,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 
 #include <QDebug>
-//#include "ui_multitrack.h"
+//#include "ui_Manytrack.h"
 
 using namespace cv;
 using namespace std;
@@ -183,7 +183,7 @@ public:
                            Eigen::Matrix4f &transform);
 
 private:
-    //Ui::MultitrackClass uitrack;
+    //Ui::ManytrackClass uitrack;
 
     pcl::PointXYZRGB initialTranslation;
     std::vector<Eigen::Matrix4f> transforms; // vector of incremental transformation matrices State = T_n * (T_n-1 * ... T_2 * T_1) * I

@@ -37,7 +37,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> simpleVis (pcl::PointCloud<
 }
 
 
-ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, QString maskImagepath, Ui::MultitrackClass uiPass)
+ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, QString maskImagepath, Ui::ManytrackClass uiPass)
 {
 
 
@@ -504,7 +504,7 @@ void ICPTracker::drawTrackResult(Mat img)
     Model model_cloudtodraw;
 
 
-    int trackLineLength = 200;
+    int trackLineLength = 300;
     int frameIndex;
     Point previousPosition;
     Point currentPosition;
@@ -552,7 +552,9 @@ void ICPTracker::drawTrackResult(Mat img)
                 currentPosition.y = activeTracks[i]->getY(frameIndex);
 
                 //Line shrinks over time, different colors are given to different ants
-                cv::line(trackResultImage,currentPosition,previousPosition,Scalar(255+10*(-i),250/activeTracks.size()*i,300/activeTracks.size()*(2-i)),3*(trackLineLength-k)/trackLineLength, CV_AA);
+                cv::line(trackResultImage,currentPosition,previousPosition,Scalar(255+10*(-i),250/activeTracks.size()*i,300/activeTracks.size()*(2-i),240*(trackLineLength-k)/trackLineLength),3*(trackLineLength-k)/trackLineLength);
+
+
                 previousPosition = currentPosition;
 
             }
@@ -980,7 +982,7 @@ void ICPTracker::outputInteractionsReport()
     Track* ta;
     Track* tb;
     FILE* fp = fopen("interaction_report.html","w");
-    fprintf(fp,"<html><title>Multitrack Interactions Report</title>\n");
+    fprintf(fp,"<html><title>Manytrack Interactions Report</title>\n");
     fprintf(fp,"<body><font face=\"arial, helvetica\"><table border=\"1\" >\n");
     fprintf(fp,"<tr><td><b>Ant 1 ID</b></td><td><b>Ant 2 ID</b></td><td><b>Interaction start frame</b></td><td><b>Interaction end frame</b></td></tr>\n");
 

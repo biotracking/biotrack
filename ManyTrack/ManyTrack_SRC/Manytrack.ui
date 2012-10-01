@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MultitrackClass</class>
- <widget class="QMainWindow" name="MultitrackClass">
+ <class>ManytrackClass</class>
+ <widget class="QMainWindow" name="ManytrackClass">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MultiTrack 1.1</string>
+   <string>Manytrack 1.1</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="multitrack.qrc">
-    <normaloff>:/Multitrack/Multitrack.png</normaloff>:/Multitrack/Multitrack.png</iconset>
+   <iconset>
+    <normaloff>:/Manytrack/Manytrack.png</normaloff>:/Manytrack/Manytrack.png</iconset>
   </property>
   <property name="animated">
    <bool>true</bool>
@@ -143,7 +143,7 @@
        <enum>QTabWidget::East</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="filesTabWidget">
        <attribute name="title">
@@ -208,8 +208,8 @@
               <string>Load Video</string>
              </property>
              <property name="icon">
-              <iconset resource="multitrack.qrc">
-               <normaloff>:/Multitrack/Multitrack.png</normaloff>:/Multitrack/Multitrack.png</iconset>
+              <iconset>
+               <normaloff>:/Manytrack/Manytrack.png</normaloff>:/Manytrack/Manytrack.png</iconset>
              </property>
             </widget>
            </item>
@@ -1056,8 +1056,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="multitrack.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

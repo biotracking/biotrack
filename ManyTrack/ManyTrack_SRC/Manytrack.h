@@ -1,5 +1,5 @@
-#ifndef MULTITRACK_H
-#define MULTITRACK_H
+#ifndef Manytrack_H
+#define Manytrack_H
 
 #include <QtCore/QCoreApplication>
 #include <QtCore>
@@ -24,17 +24,17 @@
 #include <QDir>
 #include <QtGui/QFileDialog>
 #include <QSettings>
-#include "ui_multitrack.h"
+#include "ui_Manytrack.h"
 
 
 
-class Multitrack : public QMainWindow
+class Manytrack : public QMainWindow
 {
 	Q_OBJECT
 
 public:
-    Multitrack(QWidget *parent = 0, Qt::WFlags flags = 0);
-    ~Multitrack();
+    Manytrack(QWidget *parent = 0, Qt::WFlags flags = 0);
+    ~Manytrack();
 	QString projectSaveDirectory;
 		QString videopath;
 
@@ -75,7 +75,7 @@ public slots:
 	void saveSettings();
 
 private:
-    Ui::MultitrackClass ui;
+    Ui::ManytrackClass ui;
 	ICPTracker* icpTracker;
     QLabel* imageLabel;
 	QImage qimage;
@@ -153,4 +153,4 @@ private slots:
      void on_visualizationcheckBox_toggled(bool checked);
 };
 
-#endif // MULTITRACK_H
+#endif // Manytrack_H

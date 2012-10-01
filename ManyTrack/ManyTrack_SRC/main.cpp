@@ -1,5 +1,5 @@
 #include <QtGui/QApplication>
-#include "multitrack.h"
+#include "Manytrack.h"
 /***
 
 Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Systems Lab www.bio-tracking.org
@@ -31,7 +31,7 @@ Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Syst
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    Multitrack w;
+    Manytrack w;
     w.show();
 
     //Shows Path for current environment
