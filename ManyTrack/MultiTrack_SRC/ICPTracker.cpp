@@ -9,7 +9,7 @@ viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
 
     viewerT.setBackgroundColor (1.0, 0.5, 1.0);
     //    viewerT->updatePointCloud(data_cloud_PTR,"datacloud");
-
+    //viewerT.updatePointCloud()
     pcl::PointXYZ o;
     o.x = 1.0;
     o.y = 0;
@@ -489,7 +489,7 @@ void ICPTracker::drawTrackResult(Mat img)
 {
 
     int font = FONT_HERSHEY_PLAIN;
-    double fontscale=1;
+    double fontscale=1.5;
     //    int thickness = 40;
     char label[10];
     trackResultImage =img.clone();
@@ -629,8 +629,7 @@ void ICPTracker::drawTrackResult(Mat img)
         //        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
         //Write the name of the model used
-        //NOT WORKING -->
-        cv::putText(trackResultImage, models[activeTracks[i]->modelIndex].name.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,0,255));
+        cv::putText(trackResultImage, models[activeTracks[i]->modelIndex].name.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,255,255), 2);
 
     }
 
