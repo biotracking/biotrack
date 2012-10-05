@@ -781,6 +781,12 @@ Model ICPTracker::loadModelPoints(Model modelBGRAimg)
                 temp_model_cloud.back().y=                                       y*resolutionFractionMultiplier - modelDimensions.y/2;
                 temp_model_cloud.back().z=   pixvalHue*colorRegScale; //0;
 
+                //Figure out dimensions
+                if(coordinate.x<minX) minX=coordinate.x;
+                if(coordinate.y<minY) minY=coordinate.y;
+                if(coordinate.x>maxX) maxX=coordinate.x;
+                if(coordinate.y>maxY) maxY=coordinate.y;
+
 
             }
         }
@@ -793,11 +799,7 @@ Model ICPTracker::loadModelPoints(Model modelBGRAimg)
     qDebug()<<"fewestNumofModel "<<fewestNumofModelPoints<< "  largest  "<<largestNumofModelPoints;
     outputModelWCloud.cloud=temp_model_cloud;
 
-    //Figure out dimensions
-    if(coordinate.x<minX) minX=coordinate.x;
-    if(coordinate.y<minY) minY=coordinate.y;
-    if(coordinate.x>maxX) maxX=coordinate.x;
-    if(coordinate.y>maxY) maxY=coordinate.y;
+
 
     //TODO, store model width and height with the super vector
     int trueModelwidth;

@@ -63,8 +63,12 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
         isBirthFrame=true; // Try out Doing extra work aligning the objects if it is the very first frame
         //Determine what model this creature should use
+        if(modelPTS_clouds.size()<2){
+            modelIndex = 0;
+        }
+        else{
         modelIndex= identify(dataPTS_cloud,modelPTS_clouds);
-
+}
 
     }
     else
@@ -828,4 +832,57 @@ computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
   trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+void Track::
+icp (const PointCloud<Point>::Ptr &src,
+     const PointCloud<Point>::Ptr &tgt,
+     Eigen::Matrix4d &transform)
+{/**
+  CorrespondencesPtr all_correspondences (new Correspondences),
+                     good_correspondences (new Correspondences);
+
+  PointCloud<Point>::Ptr output (new PointCloud<Point>);
+  *output = *src;
+
+  Eigen::Matrix4d final_transform (Eigen::Matrix4d::Identity ());
+
+  int iterations = 0;
+//  DefaultConvergenceCriteria<double> converged (iterations, transform, *good_correspondences);
+
+  // ICP loop
+//  do
+//  {
+    // Find correspondences
+    findCorrespondences (output, tgt, *all_correspondences);
+    PCL_DEBUG ("Number of correspondences found: %d\n", all_correspondences->size ());
+
+    if (rejection)
+    {
+      // Reject correspondences
+      rejectBadCorrespondences (all_correspondences, output, tgt, *good_correspondences);
+      PCL_DEBUG ("Number of correspondences remaining after rejection: %d\n", good_correspondences->size ());
+    }
+    else
+      *good_correspondences = *all_correspondences;
+
+    // Find transformation
+    findTransformation (output, tgt, good_correspondences, transform);
+
+    // Obtain the final transformation
+    final_transform = transform * final_transform;
+
+    // Transform the data
+    transformPointCloudWithNormals (*src, *output, final_transform.cast<float> ());
+
+    // Check if convergence has been reached
+    ++iterations;
+
+    // Visualize the results
+    view (output, tgt, good_correspondences);
+//  }
+//  while (!converged);
+  transform = final_transform;
+
+  /**/
+}
 

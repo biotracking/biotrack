@@ -30,7 +30,8 @@ INCLUDEPATH +=  "/usr/local/include/pcl-1.6/" \
                  "/usr/include/eigen3/" \
                  "/usr/include/openni/" \
                  "/usr/include/vtk-5.8/" \
-          "/usr/lib/libvtkCommon.so.5.8"
+          "/usr/lib/libvtkCommon.so.5.8" \
+
 
 
 

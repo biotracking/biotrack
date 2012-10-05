@@ -43,6 +43,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_representation.h>
 
+#include <pcl/common/point_operators.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/keypoints/uniform_sampling.h>
 #include <pcl/features/normal_3d.h>
@@ -54,7 +55,7 @@
 #include <pcl/registration/correspondence_rejection_median_distance.h>
 #include <pcl/registration/correspondence_rejection_surface_normal.h>
 #include <pcl/registration/transformation_estimation_point_to_plane_lls.h>
-//#include <pcl/registration/default_convergence_criteria.h>
+//#include <pcl/registration/impl/default_convergence_criteria.h>
 
 #include <pcl/visualization/pcl_visualizer.h>
 
@@ -181,6 +182,11 @@ public:
   void  computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
                            const PointCloud<PointXYZ>::Ptr &tgt,
                            Eigen::Matrix4f &transform);
+
+  void
+  icp (const PointCloud<Point>::Ptr &src,
+       const PointCloud<Point>::Ptr &tgt,
+       Eigen::Matrix4d &transform);
 
 private:
     //Ui::ManytrackClass uitrack;
