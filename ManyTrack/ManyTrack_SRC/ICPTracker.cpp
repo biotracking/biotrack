@@ -871,6 +871,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     QString tsname=projectdirectory+icpprojectname+"/"+"timestamp.btf";
     QString tsname_f=projectdirectory+icpprojectname+"/"+"timestamp_frames.btf";
 
+    QString modelname=projectdirectory+icpprojectname+"/"+"type.btf";
+
     QString idname=projectdirectory+icpprojectname+"/"+"id.btf";
     QString ximagename=projectdirectory+icpprojectname+"/"+"ximage.btf";
     QString yimagename=projectdirectory+icpprojectname+"/"+"yimage.btf";
@@ -884,6 +886,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     FILE* yImageFP = fopen(yimagename.toAscii(),"w");
     FILE* angleFP = fopen(timagename.toAscii(),"w");
     FILE* idFP = fopen(idname.toAscii(),"w");
+    FILE* typeFP = fopen(modelname.toAscii(),"w");
+
     int startFrame = 0;
     int endFrame = 0;
     typedef std::multimap<int, Track*> mapType;
@@ -937,6 +941,7 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     float angle;
     int timestamp;
     int id;
+    String type;
     for(mapType::const_iterator it = framesToTracksMAP.begin(); it != framesToTracksMAP.end(); ++it)
     {
         fIndex = (*it).first;
@@ -947,6 +952,9 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
         id = track->getID();
         fprintf(timeStampFP, "%d\n", timestamp);
         fprintf(timeStampFP_f, "%d\n", fIndex); //Fix this: determine if needs to be fIndex+1 or just fIndex
+
+        type =  models[track->modelIndex].name.toStdString();
+        fprintf(typeFP, "%s\n", type.c_str());
 
         fprintf(idFP, "%d\n", id);
         x = track->getX(fIndex+1);
@@ -964,6 +972,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     fclose(xImageFP);
     fclose(yImageFP);
     fclose(angleFP);
+    fclose(typeFP);
+
     fclose(idFP);
 
     return;
