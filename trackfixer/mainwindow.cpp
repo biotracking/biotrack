@@ -285,7 +285,7 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
                             }
                         }
                     }
-                    double theta = (M_PI)+((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
+                    double theta = ((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
                     int radius = 10;
                     int lineWidth = 2;
                     //std::cout<<"(";
