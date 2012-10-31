@@ -8,8 +8,7 @@
 
 using namespace std;
 
-QString prefix("/home/stephen/Desktop/Ant_videos/3.21.12_B144_0.1M/");
-//QString prefix("/home/stephen/Ants/");
+QString prefix("../data/B144/Feeder_0.4M/");
 bool aviOut = false;
 bool showDebug = false;
 int numParkingSpots = 40;
@@ -21,6 +20,70 @@ CvFont bigFont;
 //CvScalar trueColor = cvScalar(0, 255, 0, 0);
 //CvScalar otherColor = cvScalar(0, 255, 255, 0);
 int **spotIDs; //[frame, spot] => ID
+
+//QString IDbuff[ ] = {
+//        QString("-ER-"),
+//        QString("BGBY"),
+//        QString("GBGP"),
+//        QString("GPBW"),
+//        QString("BPPO"),
+//        QString("OGPG"),
+//        QString("PGOP"),
+//        QString("BPWP"),
+//        QString("GWBG"),
+//        QString("GWOW"),
+//        QString("OP--"),
+//        QString("PP--"),
+//        QString("GOYP"),
+//        QString("OOOW"),
+//        QString("OPYO"),
+//        QString("GW--"),
+//        QString("GWPB"),
+//        QString("BBGY"),
+//        QString("GO-B")};
+QString IDbuff[ ] = {
+        QString("-ER-"),
+        QString("----"),
+        QString("BBGY"),
+        QString("BGBY"),
+        QString("BPPO"),
+        QString("BPWP"),
+        QString("GBGP"),
+        QString("GB-O"),
+        QString("GG-O"),
+        QString("GO-B"),
+        QString("GOYP"),
+        QString("GPBW"),
+        QString("GW--"),
+        QString("GWBG"),
+        QString("GWOW"),
+        QString("GWPB"),
+        QString("OGPG"),
+        QString("OOO-"),
+        QString("OOOW"),
+        QString("OP--"),
+        QString("OPYO"),
+        QString("OWGW"),
+        QString("P---"),
+        QString("PGOP"),
+        QString("PP--"),
+        QString("PYWB"),
+        QString("WPWO")};
+CvScalar colors[ ] = {
+        cvScalar(0, 0, 0, 0),
+        cvScalar(255, 0, 0, 0),
+        cvScalar(0, 255, 0, 0),
+        cvScalar(0, 0, 255, 0),
+        cvScalar(255, 255, 0, 0),
+        cvScalar(0, 255, 255, 0),
+        cvScalar(255, 0, 255, 0),
+        cvScalar(255, 255, 255, 0),
+        cvScalar(127, 20, 20, 0),
+        cvScalar(20, 127, 20, 0),
+        cvScalar(20, 20, 127, 0),
+        cvScalar(127, 127, 20, 0),
+        cvScalar(20, 127, 127, 0),
+        cvScalar(127, 20, 127, 0)};
 
 void processClip(int clipNum){
 	
@@ -46,15 +109,15 @@ void processClip(int clipNum){
 			qDebug()<<"could not open writer";
 	}
 	if(showDebug){
-                cvNamedWindow("Debug", CV_WINDOW_AUTOSIZE );
+        cvNamedWindow("Debug", CV_WINDOW_AUTOSIZE );
 	}
-        CvCapture* capture = cvCreateFileCapture(QString(prefix+"B144_3.21.12_0.1M_clip"+QString::number(clipNum)+".MOV").toAscii());
+    CvCapture* capture = cvCreateFileCapture(QString(prefix+"B144_3.21.12_0.1M_clip"+QString::number(clipNum)+".MOV").toAscii());
 	IplImage* frame;
 	int currentFrame=1;
 	cvSetCaptureProperty(capture, CV_CAP_PROP_POS_FRAMES, currentFrame);
 
-        QString name = "../data/results"+QString::number(clipNum)+".csv";
-        ifstream myfile (name.toUtf8().constData());
+    QString name = prefix+"results"+QString::number(clipNum)+".csv";
+    ifstream myfile (name.toUtf8().constData());
 	if(!myfile.is_open()) exit(0);
 	string line;
 	if(myfile.good()) getline (myfile,line); //the header line
@@ -80,10 +143,10 @@ void processClip(int clipNum){
 		myfile >> commaTrash;
 		myfile >> similarity;
 		myfile >> commaTrash;
-                if(similarity > .8){ //hack?
-		blurBuffer[frameNum][spotNum] = id;
-		certainties[(frameNum)*numParkingSpots+spotNum] = similarity;
-                }
+        if(similarity > .8){ //hack?
+            blurBuffer[frameNum][spotNum] = id;
+            certainties[(frameNum)*numParkingSpots+spotNum] = similarity;
+        }
 	}
 
 	//filter
@@ -173,13 +236,13 @@ void processClip(int clipNum){
 		}
 	}
 	ofstream outFile;
-        name = "../data/filtered"+QString::number(clipNum)+".csv";
+    name = prefix+"filtered"+QString::number(clipNum)+".csv";
 	outFile.open(name.toUtf8().constData());
-	outFile << "Frame Number, Spot Number, ID, Confidence, Similarity, \n";
+    outFile << "Frame Number, Spot Number, ID, Confidence (unused), Similarity (unused), \n";
 	for(int i=0; i<numFrames; i++){
 		for(int j=0; j<numParkingSpots; j++){
 			if(spotIDs[i][j] >= 0)
-				outFile << i << "," << j << "," << spotIDs[i][j] << "," << 0 << "," << 0 << ", \n"; //better values than 0 would be nice
+                outFile << i << "," << j << "," << IDbuff[spotIDs[i][j]].toStdString() << "," << 0 << "," << 0 << ", \n"; //better values than 0 would be nice
 		}
 	}
 	outFile.close();
@@ -216,37 +279,6 @@ void processClip(int clipNum){
 			}
 		}
 	}
-
-	QString IDbuff[ ] = {
-			QString("----"),
-			QString("BBGY"),
-			QString("BPPO"),
-			QString("BPWP"),
-			QString("GBGP"),
-			QString("GO-B"),
-			QString("GOYP"),
-			QString("GW--"),
-			QString("GWBG"),
-			QString("GWPB"),
-			QString("OGPG"),
-			QString("OPYO"),
-			QString("PGOP"),
-			QString("PP--")};
-	CvScalar colors[ ] = {
-			cvScalar(0, 0, 0, 0),
-			cvScalar(255, 0, 0, 0),
-			cvScalar(0, 255, 0, 0),
-			cvScalar(0, 0, 255, 0),
-			cvScalar(255, 255, 0, 0),
-			cvScalar(0, 255, 255, 0),
-			cvScalar(255, 0, 255, 0),
-			cvScalar(255, 255, 255, 0),
-			cvScalar(127, 20, 20, 0),
-			cvScalar(20, 127, 20, 0),
-			cvScalar(20, 20, 127, 0),
-			cvScalar(127, 127, 20, 0),
-			cvScalar(20, 127, 127, 0),
-			cvScalar(127, 20, 127, 0)};
 
     //draw spots on frames
 	do {
@@ -320,7 +352,7 @@ void processClip(int clipNum){
 		cvAddWeighted(frame, 0.5, originalFrame, 0.5, 0.0, frame);
 
 		if(showDebug){
-                        cvShowImage("Debug", frame );
+            cvShowImage("Debug", frame );
 		}
 		if(aviOut){
 			if (!cvWriteFrame(writer,frame))
