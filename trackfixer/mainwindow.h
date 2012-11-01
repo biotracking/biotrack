@@ -4,6 +4,8 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QMessageBox>
 #include <QFileDialog>
+#include <QGraphicsScene>
+#include <QGraphicsLineItem>
 #include <opencv2/opencv.hpp>
 //#include <qthread.h>
 #include <vector>
@@ -50,6 +52,8 @@ private:
 	std::vector<std::pair<std::string,int> > flip_data;
     std::vector<int> removed_tracks;
     QImage Mat2QImage(const cv::Mat3b &src);
+    QGraphicsScene scene;
+    QGraphicsLineItem* curFrameLine;
 
 protected:
     void timerEvent(QTimerEvent*);  // overide timerEvent function to draw image sequence

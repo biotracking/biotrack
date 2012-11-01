@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     scaleFactor = 1.0;
     frame_count=0;
     ui->imageLabel->setScaledContents(true);
+    ui->graphicsView->setScene(&scene);
+    curFrameLine = NULL;
 }
 
 
@@ -131,13 +133,68 @@ void MainWindow::loadBTF(std::string dname){
     }
     std::cout<<"BTF data for ["<<frame_data.size()<<"] frames"<<std::endl;
     //load up all the ID's through the video
-    for(unsigned int i=0;i<btf_data.at(id_idx).size();i++){
-        std::string id = btf_data.at(id_idx).at(i);
-        if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
-            ui->listWidget->addItem(QString(id.c_str()));
+    std::vector<std::pair<std::string,int> > idsAndStarts, scratch;
+    double maxID = 0.0;
+    for(unsigned int i=0;i<frame_data.size();i++){
+        scratch.clear();
+        bool *marked = new bool[idsAndStarts.size()];
+        for(int flarfle = 0;flarfle<idsAndStarts.size();flarfle++) marked[flarfle]=false;
+        for(unsigned int j=0;j<frame_data.at(i).size();j++){
+            bool found = false;
+            for(unsigned int k=0;k<idsAndStarts.size();k++){
+                if(idsAndStarts.at(k).first.compare(btf_data.at(id_idx).at(frame_data.at(i).at(j))) == 0){
+                    marked[k] = true;
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                std::pair<std::string,int> tmpPair;
+                tmpPair.first = btf_data.at(id_idx).at(frame_data.at(i).at(j)); //ant ID
+                tmpPair.second = i; //frame number
+                scratch.push_back(tmpPair);
+            }
         }
+        for(unsigned int k=0;k<idsAndStarts.size();k++){
+            if(marked[k]){
+                scratch.push_back(idsAndStarts.at(k));
+            } else {
+                int x,y,width,height;
+                x = idsAndStarts.at(k).second;
+                y = atoi(idsAndStarts.at(k).first.c_str())*20;
+                width = i-x;
+                height = 19;
+                if(y+height > maxID) maxID = y+height;
+                ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
+            }
+        }
+        delete [] marked;
+        //std::string id = btf_data.at(id_idx).at(i);
+        //if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
+        //    ui->listWidget->addItem(QString(id.c_str()));
+        //}
+        /*
+        std::cout<<"scratch [";
+        for(unsigned int flarfle=0;flarfle<scratch.size();flarfle++) std::cout<<" "<<scratch.at(flarfle).first;
+        std::cout<<"]"<<std::endl;
+        std::cout<<"idsAndStarts [";
+        for(unsigned int flarfle=0;flarfle<idsAndStarts.size();flarfle++) std::cout<<" "<<idsAndStarts.at(flarfle).first;
+        std::cout<<"]"<<std::endl;
+        */
+        idsAndStarts = scratch;
     }
-    ui->listWidget->sortItems();
+    for(unsigned int i=0;i<idsAndStarts.size();i++){
+        int x,y,width,height;
+        x = idsAndStarts.at(i).second;
+        y = atoi(idsAndStarts.at(i).first.c_str())*20;
+        width = frame_data.size()-x;
+        height = 19;
+        if(y+height > maxID) maxID = y+height;
+        ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
+    }
+    curFrameLine = ui->graphicsView->scene()->addLine(0,0,0,maxID,QPen(Qt::red));
+    //ui->graphicsView->scene()->addRect(0,0,frame_data.size(),18,QPen(),QBrush(Qt::red));
+    //ui->listWidget->sortItems();
     /*
     std::cout<<"Frame 684 contains lines: [";
     for(unsigned int i=0;i<frame_data.at(684).size();i++){
@@ -268,12 +325,13 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     
     out = in.clone();
     cv::cvtColor(in,out,CV_BGR2RGB);
-    for(int i=0;i<ui->listWidget->count();i++){
+    //for(int i=0;i<ui->listWidget->count();i++){
         bool found = false;
-        std::string trackId = ui->listWidget->item(i)->text().toStdString();
+        //std::string trackId = ui->listWidget->item(i)->text().toStdString();
         if(value<((int)frame_data.size())){
             for(unsigned int j=0;j<frame_data.at(value).size();j++){
-                if(trackId.compare(btf_data.at(id_idx).at(frame_data.at(value).at(j)))==0){
+                std::string trackId = btf_data.at(id_idx).at(frame_data.at(value).at(j));
+                //if(trackId.compare(btf_data.at(id_idx).at(frame_data.at(value).at(j)))==0){
                     double scaledX = (scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()));
                     double scaledY = (scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()));
                     bool flip_coeff = false;
@@ -298,21 +356,22 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
                     double endPtY = (radius*sin(theta))+scaledY;
                     cv::line(out,cv::Point(scaledX,scaledY),cv::Point(endPtX,endPtY),btfColor,lineWidth);
                     cv::putText(out,trackId,cv::Point(scaledX,scaledY),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255),2);
-                    found = true;
-                    break;
-                }
+                    //found = true;
+                    //break;
+                //}
             }
         }
         if(found){
-            ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(255,255,255)));
+            //ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(255,255,255)));
         } else {
-            ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(200,200,200)));
+            //ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(200,200,200)));
         }
-    }
+    //}
     QImage img = Mat2QImage(out);
     //img.scaledToHeight(ui->imageLabel->height());
     //ui->imageLabel->setPixmap(QPixmap::fromImage(img));
     ui->imageLabel->setPixmap(QPixmap::fromImage(img).scaledToWidth((int)(out.cols*ui->doubleSpinBox->value())));
+    curFrameLine->setPos(value,0);
 }
 
 void MainWindow::on_actionLoad_BTF_triggered()
@@ -327,6 +386,7 @@ void MainWindow::on_actionLoad_BTF_triggered()
 }
 
 void MainWindow::on_pushButton_6_clicked(){
+    /*
     for(int i=0;i<ui->listWidget->selectedItems().size();i++){
         std::pair<std::string,int> tmpPair;
         tmpPair.first = ui->listWidget->selectedItems().at(i)->text().toStdString();
@@ -334,6 +394,7 @@ void MainWindow::on_pushButton_6_clicked(){
         flip_data.push_back(tmpPair);
         //std::cout<<"Added flip:["<<tmpPair.first<<", "<<tmpPair.second<<"]"<<std::endl;
     }
+    */
 }
 
 void MainWindow::on_pushButton_7_clicked()
@@ -416,6 +477,7 @@ void MainWindow::on_pushButton_7_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
+    /*
     for(int i=0;i<ui->listWidget->selectedItems().size();i++){
         int trackNo = ui->listWidget->selectedItems().at(i)->text().toInt();
         bool found = false;
@@ -429,4 +491,5 @@ void MainWindow::on_pushButton_8_clicked()
             removed_tracks.push_back(ui->listWidget->selectedItems().at(i)->text().toInt());
         }
     }
+    */
 }
