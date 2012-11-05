@@ -5,6 +5,26 @@
 #include <fstream>
 #include <typeinfo>
 
+/*
+TrackletRectItem::TrackletRectItem(qreal x, qreal y, qreal width, qreal height, QGraphicsItem* parent, QGraphicsScene* scene){
+    QGraphicsRectItem::QGraphicsRectItem(x,y,width,height,parent,scene);
+}
+*/
+
+void TrackletRectItem::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    //std::cout<<"Pressed!"<<std::endl;
+    QBrush tmp = this->brush();
+    if(selected){
+        tmp.setColor(color);
+        this->setBrush(tmp);
+        selected = false;
+    } else {
+        tmp.setColor(color.lighter(150));
+        this->setBrush(tmp);
+        selected = true;
+    }
+}
+
 
 MainWindow::MainWindow(QWidget *parent)
         : QMainWindow(parent), ui(new Ui::MainWindow)
@@ -26,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    clearBTFData();
     delete ui;
 }
 
@@ -40,6 +61,14 @@ void MainWindow::clearBTFData(){
 	frame_data.clear();
 	flip_data.clear();
 	btf_names.clear();
+    for(int i=0; i<ui->graphicsView->scene()->items().count();i++){
+        ui->graphicsView->scene()->removeItem(ui->graphicsView->scene()->items().at(i));
+    }
+    for(unsigned int i=0;i<tracklets.size();i++){
+        TrackletRectItem* tmp= tracklets.at(i);
+        delete tmp;
+    }
+    tracklets.clear();
 }
 
 void MainWindow::loadVideo(std::string fname){
@@ -138,7 +167,7 @@ void MainWindow::loadBTF(std::string dname){
     for(unsigned int i=0;i<frame_data.size();i++){
         scratch.clear();
         bool *marked = new bool[idsAndStarts.size()];
-        for(int flarfle = 0;flarfle<idsAndStarts.size();flarfle++) marked[flarfle]=false;
+        for(unsigned int flarfle = 0;flarfle<idsAndStarts.size();flarfle++) marked[flarfle]=false;
         for(unsigned int j=0;j<frame_data.at(i).size();j++){
             bool found = false;
             for(unsigned int k=0;k<idsAndStarts.size();k++){
@@ -165,7 +194,18 @@ void MainWindow::loadBTF(std::string dname){
                 width = i-x;
                 height = 19;
                 if(y+height > maxID) maxID = y+height;
-                ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
+                TrackletRectItem *tr = new TrackletRectItem();
+                tr->setRect(x,y,width,height);
+                tr->startFrame = idsAndStarts.at(k).second;
+                tr->endFrame = i;
+                tr->color = Qt::yellow;
+                tr->flipped = tr->nuked = tr->selected = false;
+                tr->antID = atoi(idsAndStarts.at(k).first.c_str());
+                tr->setBrush(QBrush(Qt::yellow));
+                //tr->setFlag(QGraphicsItem::ItemIsSelectable,true);
+                //tr->setFlag(QGraphicsItem::ItemIsMovable,true);
+                tracklets.push_back(tr);
+                ui->graphicsView->scene()->addItem(tr);
             }
         }
         delete [] marked;
@@ -190,10 +230,26 @@ void MainWindow::loadBTF(std::string dname){
         width = frame_data.size()-x;
         height = 19;
         if(y+height > maxID) maxID = y+height;
-        ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
+        TrackletRectItem *tr = new TrackletRectItem();
+        tr->setRect(x,y,width,height);
+        tr->startFrame = idsAndStarts.at(i).second;
+        tr->endFrame = frame_data.size();
+        tr->color = Qt::yellow;
+        tr->flipped = tr->nuked = tr->selected = false;
+        tr->antID = atoi(idsAndStarts.at(i).first.c_str());
+        tr->setBrush(QBrush(Qt::yellow));
+        tracklets.push_back(tr);
+        ui->graphicsView->scene()->addItem(tr);
+        //ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
     }
     curFrameLine = ui->graphicsView->scene()->addLine(0,0,0,maxID,QPen(Qt::red));
+    //std::cout<<"width: "<<ui->graphicsView->width()<<" geom.width: "<<this->width()<<std::endl;
+    //ui->graphicsView->scale(((double)this->width())/((double)frame_data.size()),((double)this->width())/((double)frame_data.size()));
     //ui->graphicsView->scene()->addRect(0,0,frame_data.size(),18,QPen(),QBrush(Qt::red));
+    //fitInView does crazy scaling with huge margins
+    //ui->graphicsView->fitInView(0,0,500,1,Qt::KeepAspectRatio);
+    //ensureVisible does no scaling, only centers the object
+    //ui->graphicsView->ensureVisible(0,0,frame_data.size(),200,1,1);
     //ui->listWidget->sortItems();
     /*
     std::cout<<"Frame 684 contains lines: [";
@@ -335,12 +391,10 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
                     double scaledX = (scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()));
                     double scaledY = (scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()));
                     bool flip_coeff = false;
-                    for(unsigned int flip_idx=0;flip_idx<flip_data.size();flip_idx++){
-                        if(flip_data.at(flip_idx).second<value){
-                            if(trackId.compare(flip_data.at(flip_idx).first)==0){
-                                flip_coeff = !flip_coeff;
-                                //std::cout<<"FLIPPED"<<std::endl;
-                            }
+                    for(unsigned int flip_idx=0;flip_idx<tracklets.size();flip_idx++){
+                        if(tracklets.at(flip_idx)->startFrame <= value && tracklets.at(flip_idx)->endFrame > value && tracklets.at(flip_idx)->antID == atoi(trackId.c_str())){
+                            flip_coeff = tracklets.at(flip_idx)->flipped;
+                            break;
                         }
                     }
                     double theta = ((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
@@ -386,15 +440,19 @@ void MainWindow::on_actionLoad_BTF_triggered()
 }
 
 void MainWindow::on_pushButton_6_clicked(){
-    /*
-    for(int i=0;i<ui->listWidget->selectedItems().size();i++){
-        std::pair<std::string,int> tmpPair;
-        tmpPair.first = ui->listWidget->selectedItems().at(i)->text().toStdString();
-        tmpPair.second = ui->horizontalSlider->value();
-        flip_data.push_back(tmpPair);
-        //std::cout<<"Added flip:["<<tmpPair.first<<", "<<tmpPair.second<<"]"<<std::endl;
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->selected){
+            tracklets.at(i)->flipped = !(tracklets.at(i)->flipped);
+            QBrush tmp = tracklets.at(i)->brush();
+            if(tracklets.at(i)->flipped){
+                tracklets.at(i)->color = Qt::green;
+            } else {
+                tracklets.at(i)->color = Qt::yellow;
+            }
+            tmp.setColor(tracklets.at(i)->color.lighter(150));
+            tracklets.at(i)->setBrush(tmp);
+        }
     }
-    */
 }
 
 void MainWindow::on_pushButton_7_clicked()
@@ -404,13 +462,17 @@ void MainWindow::on_pushButton_7_clicked()
     dir_name = dir_name+"/";
     std::cout<<"Writting BTF to ["<<dir_name.toStdString()<<"]"<<std::endl;
     std::cout<<"Ignored tracks: [ ";
-    for(unsigned int i=0;i<removed_tracks.size();i++){
-        std::cout<<removed_tracks[i]<<" ";
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->nuked){
+            std::cout<<tracklets.at(i)->antID<<"@("<<tracklets.at(i)->startFrame<<","<<tracklets.at(i)->endFrame<<") ";
+        }
     }
     std::cout<<"]"<<std::endl;
     std::cout<<"Track flips: [ ";
-    for(unsigned int i=0;i<flip_data.size();i++){
-        std::cout<<"("<<flip_data.at(i).first<<", "<<flip_data.at(i).second<<") ";
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->flipped){
+            std::cout<<tracklets.at(i)->antID<<"@("<<tracklets.at(i)->startFrame<<","<<tracklets.at(i)->endFrame<<") ";
+        }
     }
     std::cout<<"]"<<std::endl;
     std::vector<std::fstream* > files;
@@ -436,9 +498,9 @@ void MainWindow::on_pushButton_7_clicked()
         //figure out which ID this belongs to
         std::string trackId = btf_data.at(id_idx).at(i);
         bool ignored = false;
-        for(unsigned int j=0;j<removed_tracks.size();j++){
-            if(removed_tracks.at(j)==atoi(trackId.c_str())){
-                ignored=true;
+        for(unsigned int j=0;j<tracklets.size();j++){
+            if(tracklets.at(j)->startFrame <= frameNo && tracklets.at(j)->endFrame > frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
+                ignored=tracklets.at(j)->nuked;
                 break;
             }
         }
@@ -447,13 +509,11 @@ void MainWindow::on_pushButton_7_clicked()
         //std::stringstream alsodumb(btf_data.at(t_idx).at(i));
         double theta;
         theta = atof(btf_data.at(t_idx).at(i).c_str());
-        //count how many times this ID's theta has flipped between start and this frame
         bool flip_coeff = false;
-        for(unsigned int j=0;j<flip_data.size();j++){
-            if(flip_data.at(j).second<frameNo){
-                if(trackId.compare(flip_data.at(j).first)==0){
-                    flip_coeff = !flip_coeff;
-                }
+        for(unsigned int j=0;j<tracklets.size();j++){
+            if(tracklets.at(j)->startFrame <= frameNo && tracklets.at(j)->endFrame > frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
+                flip_coeff = tracklets.at(j)->flipped;
+                break;
             }
         }
         //write out correct theta
@@ -477,19 +537,16 @@ void MainWindow::on_pushButton_7_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
-    /*
-    for(int i=0;i<ui->listWidget->selectedItems().size();i++){
-        int trackNo = ui->listWidget->selectedItems().at(i)->text().toInt();
-        bool found = false;
-        for(std::vector<int>::iterator j=removed_tracks.begin(); j<removed_tracks.end(); j++){
-            if(*j == trackNo){
-                removed_tracks.erase(j);
-                found=true;
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->selected){
+            tracklets.at(i)->nuked = !(tracklets.at(i)->nuked);
+            QBrush tmp = tracklets.at(i)->brush();
+            if(tracklets.at(i)->nuked){
+                tmp.setStyle(Qt::DiagCrossPattern);
+            } else {
+                tmp.setStyle(Qt::SolidPattern);
             }
-        }
-        if(!found){
-            removed_tracks.push_back(ui->listWidget->selectedItems().at(i)->text().toInt());
+            tracklets.at(i)->setBrush(tmp);
         }
     }
-    */
 }

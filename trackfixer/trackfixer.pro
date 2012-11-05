@@ -7,9 +7,9 @@ unix {
 	PKGCONFIG += opencv
 }
 SOURCES += main.cpp \
-    mainwindow.cpp  
+    mainwindow.cpp    
 
-HEADERS += mainwindow.h 
+HEADERS += mainwindow.h   
 
 FORMS += mainwindow.ui
 
