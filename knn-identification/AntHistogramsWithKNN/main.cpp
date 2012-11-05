@@ -3,15 +3,23 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    QString activeFolder = QString("/B144/Feeder_1.6M/");
 
-    for(int clip=1; clip<=8; clip++)
-        identifyClip(clip);
+    int clipNum = 0;
+    QString header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf"+activeFolder;
+    QDir unkDir(header);
+    QStringList fileList = unkDir.entryList(QStringList("FeederMugshots_*"));
+    QStringList::const_iterator unkIterator;
+    for (unkIterator = fileList.constBegin(); unkIterator != fileList.constEnd(); ++unkIterator){
+        clipNum++;
+        identifyClip(activeFolder+(*unkIterator)+"/", clipNum);
+    }
 
     return a.exec();
 }
 
-void identifyClip(int clipNum){
-    qDebug()<<"Clip"<<clipNum;
+void identifyClip(QString activeFolder, int clipNum){
+    qDebug()<<"Clip"<<clipNum<<":"<<activeFolder;
 
     qDebug()<<"===========KNN Ant Identification Program===========\n( Starting with k ="<<K<<"bgSimilarity ="<<bgSimilarity<<"binSize ="<<binSize<<")";
 
@@ -120,7 +128,8 @@ void identifyClip(int clipNum){
     delete [] YUVsamples;
 
     qDebug()<<"Processing unidentified images...";
-    header = "/home/stephen/Desktop/Ant_videos/3.21.12_B144_0.1M/clip"+QString::number(clipNum)+"_Split/";
+    header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf"+activeFolder;
+
     for(int i=0; i<maxFrames; i++){
         for(int j=0; j<numParkingSpots; j++){
             nullPtr[(i)*numParkingSpots + j ] = true;
@@ -148,11 +157,14 @@ void identifyClip(int clipNum){
             else{
                 RgbImage rgbImg(img);
                 QString name = (*innerIterator);
-                name.remove(QString("pSpot"));
+                name.remove(QString("framenum_"));
                 name.remove(QString(".png"));
-                QStringList parts = name.split("_");
-                int i = parts[3].toInt();//frame
-                int j = parts[0].toInt();//spot
+                //QStringList parts = name.split("_");
+                //int i = parts[3].toInt();//frame
+                //int j = parts[0].toInt();//spot
+                int i = name.toInt();
+                QString spotName = (*uIterator);
+                int j = spotName.remove("pSpot").toInt();
                 nullPtr[(i)*numParkingSpots + j ] = false;
                 for(int r=0; r<rgbImg.height(); r++){
                     for(int c=0; c<rgbImg.width(); c++){
@@ -216,7 +228,9 @@ void identifyClip(int clipNum){
 //	}
 //	delete [] unknowns;
 
-    header = "../data/";
+    header = "../data"+activeFolder;
+    QDir dir(header); if (!dir.exists()) dir.mkpath(".");
+
     qDebug()<<"Computing confusion matrix...";
     int confHeight = 480, confWidth = 2*confHeight;//, buffer = 2, unknownWidth = (double)(confWidth/(numKnownAnts*maxSamplesPerAnt))*numUnknownImages;
     QString name = header+"confusionmat"+QString::number(clipNum)+".png";

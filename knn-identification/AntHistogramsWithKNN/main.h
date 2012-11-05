@@ -38,7 +38,7 @@ bool similar(int x, int y, int threshold){
 	return abs(x-y)<=threshold && abs(y-x)<=threshold;
 }
 
-void identifyClip(int clipNum);
+void identifyClip(QString folder, int clipNum);
 
 class UVHistogram{
 public:
