@@ -577,6 +577,7 @@ void Track::getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB> &modelPts, int i
  * within the distanceThreshold  to dirtyPts.
  *
  * @param dataPTSreduced_cloud a reference to a vector of Points
+ * @param point_cloud_for_reduction   the collection of points that we want to delete some points from
   * @param distanceThreshold an integer Euclidean distance
  */
 pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::PointCloud<pcl::PointXYZRGB> point_cloud_for_reduction,pcl::PointCloud<pcl::PointXYZRGB> removal_Cloud, int distanceThreshold){
@@ -593,6 +594,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
         float point_radius = distanceThreshold;
 
+        PointCloud<pcl::PointXYZRGB> point_cloud_flattened;//Point cloud with extra Hue Dimension crushed to 0
+
         PointCloud<pcl::PointXYZRGB> point_cloud_for_return;
         point_cloud_for_return.reserve(point_cloud_for_reduction.size());
 
@@ -607,7 +610,16 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
     //        }
 
-            pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_for_reduction));
+            //Make a version of the original data cloud that is flattened to z=0 but with the same indice
+            copyPointCloud( point_cloud_for_reduction,point_cloud_flattened);
+
+            for(int q=0; q<point_cloud_flattened.size();q++){
+
+                point_cloud_flattened.at(q).z=0;
+
+            }
+
+           pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_flattened));
 
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
@@ -626,7 +638,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
                 searchPoint.x = removal_Cloud.points[c].x;
                 searchPoint.y = removal_Cloud.points[c].y;
-                searchPoint.z = removal_Cloud.points[c].z;
+               //Need to take z as zero when using a flattened data point cloud
+               searchPoint.z = 0;
 
                 // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
                 if ( kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )

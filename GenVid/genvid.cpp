@@ -64,11 +64,11 @@ GenVid::GenVid(QWidget *parent) :
     ui->spinBox_6->setValue(1);
     ui->spinBox_7->setSingleStep(5);
     ui->spinBox_7->setRange(20,200);
-   // ui->spinBox_7->setValue(45);
+    // ui->spinBox_7->setValue(45);
     ui->spinBox_8->setSingleStep(1);
     ui->spinBox_8->setRange(1,10);
     ui->spinBox_8->setValue(2);
-   // ui->spinBox_9->setValue(3);
+    // ui->spinBox_9->setValue(3);
 
 
     ui->spinBox_5->setValue(trailSize);
@@ -139,22 +139,29 @@ void GenVid::on_actionLoad_BTF_triggered()
                     timefilepath = btfpath+"/"+current;
                     qDebug()<<"loaded "<<timefilepath;
 
-                }else
-                    if(type.contains("timage")){
+                }
+                else
+                    if(type.contains("type")){
+                        typefilepath = btfpath+"/"+current;
+                        qDebug()<<"loaded "<<typefilepath;
 
-                        anglefilepath = btfpath+"/"+current;
-                        qDebug()<<"loaded "<<anglefilepath;
-                    }else
-                        if(type.contains("ximage")){
+                    }
+                    else
+                        if(type.contains("timage")){
 
-                            xfilepath = btfpath+"/"+current;
-                            qDebug()<<"loaded "<<xfilepath;
+                            anglefilepath = btfpath+"/"+current;
+                            qDebug()<<"loaded "<<anglefilepath;
                         }else
-                            if(type.contains("yimage")){
+                            if(type.contains("ximage")){
 
-                                yfilepath = btfpath+"/"+current;
-                                qDebug()<<"loaded "<<yfilepath;
-                            }
+                                xfilepath = btfpath+"/"+current;
+                                qDebug()<<"loaded "<<xfilepath;
+                            }else
+                                if(type.contains("yimage")){
+
+                                    yfilepath = btfpath+"/"+current;
+                                    qDebug()<<"loaded "<<yfilepath;
+                                }
     }
 
 
@@ -319,7 +326,7 @@ void GenVid::processFiles()
     QFile idfile(idfilepath);
     QFile timefile(timefilepath);
     QFile timestampfile(timestampfilepath);
-
+    QFile typefile(typefilepath);
     QFile anglefile(anglefilepath);
     QFile xfile(xfilepath);
     QFile yfile(yfilepath);
@@ -335,7 +342,7 @@ void GenVid::processFiles()
     xs.clear();
     ys.clear();
 
-            angle.clear();
+    angle.clear();
     ant_id.clear();
     timeList.clear();
     xsList.clear();
@@ -351,7 +358,8 @@ void GenVid::processFiles()
          yfile.open(QIODevice::ReadOnly|QIODevice::Text) |
          anglefile.open(QIODevice::ReadOnly|QIODevice::Text) |
          timefile.open(QIODevice::ReadOnly|QIODevice::Text) |
-         timestampfile.open(QIODevice::ReadOnly|QIODevice::Text)
+         timestampfile.open(QIODevice::ReadOnly|QIODevice::Text) |
+         typefile.open(QIODevice::ReadOnly|QIODevice::Text)
 
          )
     {
@@ -361,6 +369,7 @@ void GenVid::processFiles()
         QTextStream angleStamp( &anglefile );
         QTextStream timeMillisstream( &timefile );
         QTextStream timeStampstream( &timestampfile );
+        QTextStream typefilestream (&typefile);
 
 
         QString delimiterPattern("\n");
@@ -371,6 +380,8 @@ void GenVid::processFiles()
         ys = yStamp.readAll();
         angle = angleStamp.readAll();
         ant_id = idStamp.readAll();
+        typeS = typefilestream.readAll();
+        typelist = typeS.split(delimiterPattern);
 
         timeList = time.split(delimiterPattern);
         timeStampList = timestamp.split(delimiterPattern);
@@ -381,23 +392,23 @@ void GenVid::processFiles()
         ant_List = ant_id.split(delimiterPattern);
 
         qDebug()<<"Number of BTF Lines for each file (should be consistent)";
-        qDebug()<<timeList.size()<<" "<<timeStampList.size()<<" "<<xsList.size()<<" "<<ysList.size()<<" "<<angleList.size()<<" "<<ant_List.size();
+        qDebug()<<timeList.size()<<" "<<timeStampList.size()<<" "<<xsList.size()<<" "<<ysList.size()<<" "<<angleList.size()<<" "<<ant_List.size()<<typelist;
 
-          qDebug()<<"Final Frame  "<<timeStampList.at(timeStampList.size()-2).toInt(); // The very last value of all these is a "" or 0 in Int for some reason
-btfLength = timeStampList.at(timeStampList.size()-2).toInt();
+        qDebug()<<"Final Frame  "<<timeStampList.at(timeStampList.size()-2).toInt(); // The very last value of all these is a "" or 0 in Int for some reason
+        btfLength = timeStampList.at(timeStampList.size()-2).toInt();
         // MSec data structure: A vector of every MSec, for a particular MSec a vector of ants, each ant is a qstringlist of parameters.
 
         int currentMSec =-33;
         for (std::vector<int>::size_type i = 0; i<timeList.size();i++){
             if(currentMSec == timeList.at(i).toInt()){
-                tempant << timeList.at(i)<<xsList.at(i)<<ysList.at(i)<<angleList.at(i)<<ant_List.at(i);
+                tempant << timeList.at(i)<<xsList.at(i)<<ysList.at(i)<<angleList.at(i)<<ant_List.at(i)<<typelist.at(i);
                 antsAtMsec.push_back(tempant);
                 tempant.clear();
-               // currentMSec = timeList.at(i).toInt();
+                // currentMSec = timeList.at(i).toInt();
             }else{
                 Msec.push_back(antsAtMsec);
                 antsAtMsec.clear();
-                tempant << timeList.at(i)<<xsList.at(i)<<ysList.at(i)<<angleList.at(i)<<ant_List.at(i);
+                tempant << timeList.at(i)<<xsList.at(i)<<ysList.at(i)<<angleList.at(i)<<ant_List.at(i)<<typelist.at(i);
                 antsAtMsec.push_back(tempant);
                 tempant.clear();
                 currentMSec = timeList.at(i).toInt();
@@ -405,9 +416,9 @@ btfLength = timeStampList.at(timeStampList.size()-2).toInt();
 
             }
         }
-//        Msec.back();
+        //        Msec.back();
         qDebug()<<"Length of BTF data   currentMSec   "<<currentMSec<<" Msec bcak ";
-//        btfLength=currentMSec;
+        //        btfLength=currentMSec;
     }
 
 
@@ -545,12 +556,13 @@ Mat GenVid::checkFile(Mat img){
         }
 
         //attach ant name
-
+        //TODO, fix up this crazy crap. Just synthesize a single string then use CV::putText
+        //TODO make more than one font size that isn't hard coded and adjusts to the resolution
         if(idOn){
             if(fontSize==1){
-                putText( img,tempant.at(4).toStdString(), Point(org.x,org.y), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+                putText( img,tempant.at(5).toStdString()+" ("+tempant.at(4).toStdString()+")", Point(org.x,org.y), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
             } else {
-                putText( img,tempant.at(4).toStdString(), Point(org.x,org.y-15), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+                putText( img,tempant.at(5).toStdString()+" ("+tempant.at(4).toStdString()+")", Point(org.x,org.y-15), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
             }
         }
         if(xyOn){
@@ -717,7 +729,7 @@ void GenVid::on_checkID_clicked()
 void GenVid::on_checkArrow_clicked()
 {
     arrowOn=ui->checkArrow->isChecked();
-  //  arrowOn =!arrowOn;
+    //  arrowOn =!arrowOn;
     refresh();
 
 }

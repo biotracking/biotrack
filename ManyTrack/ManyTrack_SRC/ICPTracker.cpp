@@ -17,8 +17,6 @@ viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
     //    viewerT.addSphere (o, 0.25, "sphere", 0);
     qDebug()<< "i only run once";
 
-
-
 }
 
 boost::shared_ptr<pcl::visualization::PCLVisualizer> simpleVis (pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud)
@@ -58,9 +56,11 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
     numOfTracks = 0;
     isVideoShowing = true;
     resolutionFractionMultiplier = 4; // 4 for 1/4 resolution, 2 for 1/2 resolution, 1 for full resolution
-    separationThreshold=6;
+    separationThreshold=6;    
 
-    // TODO: move into load function
+    /*
+      * Load All canned data
+      */
     //Load background image
     bgImage = imread(bgImagepath.toStdString());
 
@@ -627,12 +627,14 @@ void ICPTracker::drawTrackResult(Mat img)
         ///////////////
         ///Draw ID Label Text
         //////////////
+
+        if(uiICP.textCheckBox->isChecked()){
         sprintf(label, "%d", activeTracks[i]->getID());
         //        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
         //Write the name of the model used
         cv::putText(trackResultImage, models[activeTracks[i]->modelIndex].name.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,255,255), 2);
-
+}
     }
 
 
@@ -871,6 +873,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     QString tsname=projectdirectory+icpprojectname+"/"+"timestamp.btf";
     QString tsname_f=projectdirectory+icpprojectname+"/"+"timestamp_frames.btf";
 
+    QString modelname=projectdirectory+icpprojectname+"/"+"type.btf";
+
     QString idname=projectdirectory+icpprojectname+"/"+"id.btf";
     QString ximagename=projectdirectory+icpprojectname+"/"+"ximage.btf";
     QString yimagename=projectdirectory+icpprojectname+"/"+"yimage.btf";
@@ -884,6 +888,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     FILE* yImageFP = fopen(yimagename.toAscii(),"w");
     FILE* angleFP = fopen(timagename.toAscii(),"w");
     FILE* idFP = fopen(idname.toAscii(),"w");
+    FILE* typeFP = fopen(modelname.toAscii(),"w");
+
     int startFrame = 0;
     int endFrame = 0;
     typedef std::multimap<int, Track*> mapType;
@@ -937,6 +943,7 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     float angle;
     int timestamp;
     int id;
+    String type;
     for(mapType::const_iterator it = framesToTracksMAP.begin(); it != framesToTracksMAP.end(); ++it)
     {
         fIndex = (*it).first;
@@ -947,6 +954,9 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
         id = track->getID();
         fprintf(timeStampFP, "%d\n", timestamp);
         fprintf(timeStampFP_f, "%d\n", fIndex); //Fix this: determine if needs to be fIndex+1 or just fIndex
+
+        type =  models[track->modelIndex].name.toStdString();
+        fprintf(typeFP, "%s\n", type.c_str());
 
         fprintf(idFP, "%d\n", id);
         x = track->getX(fIndex+1);
@@ -964,6 +974,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     fclose(xImageFP);
     fclose(yImageFP);
     fclose(angleFP);
+    fclose(typeFP);
+
     fclose(idFP);
 
     return;
@@ -1113,13 +1125,11 @@ void ICPTracker::processInteractions(Track* ta, Track* tb, FILE* fp)
 
 Mat ICPTracker::runContourDetection(Mat img){
 
-    //    Mat canny_output;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
 
 
     /// Detect edges using canny
-    //Canny( img, img, 50, 50*2, 3 );
     /// Find contours
     findContours( img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
@@ -1142,5 +1152,10 @@ Mat ICPTracker::runContourDetection(Mat img){
 
 
 }
+
+
+
+
+
 
 
