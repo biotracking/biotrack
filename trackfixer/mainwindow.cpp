@@ -243,6 +243,7 @@ void MainWindow::loadBTF(std::string dname){
         //ui->graphicsView->scene()->addRect(x,y,width,height,QPen(),QBrush(Qt::yellow));
     }
     curFrameLine = ui->graphicsView->scene()->addLine(0,0,0,maxID,QPen(Qt::red));
+    curFrameLine->setZValue(1.0);
     //std::cout<<"width: "<<ui->graphicsView->width()<<" geom.width: "<<this->width()<<std::endl;
     //ui->graphicsView->scale(((double)this->width())/((double)frame_data.size()),((double)this->width())/((double)frame_data.size()));
     //ui->graphicsView->scene()->addRect(0,0,frame_data.size(),18,QPen(),QBrush(Qt::red));
@@ -547,6 +548,40 @@ void MainWindow::on_pushButton_8_clicked()
                 tmp.setStyle(Qt::SolidPattern);
             }
             tracklets.at(i)->setBrush(tmp);
+        }
+    }
+}
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    //split button
+    int currentFrame = ui->horizontalSlider->value();
+    if(currentFrame >=0 && (unsigned int)currentFrame < frame_data.size()){
+        for(unsigned int i=0;i<tracklets.size();i++){
+            if(tracklets.at(i)->selected){
+                int x,y,width,height;
+                x = currentFrame;
+                y = tracklets.at(i)->antID;
+                width = (tracklets.at(i)->endFrame)-currentFrame;
+                height = 19;
+                TrackletRectItem *tr = new TrackletRectItem();
+                tr->setRect(x,y,width,height);
+                tr->startFrame = currentFrame;
+                tr->endFrame = tracklets.at(i)->endFrame;
+                tr->color = Qt::yellow;
+                tr->flipped = tr->nuked = tr->selected = false;
+                tr->antID = tracklets.at(i)->antID;
+                tr->setBrush(QBrush(Qt::yellow));
+                tracklets.push_back(tr);
+                x = tracklets.at(i)->startFrame;
+                y = tracklets.at(i)->antID;
+                width = currentFrame - tracklets.at(i)->startFrame;
+                height = 19;
+                tracklets.at(i)->endFrame = currentFrame;
+                tracklets.at(i)->setRect(x,y,width,height);
+                ui->graphicsView->scene()->addItem(tr);
+
+            }
         }
     }
 }

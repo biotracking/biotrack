@@ -28,7 +28,7 @@
            <x>0</x>
            <y>0</y>
            <width>841</width>
-           <height>348</height>
+           <height>306</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
@@ -115,6 +115,31 @@
           </property>
           <property name="text">
            <string>Write BTF</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="pushButton_9">
+          <property name="text">
+           <string>Split Track</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_10">
+          <property name="text">
+           <string>Label Track</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_11">
+          <property name="text">
+           <string>New Track</string>
           </property>
          </widget>
         </item>
