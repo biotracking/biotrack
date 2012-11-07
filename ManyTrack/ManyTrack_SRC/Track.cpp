@@ -616,6 +616,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
             for(int q=0; q<point_cloud_flattened.size();q++){
 
                 point_cloud_flattened.at(q).z=0;
+
             }
 
            pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_flattened));

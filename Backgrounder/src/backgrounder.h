@@ -110,6 +110,7 @@ private slots:
 
     void on_saveBGButton_clicked();
 
+
 private:
     Ui::Backgrounder *ui;
 };

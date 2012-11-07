@@ -5,6 +5,7 @@ Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
     : QMainWindow(parent, flags)
 {
 
+//Global Settings to Apply the everytime the program is run first time
 
     trackerChecked=false;
     nopath="(none selected)";
@@ -19,76 +20,30 @@ Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
 
     setWindowIcon(QIcon("Manytrack.png"));
 
-
     imageData = NULL;
     icpTracker= NULL;
     imageLabel = ui.imageLabel;
 
 
-    isPlaying = false;
+    isTracking = false;
     isVideoShowing=true;
     completedTracking=false;
 
-
-    /*
-    * Connect UI buttons to slots
-    */
-    ui.stopButton->setEnabled(false);
-    ui.saveBTFButton->setEnabled(false);
-    //ui.blobsButton->setEnabled(false);
-    //connect(ui.blobsButton, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
-    ui.subtractioncheckBox->setChecked(false);
-    connect(ui.subtractioncheckBox, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
-
-    ui.contourTrackingcheckBox->setChecked(false);
-    connect(ui.contourTrackingcheckBox, SIGNAL(clicked()), this, SLOT(toggleContourTracking()));
-
-
-    ui.resetButton->setEnabled(false);
-    //ui.resolutionSpinBox->setValue(resFractionMultiplier);
-    connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(toggleStopButton()));
-    //connect(ui.saveHTMLButton, SIGNAL(clicked()), this, SLOT(saveHTML()));
-    connect(ui.saveBTFButton, SIGNAL(clicked()), this, SLOT(saveBTF()));
-    connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(icpReset()));
-    ui.backgroundButton->setEnabled(true);
-    connect(ui.backgroundButton, SIGNAL(clicked()), this, SLOT(loadBackgroundFile()));
-    ui.videoButton->setEnabled(true);
-    connect(ui.videoButton, SIGNAL(clicked()), this, SLOT(loadVideoFile()));
-    ui.modelButton->setEnabled(true);
-    connect(ui.modelButton, SIGNAL(clicked()), this, SLOT(loadModelFile()));
-    ui.maskButton->setEnabled(true);
-    connect(ui.maskButton, SIGNAL(clicked()), this, SLOT(chooseMaskFile()));
-
-    ui.projectDirectoryButton->setEnabled(true);
-    connect(ui.projectDirectoryButton, SIGNAL(clicked()), this, SLOT(chooseProjectDirectory()));
-
-
-
-    connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(icpReset()));
-
-    connect(ui.bgSubThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(bgThresholdSpinValueChanged(int)));
-    //connect(ui.bgsubSlider, SIGNAL(sliderMoved(int)), ui.bgSubThresholdSpinBox, SIGNAL(bgThresholdSpinValueChanged(int)));
-
-    connect(ui.blobBirthAreaThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(blobBirthAreaThresholdValueChanged()));
-    connect(ui.resolutionSpinBox, SIGNAL(valueChanged(int)), this, SLOT(resolutionFractionValueChanged()));
-    connect(ui.trackdistanceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(trackdistanceValueChanged()));
-
-    connect(ui.trackdeathSpinBox, SIGNAL(valueChanged(int)), this, SLOT(trackDeathValueChanged()));
-    connect(ui.separationSpinBox, SIGNAL(valueChanged(int)), this, SLOT(separationValueChanged()));
-
-    connect(ui.actionLoad_Settings, SIGNAL(triggered()), this, SLOT(loadSettings()));
-    connect(ui.actionLoad_Defaults, SIGNAL(triggered()), this, SLOT(loadDefaults()));
-    connect(ui.actionSave_All, SIGNAL(triggered()), this, SLOT(saveSettings()));
+//Connect UI buttons to appropriate slots
+    connectUI();
 
     ui.visualizationLabel->setAttribute(Qt::WA_TranslucentBackground);
+
+    //Load the default settings from the last time the program was used
     readSettings();
 
     loadNewTracker();
 
+    //Set the Normal zoom view (prevents users from getting lost)
     on_displaycomboBox_currentIndexChanged(0);
 
     //Start the Timer Running (This controls the speed of QT's main loop)
-    startTimer(0);  // High speed-second timer
+    startTimer(0);  // High speed-second timer, tries to go as fast as it can
     //startTimer(1000/300000000);  // example 0.1-second timer
 
 }
@@ -103,8 +58,22 @@ Manytrack::~Manytrack()
 }
 
 void Manytrack::timerEvent(QTimerEvent*) {
-    if (!isPlaying){ return;}
+    if (!isTracking){
+        return;} //Don't run the timer
+
+
+
     else{
+        //This is the main tracking loop. The program attempts to:
+        // go through every frame of the video,
+        // track each frame
+        // and stop at the end, ready to repeat or let the user change parameters
+
+
+
+
+
+
         Mat img = updateFrame();
         if(completedTracking==false){
             icpTracker->track(img, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
@@ -112,19 +81,9 @@ void Manytrack::timerEvent(QTimerEvent*) {
 
             updateImage(img);
 
-            Mat qImgARGB;
-            qImgARGB = icpTracker->getTrackResultImage();
-            QImage qimage;
-            qimage = QImage((const uchar*)qImgARGB.data, qImgARGB.cols, qImgARGB.rows,qImgARGB.step, QImage::Format_ARGB32);
-            qimage = qimage.rgbSwapped();
-            qimage = qimage.scaled(displayWidth, displayHeight);
-        //    qimage = qimage.scaled(displayWidth, displayHeight);
+            updateVisualization(icpTracker->getTrackResultImage());
 
-            ui.visualizationLabel->setPixmap(QPixmap::fromImage(qimage));
-
-
-
-            }
+           }
         }
         updateStatusBar();
     }
@@ -143,7 +102,7 @@ Mat Manytrack::updateFrame()
 
             //!!  Stop Tracking  !!//
 
-            toggleStopButton();
+            toggleTracking();
             ui.stopButton->setEnabled(false);
             ui.resetButton->setEnabled(true);
 
@@ -157,7 +116,7 @@ Mat Manytrack::updateFrame()
 
         //!!  Stop Tracking  !!//
         completedTracking=true;
-        toggleStopButton();
+        toggleTracking();
         ui.stopButton->setEnabled(false);
         ui.resetButton->setEnabled(true);
 
@@ -259,10 +218,12 @@ void Manytrack::separationValueChanged()
         icpTracker->setSeparationThreshold(ui.separationSpinBox->value());
 }
 
-void Manytrack::toggleStopButton()
+void Manytrack::toggleTracking()
 {
-    if (isPlaying)
+    if (isTracking)
     {
+        //Turn on or off UI components
+
         //ui.blobsButton->setEnabled(true);
         ui.stopButton->setText(tr("play"));
         //icpTracker->outputInteractionsReport();
@@ -274,7 +235,13 @@ void Manytrack::toggleStopButton()
         ui.maskButton->setEnabled(true);
         ui.modelButton->setEnabled(true);
 
-        isPlaying = !isPlaying;
+        ui.framesSlider->setEnabled(true);
+        ui.framesspinBox->setEnabled(true);
+        ui.previewtrackingButton->setEnabled(true);
+
+        isTracking = !isTracking;
+
+        //Pause the Timer
         //There is no Pause and Resume method for Qtime, Should probably use a QTimer
         pHour =myQTime.hour();
         pMin = myQTime.minute();
@@ -296,8 +263,14 @@ void Manytrack::toggleStopButton()
         ui.maskButton->setEnabled(false);
         ui.modelButton->setEnabled(false);
 
-        isPlaying = !isPlaying;
+        ui.framesSlider->setEnabled(false);
+        ui.framesspinBox->setEnabled(false);
+        ui.previewtrackingButton->setEnabled(false);
 
+
+        isTracking = !isTracking;
+
+        //Calculate the Paused Duration
         myQTime.setHMS(0,0,0,0);
         myQTime.start();
 
@@ -335,6 +308,18 @@ void Manytrack::updateImage(Mat dataimage)
 
     return;
 }
+
+void Manytrack::updateVisualization(Mat qImgARGB)
+{
+    QImage qimage;
+    qimage = QImage((const uchar*)qImgARGB.data, qImgARGB.cols, qImgARGB.rows,qImgARGB.step, QImage::Format_ARGB32);
+    qimage = qimage.rgbSwapped();
+    qimage = qimage.scaled(displayWidth, displayHeight);
+//    qimage = qimage.scaled(displayWidth, displayHeight);
+
+    ui.visualizationLabel->setPixmap(QPixmap::fromImage(qimage));
+}
+
 
 bool Manytrack::checkreadytoPlay()
 {
@@ -451,15 +436,7 @@ void Manytrack::chooseMaskFile()
 
 void Manytrack::toggleContourTracking()
 {
-    //Switch on an off using the entire detection or just the contour ridges
-    if(ui.contourTrackingcheckBox->isChecked()){
-        //ui.contourLabel->setText("Contour Tracking ON");
-        icpTracker->setContourTracking(true);
-    }
-    else{
-        //   ui.contourLabel->setText("Contour Tracking OFF");
-        icpTracker->setContourTracking(false);
-    }
+
 
 
 }
@@ -505,14 +482,13 @@ void Manytrack::loadDefaults(){
     ui.separationSpinBox->setValue(4);
     //Check Boxes
     ui.subtractioncheckBox->setChecked(false);
-    ui.contourTrackingcheckBox->setChecked(false);
 
 }
 
 void Manytrack::loadSettings(){
 
-    if(isPlaying){
-        toggleStopButton();
+    if(isTracking){
+        toggleTracking();
     }
 
     QString loadsetpath = QFileDialog::getOpenFileName (this, tr("Open Settings File"),lastpath);
@@ -535,7 +511,6 @@ void Manytrack::loadSettings(){
 
         //Check Boxes
         ui.subtractioncheckBox->setChecked(settings.value("bgsubcheck",false).toBool()); // again, the "false" value will be used in case of problem with QSettings
-        ui.contourTrackingcheckBox->setChecked(settings.value("contourtracking", false).toBool());
         ui.modelViewcheckBox->setChecked(settings.value("modelshow", true).toBool());
         ui.separationViewCheck->setChecked(settings.value("separationview",false).toBool());
 
@@ -573,8 +548,8 @@ void Manytrack::loadSettings(){
 //Save all values to a single file for easy loading and reloading
 
 void Manytrack::saveSettings(){
-    if(isPlaying){
-        toggleStopButton();
+    if(isTracking){
+        toggleTracking();
     }
 
 
@@ -606,7 +581,6 @@ void Manytrack::saveSettings(){
 
         //Toggle Boxes
         settings.setValue("bgsubcheck",ui.subtractioncheckBox->isChecked()); // store a bool
-        settings.setValue("contourtracking",ui.contourTrackingcheckBox->isChecked()); // store a bool
         settings.setValue("modelshow",ui.modelViewcheckBox->isChecked()); // store a bool
         settings.setValue("separationview",ui.separationViewCheck->isChecked()); // store a bool
 
@@ -651,7 +625,6 @@ void Manytrack::writeSettings()
 
     //Toggle Boxes
     settings.setValue("bgsubcheck",ui.subtractioncheckBox->isChecked()); // store a bool
-    settings.setValue("contourtracking",ui.contourTrackingcheckBox->isChecked()); // store a bool
     settings.setValue("modelshow",ui.modelViewcheckBox->isChecked()); // store a bool
     settings.setValue("separationview",ui.separationViewCheck->isChecked()); // store a bool
 
@@ -679,7 +652,6 @@ void Manytrack::readSettings()
 
     //Check Boxes
     ui.subtractioncheckBox->setChecked(settings.value("bgsubcheck",false).toBool()); // again, the "false" value will be used in case of problem with QSettings
-    ui.contourTrackingcheckBox->setChecked(settings.value("contourtracking", false).toBool());
     ui.modelViewcheckBox->setChecked(settings.value("modelshow", true).toBool());
     ui.separationViewCheck->setChecked(settings.value("separationview",false).toBool());
 
@@ -747,7 +719,6 @@ completedTracking=false;
         icpTracker->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
         icpTracker->setSeparationThreshold(ui.separationSpinBox->value());
 
-        icpTracker->setContourTracking(ui.contourTrackingcheckBox->isChecked());
 
         icpTracker->setBgSubThreshold(ui.bgSubThresholdSpinBox->value());
         icpTracker->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
@@ -818,6 +789,7 @@ bool Manytrack::trackerCheck(){
     colour="red";
     //Video Capture
     capture.open(videopath.toStdString());
+    capturepreview.open(videopath.toStdString());
     //Find Properties of the Video File
     vidFPS = capture.get(CV_CAP_PROP_FPS);
     cout << "Frame rate   " <<vidFPS;
@@ -928,8 +900,6 @@ void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
                   }
               }
 
-
-
               imageLabel->resize(displayWidth,displayHeight);
                    ui.visualizationLabel->resize(ui.imageLabel->size());
                    if(trackerChecked){
@@ -937,36 +907,90 @@ void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
                        updateImage(icpTracker->getTrackResultImage());
                    }
                    ui.scrollAreaWidgetContents->resize(displayWidth,displayHeight);
+                        updateVisualization(icpTracker->getTrackResultImage());
+
+}
+
+/*
+* Connect UI buttons to slots
+*/
+void Manytrack::connectUI()
+{
+
+    ui.stopButton->setEnabled(false);
+    ui.saveBTFButton->setEnabled(false);
+    //ui.blobsButton->setEnabled(false);
+    //connect(ui.blobsButton, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
+    ui.subtractioncheckBox->setChecked(false);
+    connect(ui.subtractioncheckBox, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
+
+
+
+    ui.resetButton->setEnabled(false);
+    //ui.resolutionSpinBox->setValue(resFractionMultiplier);
+    connect(ui.stopButton, SIGNAL(clicked()), this, SLOT(toggleTracking()));
+    //connect(ui.saveHTMLButton, SIGNAL(clicked()), this, SLOT(saveHTML()));
+    connect(ui.saveBTFButton, SIGNAL(clicked()), this, SLOT(saveBTF()));
+    connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(icpReset()));
+    ui.backgroundButton->setEnabled(true);
+    connect(ui.backgroundButton, SIGNAL(clicked()), this, SLOT(loadBackgroundFile()));
+    ui.videoButton->setEnabled(true);
+    connect(ui.videoButton, SIGNAL(clicked()), this, SLOT(loadVideoFile()));
+    ui.modelButton->setEnabled(true);
+    connect(ui.modelButton, SIGNAL(clicked()), this, SLOT(loadModelFile()));
+    ui.maskButton->setEnabled(true);
+    connect(ui.maskButton, SIGNAL(clicked()), this, SLOT(chooseMaskFile()));
+
+    ui.projectDirectoryButton->setEnabled(true);
+    connect(ui.projectDirectoryButton, SIGNAL(clicked()), this, SLOT(chooseProjectDirectory()));
+
+
+
+    connect(ui.resetButton, SIGNAL(clicked()), this, SLOT(icpReset()));
+
+    connect(ui.bgSubThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(bgThresholdSpinValueChanged(int)));
+    //connect(ui.bgsubSlider, SIGNAL(sliderMoved(int)), ui.bgSubThresholdSpinBox, SIGNAL(bgThresholdSpinValueChanged(int)));
+
+    connect(ui.blobBirthAreaThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(blobBirthAreaThresholdValueChanged()));
+    connect(ui.resolutionSpinBox, SIGNAL(valueChanged(int)), this, SLOT(resolutionFractionValueChanged()));
+    connect(ui.trackdistanceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(trackdistanceValueChanged()));
+
+    connect(ui.trackdeathSpinBox, SIGNAL(valueChanged(int)), this, SLOT(trackDeathValueChanged()));
+    connect(ui.separationSpinBox, SIGNAL(valueChanged(int)), this, SLOT(separationValueChanged()));
+
+    connect(ui.actionLoad_Settings, SIGNAL(triggered()), this, SLOT(loadSettings()));
+    connect(ui.actionLoad_Defaults, SIGNAL(triggered()), this, SLOT(loadDefaults()));
+    connect(ui.actionSave_All, SIGNAL(triggered()), this, SLOT(saveSettings()));
 
 }
 
 void Manytrack::on_trackDistanceViewCheck_toggled(bool checked)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->showSearchRadius = checked;
 }
 
 void Manytrack::on_modelViewcheckBox_toggled(bool checked)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->showModel = checked;
 }
 
 void Manytrack::on_showTrailscheckBox_toggled(bool checked)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->showTrails= checked;
 }
 
 void Manytrack::on_showBoxcheckBox_toggled(bool checked)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->showBox = checked;
 }
 
 void Manytrack::on_separationViewCheck_toggled(bool checked)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->showRemovalRadii = checked;
 }
 
@@ -1032,13 +1056,13 @@ void Manytrack::on_ICP_MaxIterspinBox_valueChanged(int arg1)
 
 void Manytrack::on_ICP_TransEpsilondoubleSpinBox_valueChanged(double arg1)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->Ticp_transformationEpsilon=arg1;
 }
 
 void Manytrack::on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1)
 {
-    if(trackerChecked||isPlaying)
+    if(trackerChecked||isTracking)
         icpTracker->Ticp_euclideanDistance=arg1;
 }
 
@@ -1047,4 +1071,38 @@ void Manytrack::on_visualizationcheckBox_toggled(bool checked)
     if (checked)
  ui.visualizationLabel->raise();
     else ui.visualizationLabel->lower();
+}
+void Manytrack::on_framesspinBox_valueChanged(int arg1)
+{
+    ui.framesSlider->setValue(arg1);
+}
+void Manytrack::on_framesSlider_sliderMoved(int position)
+{
+    ui.framesspinBox->setValue(position);
+}
+
+
+void Manytrack::on_actionLive_Preview_triggered()
+{
+
+}
+
+void Manytrack::on_previewtrackingButton_clicked()
+{ //Perform new tracking on a single frame help aid the quality of the fit in multiple situations
+
+    Mat img;
+
+    capturepreview.set(CV_CAP_PROP_POS_FRAMES,ui.framesSlider->value());
+
+    ui.framesSlider->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
+    ui.framesspinBox->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
+
+        capturepreview.retrieve(img);
+        capturepreview.read(img);
+        icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
+  icpTrackerpreview->track(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+
+        updateImage(img);
+        updateVisualization(icpTrackerpreview->getTrackResultImage());
+
 }

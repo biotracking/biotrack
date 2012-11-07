@@ -51,7 +51,7 @@ public:
 	
 
 public slots:
-	void toggleStopButton();
+    void toggleTracking();
 	void toggleBlobsView();
     void toggleContourTracking();
     void bgThresholdSpinValueChanged(int value);
@@ -77,9 +77,13 @@ public slots:
 private:
     Ui::ManytrackClass ui;
 	ICPTracker* icpTracker;
+    ICPTracker* icpTrackerpreview;
+
     QLabel* imageLabel;
 	QImage qimage;
     VideoCapture capture;
+    VideoCapture capturepreview;
+
 
     float vidFPS;
 	int videowidth;
@@ -87,10 +91,15 @@ private:
 	unsigned char *imageData;
 	int imageWidth;
 	int imageHeight;
-	bool isPlaying;
+    bool isTracking;
     bool isVideoShowing;
     QString statusMessage;
     void updateImage(Mat dataimage);
+    void updateVisualization(Mat qImgARGB);
+
+    void connectUI();
+
+
 	void updateStatusBar();
 	void messageToStatusBar(QString message);
     Mat updateFrame();
@@ -151,6 +160,15 @@ private slots:
      void on_ICP_TransEpsilondoubleSpinBox_valueChanged(double arg1);
      void on_ICP_EuclideanDistdoubleSpinBox_valueChanged(double arg1);
      void on_visualizationcheckBox_toggled(bool checked);
+
+     void on_actionLive_Preview_triggered();
+     void on_previewtrackingButton_clicked();
+
+     void on_framesspinBox_valueChanged(int arg1);
+
+     void on_framesSlider_sliderMoved(int position);
+
+
 };
 
 #endif // Manytrack_H

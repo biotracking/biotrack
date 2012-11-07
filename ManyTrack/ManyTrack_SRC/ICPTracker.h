@@ -145,6 +145,10 @@ Model loadModelPoints(Model modelBGRAimg);
 
 protected:
 
+private slots:
+
+    void on_framesspinBox_valueChanged(int arg1);
+    void on_framesSlider_sliderMoved(int position);
 };
 
 #endif // ICPTRACKER_H
