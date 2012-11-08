@@ -4,6 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QMessageBox>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QGraphicsScene>
 #include <QGraphicsLineItem>
 #include <QGraphicsRectItem>
@@ -60,11 +61,11 @@ private:
     cv::Mat share_cvimage;
     cv::VideoCapture cap;
     //std::vector<cv::Mat> loadedVideo;
-    std::vector<std::vector<std::string> > btf_data;
+    //std::vector<std::vector<std::string> > btf_data;
     std::vector<std::string> btf_names;
-    std::vector<std::vector<int> > frame_data;
-	std::vector<std::pair<std::string,int> > flip_data;
-    std::vector<int> removed_tracks;
+    //std::vector<std::vector<int> > frame_data;
+    //std::vector<std::pair<std::string,int> > flip_data;
+    //std::vector<int> removed_tracks;
     QImage Mat2QImage(const cv::Mat3b &src);
     QGraphicsScene scene;
     QGraphicsLineItem* curFrameLine;
@@ -91,6 +92,7 @@ private slots:
     void on_pushButton_7_clicked();
     void on_pushButton_8_clicked();
     void on_pushButton_9_clicked();
+    void on_pushButton_10_clicked();
 };
 
 #endif // MAINWINDOW_H

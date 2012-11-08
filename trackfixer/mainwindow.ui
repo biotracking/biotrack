@@ -28,7 +28,7 @@
            <x>0</x>
            <y>0</y>
            <width>841</width>
-           <height>306</height>
+           <height>348</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout">
@@ -80,6 +80,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_9">
+          <property name="text">
+           <string>Split track</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButton_6">
           <property name="maximumSize">
            <size>
@@ -106,6 +113,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton_10">
+          <property name="text">
+           <string>Label track</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pushButton_7">
           <property name="maximumSize">
            <size>
@@ -115,31 +129,6 @@
           </property>
           <property name="text">
            <string>Write BTF</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QPushButton" name="pushButton_9">
-          <property name="text">
-           <string>Split Track</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_10">
-          <property name="text">
-           <string>Label Track</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton_11">
-          <property name="text">
-           <string>New Track</string>
           </property>
          </widget>
         </item>
