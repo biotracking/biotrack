@@ -23,6 +23,7 @@ public:
     //TrackletRectItem(qreal x, qreal y, qreal width, qreal height, QGraphicsItem* parent=0, QGraphicsScene* scene=0);
     bool flipped, selected, nuked;
     int startFrame, endFrame, antID;
+    std::vector<double> ximage, yimage, timage, timestamp;
     QColor color;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
@@ -68,6 +69,7 @@ private:
     QGraphicsScene scene;
     QGraphicsLineItem* curFrameLine;
     std::vector<TrackletRectItem*> tracklets;
+    std::vector<std::vector<TrackletRectItem*> > frame_tracklets;
 
 protected:
     void timerEvent(QTimerEvent*);  // overide timerEvent function to draw image sequence

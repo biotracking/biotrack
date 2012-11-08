@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+#include <algorithm>
 
 /*
 TrackletRectItem::TrackletRectItem(qreal x, qreal y, qreal width, qreal height, QGraphicsItem* parent, QGraphicsScene* scene){
@@ -41,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->imageLabel->setScaledContents(true);
     ui->graphicsView->setScene(&scene);
     curFrameLine = NULL;
+    frame_tracklets.clear();
 }
 
 
@@ -55,6 +57,10 @@ void MainWindow::clearBTFData(){
 		btf_data[i].clear();
 	}
 	btf_data.clear();
+    for(unsigned int i=0;i<frame_tracklets.size();i++){
+        frame_tracklets.at(i).clear();
+    }
+    frame_tracklets.clear();
 	for(unsigned int i=0;i<frame_data.size();i++){
 		frame_data[i].clear();
 	}
@@ -195,6 +201,9 @@ void MainWindow::loadBTF(std::string dname){
                 height = 19;
                 if(y+height > maxID) maxID = y+height;
                 TrackletRectItem *tr = new TrackletRectItem();
+                tr->ximage.clear();
+                tr->yimage.clear();
+                tr->timage.clear();
                 tr->setRect(x,y,width,height);
                 tr->startFrame = idsAndStarts.at(k).second;
                 tr->endFrame = i;
@@ -202,25 +211,11 @@ void MainWindow::loadBTF(std::string dname){
                 tr->flipped = tr->nuked = tr->selected = false;
                 tr->antID = atoi(idsAndStarts.at(k).first.c_str());
                 tr->setBrush(QBrush(Qt::yellow));
-                //tr->setFlag(QGraphicsItem::ItemIsSelectable,true);
-                //tr->setFlag(QGraphicsItem::ItemIsMovable,true);
                 tracklets.push_back(tr);
                 ui->graphicsView->scene()->addItem(tr);
             }
         }
         delete [] marked;
-        //std::string id = btf_data.at(id_idx).at(i);
-        //if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
-        //    ui->listWidget->addItem(QString(id.c_str()));
-        //}
-        /*
-        std::cout<<"scratch [";
-        for(unsigned int flarfle=0;flarfle<scratch.size();flarfle++) std::cout<<" "<<scratch.at(flarfle).first;
-        std::cout<<"]"<<std::endl;
-        std::cout<<"idsAndStarts [";
-        for(unsigned int flarfle=0;flarfle<idsAndStarts.size();flarfle++) std::cout<<" "<<idsAndStarts.at(flarfle).first;
-        std::cout<<"]"<<std::endl;
-        */
         idsAndStarts = scratch;
     }
     for(unsigned int i=0;i<idsAndStarts.size();i++){
@@ -231,6 +226,9 @@ void MainWindow::loadBTF(std::string dname){
         height = 19;
         if(y+height > maxID) maxID = y+height;
         TrackletRectItem *tr = new TrackletRectItem();
+        tr->ximage.clear();
+        tr->yimage.clear();
+        tr->timage.clear();
         tr->setRect(x,y,width,height);
         tr->startFrame = idsAndStarts.at(i).second;
         tr->endFrame = frame_data.size();
@@ -244,47 +242,23 @@ void MainWindow::loadBTF(std::string dname){
     }
     curFrameLine = ui->graphicsView->scene()->addLine(0,0,0,maxID,QPen(Qt::red));
     curFrameLine->setZValue(1.0);
-    //std::cout<<"width: "<<ui->graphicsView->width()<<" geom.width: "<<this->width()<<std::endl;
-    //ui->graphicsView->scale(((double)this->width())/((double)frame_data.size()),((double)this->width())/((double)frame_data.size()));
-    //ui->graphicsView->scene()->addRect(0,0,frame_data.size(),18,QPen(),QBrush(Qt::red));
-    //fitInView does crazy scaling with huge margins
-    //ui->graphicsView->fitInView(0,0,500,1,Qt::KeepAspectRatio);
-    //ensureVisible does no scaling, only centers the object
-    //ui->graphicsView->ensureVisible(0,0,frame_data.size(),200,1,1);
-    //ui->listWidget->sortItems();
-    /*
-    std::cout<<"Frame 684 contains lines: [";
-    for(unsigned int i=0;i<frame_data.at(684).size();i++){
-        std::cout<<frame_data.at(684).at(i)<<" ";
-    }
-    std::cout<<"]"<<std::endl;
-    */
-    /*
-    std::cout<<"Done!"<<std::endl;
-    for(unsigned int i=0;i<btf_names.size();i++){
-        if(btf_names.at(i).compare(std::string("id.btf")) == 0){
-            for(unsigned int j=0;j<btf_data.at(i).size();j++){
-                std::string id = btf_data.at(i).at(j);
-                if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
-                    ui->listWidget->addItem(QString(id.c_str()));
+    std::vector<TrackletRectItem*> trackletsInFrame;
+    for(unsigned int i=0;i<frame_data.size();i++){
+        trackletsInFrame.clear();
+        for(unsigned int j=0;j<frame_data.at(i).size();j++){
+            int curID = atoi(btf_data.at(id_idx).at(frame_data.at(i).at(j)).c_str());
+            for(unsigned int k=0;k<tracklets.size();k++){
+                if(tracklets.at(k)->antID == curID && tracklets.at(k)->startFrame <= (int)i && tracklets.at(k)->endFrame > (int)i){
+                    tracklets.at(k)->ximage.push_back(atof(btf_data.at(x_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->yimage.push_back(atof(btf_data.at(y_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->timage.push_back(atof(btf_data.at(t_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->timestamp.push_back(atof(btf_data.at(timestamp_idx).at(frame_data.at(i).at(j)).c_str()));
+                    trackletsInFrame.push_back(tracklets.at(k));
                 }
             }
         }
-        if(btf_names.at(i).compare(std::string("timestamp.btf")) == 0){
-            int count=0;
-            std::string lastTS = "33";
-            for(unsigned int j=0;j<btf_data.at(i).size();j++){
-                if(lastTS.compare(btf_data.at(i).at(j))!=0){
-                    count++;
-                    lastTS=btf_data.at(i).at(j);
-                }
-                std::stringstream thisisdumb;
-                thisisdumb<<count;
-                btf_frameno.push_back(thisisdumb.str());
-            }
-        }
+        frame_tracklets.push_back(trackletsInFrame);
     }
-    */
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -382,49 +356,43 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     
     out = in.clone();
     cv::cvtColor(in,out,CV_BGR2RGB);
-    //for(int i=0;i<ui->listWidget->count();i++){
-        bool found = false;
-        //std::string trackId = ui->listWidget->item(i)->text().toStdString();
-        if(value<((int)frame_data.size())){
-            for(unsigned int j=0;j<frame_data.at(value).size();j++){
-                std::string trackId = btf_data.at(id_idx).at(frame_data.at(value).at(j));
-                //if(trackId.compare(btf_data.at(id_idx).at(frame_data.at(value).at(j)))==0){
-                    double scaledX = (scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()));
-                    double scaledY = (scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()));
-                    bool flip_coeff = false;
-                    for(unsigned int flip_idx=0;flip_idx<tracklets.size();flip_idx++){
-                        if(tracklets.at(flip_idx)->startFrame <= value && tracklets.at(flip_idx)->endFrame > value && tracklets.at(flip_idx)->antID == atoi(trackId.c_str())){
-                            flip_coeff = tracklets.at(flip_idx)->flipped;
-                            break;
-                        }
-                    }
-                    double theta = ((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
-                    int radius = 10;
-                    int lineWidth = 2;
-                    //std::cout<<"(";
-                    //std::cout<<(int)(scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()))<<", ";
-                    //std::cout<<(int)(scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()))<<") ";
-                    //std::cout<<"("<<in.cols<<", "<<in.rows<<")"<<std::endl;
-                    cv::Scalar btfColor(255,0,0);
-                    cv::circle(out,cv::Point(scaledX,scaledY),radius,btfColor,lineWidth);
-                    double endPtX = (radius*cos(theta))+scaledX;
-                    double endPtY = (radius*sin(theta))+scaledY;
-                    cv::line(out,cv::Point(scaledX,scaledY),cv::Point(endPtX,endPtY),btfColor,lineWidth);
-                    cv::putText(out,trackId,cv::Point(scaledX,scaledY),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255),2);
-                    //found = true;
-                    //break;
-                //}
-            }
+    //bool found = false;
+    if(value<((int)frame_tracklets.size())){
+        //for(unsigned int j=0;j<frame_data.at(value).size();j++){
+        for(unsigned int j=0;j<frame_tracklets.at(value).size();j++){
+            thisisdumb.str("");
+            thisisdumb.clear();
+            thisisdumb<<frame_tracklets.at(value).at(j)->antID;
+            std::string trackId = thisisdumb.str();
+            //std::cout<<"ID: "<<frame_tracklets.at(value).at(j)->antID;
+            //std::cout<<" Frame: "<<value<<std::endl;
+            int trackletStart = frame_tracklets.at(value).at(j)->startFrame;
+            double scaledX = (scaleFactor*frame_tracklets.at(value).at(j)->ximage.at(value-trackletStart));
+            double scaledY = (scaleFactor*frame_tracklets.at(value).at(j)->yimage.at(value-trackletStart));
+            bool flip_coeff = frame_tracklets.at(value).at(j)->flipped;
+            double theta = ((flip_coeff)?M_PI:0)+frame_tracklets.at(value).at(j)->timage.at(value-trackletStart);
+            //std::string trackId = btf_data.at(id_idx).at(frame_data.at(value).at(j));
+            //double scaledX = (scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()));
+            //double scaledY = (scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()));
+            //bool flip_coeff = false;
+            //for(unsigned int flip_idx=0;flip_idx<tracklets.size();flip_idx++){
+            //    if(tracklets.at(flip_idx)->startFrame <= value && tracklets.at(flip_idx)->endFrame > value && tracklets.at(flip_idx)->antID == atoi(trackId.c_str())){
+            //        flip_coeff = tracklets.at(flip_idx)->flipped;
+            //        break;
+            //    }
+            //}
+            //double theta = ((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
+            int radius = 10;
+            int lineWidth = 2;
+            cv::Scalar btfColor(255,0,0);
+            cv::circle(out,cv::Point(scaledX,scaledY),radius,btfColor,lineWidth);
+            double endPtX = (radius*cos(theta))+scaledX;
+            double endPtY = (radius*sin(theta))+scaledY;
+            cv::line(out,cv::Point(scaledX,scaledY),cv::Point(endPtX,endPtY),btfColor,lineWidth);
+            cv::putText(out,trackId,cv::Point(scaledX,scaledY),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255),2);
         }
-        if(found){
-            //ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(255,255,255)));
-        } else {
-            //ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(200,200,200)));
-        }
-    //}
+    }
     QImage img = Mat2QImage(out);
-    //img.scaledToHeight(ui->imageLabel->height());
-    //ui->imageLabel->setPixmap(QPixmap::fromImage(img));
     ui->imageLabel->setPixmap(QPixmap::fromImage(img).scaledToWidth((int)(out.cols*ui->doubleSpinBox->value())));
     curFrameLine->setPos(value,0);
 }
@@ -482,14 +450,29 @@ void MainWindow::on_pushButton_7_clicked()
         a_file->open((dir_name+btf_names.at(i).c_str()).toStdString().c_str(),std::fstream::out);
         files.push_back(a_file);
     }
-
+    for(unsigned int i=0;i<frame_tracklets.size();i++){
+        for(unsigned int j=0;j<frame_tracklets.at(i).size();j++){
+            //if nuked, ignore this tracklet
+            if(frame_tracklets.at(i).at(j)->nuked)
+                continue;
+            //otherwise, write out the x and y
+            int trackletStart = frame_tracklets.at(i).at(j)->startFrame;
+            (*(files.at(x_idx)))<<frame_tracklets.at(i).at(j)->ximage.at(i-trackletStart)<<std::endl;
+            (*(files.at(y_idx)))<<frame_tracklets.at(i).at(j)->yimage.at(i-trackletStart)<<std::endl;
+            //flip theta?
+            (*(files.at(t_idx)))<<((frame_tracklets.at(i).at(j)->flipped)?M_PI:0)+frame_tracklets.at(i).at(j)->timage.at(i-trackletStart)<<std::endl;
+            (*(files.at(timestamp_idx)))<<frame_tracklets.at(i).at(j)->timestamp.at(i-trackletStart)<<std::endl;
+            (*(files.at(id_idx)))<<frame_tracklets.at(i).at(j)->antID<<std::endl;
+        }
+    }
+    /*
     unsigned int frameNo = 0;
     for(unsigned int i=0;i<btf_data.at(id_idx).size()-1;i++){
         //figure out which frame this line belongs to
         for(;frameNo<frame_data.size();frameNo++){
             bool foundIt = false;
             for(unsigned int j=0;j<frame_data.at(frameNo).size();j++){
-                if(frame_data.at(frameNo).at(j)==i){
+                if(frame_data.at(frameNo).at(j)==(int)i){
                     foundIt = true;
                     break;
                 }
@@ -500,7 +483,7 @@ void MainWindow::on_pushButton_7_clicked()
         std::string trackId = btf_data.at(id_idx).at(i);
         bool ignored = false;
         for(unsigned int j=0;j<tracklets.size();j++){
-            if(tracklets.at(j)->startFrame <= frameNo && tracklets.at(j)->endFrame > frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
+            if(tracklets.at(j)->startFrame <= (int)frameNo && tracklets.at(j)->endFrame > (int)frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
                 ignored=tracklets.at(j)->nuked;
                 break;
             }
@@ -512,7 +495,7 @@ void MainWindow::on_pushButton_7_clicked()
         theta = atof(btf_data.at(t_idx).at(i).c_str());
         bool flip_coeff = false;
         for(unsigned int j=0;j<tracklets.size();j++){
-            if(tracklets.at(j)->startFrame <= frameNo && tracklets.at(j)->endFrame > frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
+            if(tracklets.at(j)->startFrame <= (int)frameNo && tracklets.at(j)->endFrame > (int)frameNo && tracklets.at(j)->antID==atoi(trackId.c_str())){
                 flip_coeff = tracklets.at(j)->flipped;
                 break;
             }
@@ -521,7 +504,7 @@ void MainWindow::on_pushButton_7_clicked()
         theta = ((flip_coeff)?M_PI:0)+theta;
         if(theta>(2*M_PI)) theta=theta-(2*M_PI);
         for(unsigned int j=0;j<files.size();j++){
-            if(j==t_idx){
+            if((int)j==t_idx){
                 files.at(j)->precision(15);
                 (*files.at(j))<<theta<<std::endl;
             } else {
@@ -529,6 +512,7 @@ void MainWindow::on_pushButton_7_clicked()
             }
         }
     }
+    */
     for(unsigned int i=0;i<files.size();i++){
         files.at(i)->close();
         delete files.at(i);
@@ -556,7 +540,7 @@ void MainWindow::on_pushButton_9_clicked()
 {
     //split button
     int currentFrame = ui->horizontalSlider->value();
-    if(currentFrame >=0 && (unsigned int)currentFrame < frame_data.size()){
+    if(currentFrame >=0 && currentFrame < (int)frame_data.size()){
         for(unsigned int i=0;i<tracklets.size();i++){
             if(tracklets.at(i)->selected){
                 int x,y,width,height;
@@ -565,12 +549,65 @@ void MainWindow::on_pushButton_9_clicked()
                 width = (tracklets.at(i)->endFrame)-currentFrame;
                 height = 19;
                 TrackletRectItem *tr = new TrackletRectItem();
+                tr->ximage.clear();
+                tr->yimage.clear();
+                tr->timage.clear();
                 tr->setRect(x,y,width,height);
                 tr->startFrame = currentFrame;
                 tr->endFrame = tracklets.at(i)->endFrame;
                 tr->color = Qt::yellow;
                 tr->flipped = tr->nuked = tr->selected = false;
                 tr->antID = tracklets.at(i)->antID;
+                //find the split point in the relative tracks
+                int newEnd = currentFrame-tracklets.at(i)->startFrame;
+                //remove tracklets.at(i) from frame_tracklets at all
+                //the frames between currentFrame and endFrame
+                //and add tr to frame_tracklets at all the frames
+                //between currentFrame and endFrame
+                for(int j=currentFrame;j<tr->endFrame;j++){
+                    for(unsigned int k=0;k<frame_tracklets.at(j).size();k++){
+                        if(frame_tracklets.at(j).at(k)->antID == tr->antID){
+                            std::cout<<"Removing Ant "<<tr->antID<<" from frame "<<j<<std::endl;
+                            frame_tracklets.at(j).erase(frame_tracklets.at(j).begin()+k);
+                        }
+                    }
+                    frame_tracklets.at(j).push_back(tr);
+                }
+                //now add the track data to the new tracklet
+                //X pos
+                tr->ximage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->ximage.size();j++){
+                    tr->ximage.push_back(tracklets.at(i)->ximage.at(j));
+                }
+                //so algorith::copy is a shallow copy? how is that usefull?!?
+                //std::copy(tracklets.at(i)->ximage.begin()+newEnd,
+                //          tracklets.at(i)->ximage.end(),
+                //          tr->ximage.begin());
+                //Y pos
+                tr->yimage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->yimage.size();j++){
+                    tr->yimage.push_back(tracklets.at(i)->yimage.at(j));
+                }
+                //std::copy(tracklets.at(i)->yimage.begin()+newEnd,
+                //          tracklets.at(i)->yimage.end(),
+                //          tr->yimage.begin());
+                //Theta
+                tr->timage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->timage.size();j++){
+                    tr->timage.push_back(tracklets.at(i)->timage.at(j));
+                }
+                //std::copy(tracklets.at(i)->timage.begin()+newEnd,
+                //          tracklets.at(i)->timage.end(),
+                //          tr->timage.begin());
+                //Timestamp
+                tr->timestamp.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->timestamp.size();j++){
+                    tr->timestamp.push_back(tracklets.at(i)->timestamp.at(j));
+                }
+                //std::copy(tracklets.at(i)->timestamp.begin()+newEnd,
+                //          tracklets.at(i)->timestamp.end(),
+                //          tr->timestamp.begin());
+
                 tr->setBrush(QBrush(Qt::yellow));
                 tracklets.push_back(tr);
                 x = tracklets.at(i)->startFrame;
@@ -578,6 +615,16 @@ void MainWindow::on_pushButton_9_clicked()
                 width = currentFrame - tracklets.at(i)->startFrame;
                 height = 19;
                 tracklets.at(i)->endFrame = currentFrame;
+                //now remove the split data from the old tracklet
+                tracklets.at(i)->ximage.erase(tracklets.at(i)->ximage.begin()+(newEnd),
+                                              tracklets.at(i)->ximage.end());
+                tracklets.at(i)->yimage.erase(tracklets.at(i)->yimage.begin()+(newEnd),
+                                              tracklets.at(i)->yimage.end());
+                tracklets.at(i)->timage.erase(tracklets.at(i)->timage.begin()+(newEnd),
+                                              tracklets.at(i)->timage.end());
+                tracklets.at(i)->timestamp.erase(tracklets.at(i)->timestamp.begin()+(newEnd),
+                                              tracklets.at(i)->timestamp.end());
+                                             /* */
                 tracklets.at(i)->setRect(x,y,width,height);
                 ui->graphicsView->scene()->addItem(tr);
 
