@@ -466,7 +466,7 @@ void MainWindow::on_pushButton_9_clicked()
             if(tracklets.at(i)->selected){
                 int x,y,width,height;
                 x = currentFrame;
-                y = tracklets.at(i)->antID;
+                y = tracklets.at(i)->antID*20;
                 width = (tracklets.at(i)->endFrame)-currentFrame;
                 height = 19;
                 TrackletRectItem *tr = new TrackletRectItem();
@@ -518,7 +518,7 @@ void MainWindow::on_pushButton_9_clicked()
                 tr->setBrush(QBrush(Qt::yellow));
                 tracklets.push_back(tr);
                 x = tracklets.at(i)->startFrame;
-                y = tracklets.at(i)->antID;
+                y = tracklets.at(i)->antID*20;
                 width = currentFrame - tracklets.at(i)->startFrame;
                 height = 19;
                 tracklets.at(i)->endFrame = currentFrame;
