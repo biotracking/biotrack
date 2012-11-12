@@ -25,6 +25,8 @@ Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
     imageLabel = ui.imageLabel;
 
 
+
+
     isTracking = false;
     isVideoShowing=true;
     completedTracking=false;
@@ -74,12 +76,13 @@ void Manytrack::timerEvent(QTimerEvent*) {
 
 
 
-        Mat img = updateFrame();
+//        Mat img = updateFrame();
+        currentFrameImg = updateFrame();
         if(completedTracking==false){
-            icpTracker->track(img, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+            icpTracker->track(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
             if(ui.display_pushButton->isChecked()){
 
-            updateImage(img);
+            updateVideoImage(currentFrameImg);
 
             updateVisualization(icpTracker->getTrackResultImage());
 
@@ -160,7 +163,7 @@ void Manytrack::messageToStatusBar(QString message)
 void Manytrack::nextFrame()
 {
     Mat img = updateFrame();
-    updateImage(img);
+    updateVideoImage(img);
     updateStatusBar();
 }
 
@@ -279,7 +282,7 @@ void Manytrack::toggleTracking()
 
 }
 
-void Manytrack::toggleBlobsView()
+void Manytrack::toggleSubtractionView()
 {
     if(ui.subtractioncheckBox->isChecked())
 
@@ -293,7 +296,7 @@ void Manytrack::toggleBlobsView()
     }
 }
 
-void Manytrack::updateImage(Mat dataimage)
+void Manytrack::updateVideoImage(Mat dataimage)
 {
 
 
@@ -700,12 +703,15 @@ void Manytrack::icpReset(){
 }
 void Manytrack::loadNewTracker(){
 
+ //Set Tracking to unfinished
 completedTracking=false;
+
     //Open all Image Assets and check to see if they are OK before creating a new ICPTRACKER object
     if(trackerCheck()){
         //All items checked out OK continue!
         icpTracker = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
+        //FIX TODO -- put all these commands into the constructor ofthe ICPtracker
         icpTracker->showModel=ui.modelViewcheckBox->isChecked();
         icpTracker->showRemovalRadii=ui.separationViewCheck->isChecked();
         icpTracker->showSearchRadius= ui.trackDistanceViewCheck->isChecked();
@@ -740,7 +746,7 @@ completedTracking=false;
         ui.resetButton->setEnabled(false);
         ui.stopButton->setEnabled(true);
         ui.stopButton->setText(tr("PLAY"));
-        toggleBlobsView();
+        toggleSubtractionView();
         ui.toolbartabWidget->setCurrentWidget(ui.controlsTabWidget); // if they are all set with the files, switch automatically to controls.
     }
     else{     ui.stopButton->setEnabled(false);
@@ -749,6 +755,8 @@ completedTracking=false;
 
 bool Manytrack::trackerCheck(){
     bool everythingok=true;
+
+    //TODO Check for MASK matches to BG and Video
 
     QString error="ERROR:  ";
     QString colour="red"; // you can use also QColor
@@ -790,6 +798,9 @@ bool Manytrack::trackerCheck(){
     //Video Capture
     capture.open(videopath.toStdString());
     capturepreview.open(videopath.toStdString());
+    ui.framesSlider->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
+    ui.framesspinBox->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
+
     //Find Properties of the Video File
     vidFPS = capture.get(CV_CAP_PROP_FPS);
     cout << "Frame rate   " <<vidFPS;
@@ -880,22 +891,28 @@ void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
                       displayWidth = bgImage.cols;
                       displayHeight= bgImage.rows;
 
-                      //     qimage = qimage.scaled(qimage.width(), qimage.height());// TODO make this display adjustable
+                      //     qimage = qimage.scaled(qimage.width(), qimage.height());
                       //  ui.scrollAreaWidgetContents->setGeometry(0,0,qimage.width(), qimage.height());
                   }
                   else if(index==2){ // 50% view
                       displayWidth = bgImage.cols/2;
                       displayHeight= bgImage.rows/2;
 
-                      // qimage = qimage.scaled(qimage.width()/2, qimage.height()/2); // TODO make this display adjustable
+                      // qimage = qimage.scaled(qimage.width()/2, qimage.height()/2);
                       // ui.scrollAreaWidgetContents->setGeometry(0,0,qimage.width(), qimage.height());
 
                   }
                   else if(index==0){ //Fit to Window mode
                       displayWidth = ui.scrollArea->width() -20;
-                      displayHeight = ui.scrollArea->height()-20;
-                      //   qimage = qimage.scaledToWidth(ui.scrollArea->width()); // TODO make this display adjustable
+
+//                      displayHeight = displayWidth*(bgImage.rows/ bgImage.cols);
+//                                        displayHeight = 100;
+
+                      displayHeight = (int)(((double)bgImage.rows/ (double)bgImage.cols)*(double)displayWidth);
+                      //   qimage = qimage.scaledToWidth(ui.scrollArea->width());
                       // ui.scrollAreaWidgetContents->setGeometry(0,0,ui.imageLabel->width(), ui.imageLabel->height());
+                      qDebug()<<
+                                 displayHeight <<"DISPLAY HEIGHT";
 
                   }
               }
@@ -904,10 +921,11 @@ void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
                    ui.visualizationLabel->resize(ui.imageLabel->size());
                    if(trackerChecked){
 
-                       updateImage(icpTracker->getTrackResultImage());
+                       updateVideoImage(currentFrameImg);
+                       updateVisualization(icpTracker->getTrackResultImage());
+
                    }
                    ui.scrollAreaWidgetContents->resize(displayWidth,displayHeight);
-                        updateVisualization(icpTracker->getTrackResultImage());
 
 }
 
@@ -922,7 +940,7 @@ void Manytrack::connectUI()
     //ui.blobsButton->setEnabled(false);
     //connect(ui.blobsButton, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
     ui.subtractioncheckBox->setChecked(false);
-    connect(ui.subtractioncheckBox, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
+    connect(ui.subtractioncheckBox, SIGNAL(clicked()), this, SLOT(toggleSubtractionView()));
 
 
 
@@ -1099,10 +1117,36 @@ void Manytrack::on_previewtrackingButton_clicked()
 
         capturepreview.retrieve(img);
         capturepreview.read(img);
+
+        //Load New preview Tracker
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
+        icpTrackerpreview->showModel=ui.modelViewcheckBox->isChecked();
+        icpTrackerpreview->showRemovalRadii=ui.separationViewCheck->isChecked();
+        icpTrackerpreview->showSearchRadius= ui.trackDistanceViewCheck->isChecked();
+        icpTrackerpreview->showTrails = ui.showTrailscheckBox->isChecked();
+        icpTrackerpreview->showBox= ui.showBoxcheckBox->isChecked();
+
+
+        //Load UI settings into Tracker
+        icpTrackerpreview->setResolutionFraction(ui.resolutionSpinBox->value());
+        icpTrackerpreview->setTrackDeathThreshold(ui.trackdeathSpinBox->value());
+        icpTrackerpreview->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
+        icpTrackerpreview->setSeparationThreshold(ui.separationSpinBox->value());
+
+
+        icpTrackerpreview->setBgSubThreshold(ui.bgSubThresholdSpinBox->value());
+        icpTrackerpreview->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
+
+        icpTrackerpreview->Ticp_maxIter=ui.ICP_MaxIterspinBox->value();
+
+        icpTrackerpreview->Ticp_transformationEpsilon=ui.ICP_TransEpsilondoubleSpinBox->value();
+
+        icpTrackerpreview->Ticp_euclideanDistance=ui.ICP_EuclideanDistdoubleSpinBox->value();
+
+
   icpTrackerpreview->track(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
 
-        updateImage(img);
+        updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());
 
 }

@@ -52,7 +52,7 @@ public:
 
 public slots:
     void toggleTracking();
-	void toggleBlobsView();
+    void toggleSubtractionView();
     void toggleContourTracking();
     void bgThresholdSpinValueChanged(int value);
 	void blobBirthAreaThresholdValueChanged();
@@ -94,7 +94,7 @@ private:
     bool isTracking;
     bool isVideoShowing;
     QString statusMessage;
-    void updateImage(Mat dataimage);
+    void updateVideoImage(Mat dataimage);
     void updateVisualization(Mat qImgARGB);
 
     void connectUI();
@@ -112,6 +112,8 @@ private:
     bool trackerCheck();
     bool trackerChecked;
     bool completedTracking;
+
+    Mat currentFrameImg;
 
     Mat previousImg;
     Mat bgImage;
