@@ -62,4 +62,6 @@ FORMS    += multitrack.ui
 
 RESOURCES += multitrack.qrc
 
+#This needs to be here for 32 bit Ubuntu if you ever use an Eigen Function in a) a vector< > or b) a custom class or struct
+DEFINES   +=  EIGEN_DONT_ALIGN_STATICALLY
 
