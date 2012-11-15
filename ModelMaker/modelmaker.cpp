@@ -573,16 +573,13 @@ void ModelMaker::extractModel(cv::Mat origframe)
                 const Point* ppt[1] = { poly_points };
                 int npt[] = { polygon.size() };
 
-                //Set Head to alpha=254
-                //Set Center to Alpha = 255
-                //Everything inside mask == alpha 200
-                //Everything outside alpha=0;
+
 
                 fillPoly( polymask,
                           ppt,
                           npt,
                           1,
-                          Scalar( 200, 200,200, 200 ),                  // Set Model Target Zone Alpha = 200
+                          Scalar( 100, 100,100, 100 ),                  // Set Model Target Zone Alpha = 200
 
                           8,
                           0);
@@ -593,11 +590,11 @@ void ModelMaker::extractModel(cv::Mat origframe)
                                 cv::circle(origframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
                                 cv::circle(origframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
 
-                                cv::circle(polymask,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
-                                cv::circle(polymask,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
+                                //cv::circle(polymask,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+                              //  cv::circle(polymask,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
 
-                                cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
-                                cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
+                              //  cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+                              //  cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
 
 
 
@@ -630,28 +627,31 @@ void ModelMaker::extractModel(cv::Mat origframe)
 
                 */
 cv::cvtColor(polymask,polymask, CV_RGB2GRAY);
-//cv::copy(subtractedframe,subtractedframe,polymask);
-Mat subtractedframenew;
-subtractedframe.copyTo(subtractedframenew,polymask); // note that m.copyTo(m,mask) will have no masking effect
-
-subtractedframe=subtractedframenew.clone();
-
-cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(250),2);
-cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2);
 
 
+//Full alpha mask = polygon selection (a =200) + BG subtracted organism (a= 255) + Center Mark ( a = 250) + head mark (a = 240)
+//Set Head to alpha=240
+//Set Center to Alpha = 250
+//Everything inside mask == alpha 100
+//Everything outside alpha=0;
+//BG subtracted ant = 255
 
-               // Mat BGRa( 100, 100, CV_8UC4, Scalar(1,2,3,4) );
-               // Mat bgr( BGRa.rows, BGRa.cols, CV_8UC3 );
-               // Mat alpha( BGRa.rows, BGRa.cols, CV_8UC1 );
+Mat maskedsubtraction;
+subtractedframe.copyTo(maskedsubtraction,polymask); // note that m.copyTo(m,mask) will have no masking effect
+cvtColor(maskedsubtraction, maskedsubtraction,CV_BGR2GRAY);
+
+maskedsubtraction = polymask+maskedsubtraction;
+
+cv::circle(maskedsubtraction,cv::Point(scaledcenterx,scaledcentery),1,Scalar(250),2);
+cv::circle(maskedsubtraction,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2);
+
                 Mat bgr;
                 bgr=origframe.clone();
 
                 Mat alpha;
-                cvtColor(subtractedframe, alpha,CV_BGR2GRAY);
-
+                maskedsubtraction.copyTo(alpha);
                 Mat bgra;
-                cvtColor(origframe, bgra,CV_BGR2BGRA);
+                cvtColor(origframe, bgra,CV_BGR2BGRA); //Copy the origframe, we'll write over it next
 
 
 
@@ -662,23 +662,23 @@ cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2);
                 // BGRa[0] -> bgr[0], BGRa[1] -> bgr[1],
                 // BGRa[2] -> bgr[2], BGRa[3] -> alpha[0]
                 int from_to[] = { 0,0,  1,1,  2,2,  3,3 };
-                mixChannels( in, 2, &bgra, 1, from_to, 4 );
+                mixChannels( in, 2, &bgra, 1, from_to, 4 ); // input array, number of files in input array, destination, number of files in destination, from-to array, number of pairs in from-to
+
 
 
                 QString ext = ".png";
-                QString fullframe = savepath+paintCanvas->polyNames.at(i)+"_"+QString::number(centroids[i].x())+"_"+QString::number(centroids[i].y())+"_"+QString::number(currentFrame)+ext;
+               // QString fullframe = savepath+paintCanvas->polyNames.at(i)+"_"+QString::number(centroids[i].x())+"_"+QString::number(centroids[i].y())+"_"+QString::number(currentFrame)+ext;
               QString modelfilename = savepath+paintCanvas->polyNames.at(i)+"_f"+QString::number(currentFrame)+ext;
 
 
               imwrite(modelfilename.toStdString()+"_subtraction",subtractedframe);
                 imwrite(modelfilename.toStdString()+"_polymask",polymask);
+                imwrite(modelfilename.toStdString()+"_alpha",alpha);
+
 
 
 
                 //save out Model
-               //Full Frame
-                imwrite(fullframe.toStdString(),polymask);
-                qDebug()<<"Saved out: "<<fullframe;
 
                 //rotated
                imwrite(modelfilename.toStdString(),bgra);
