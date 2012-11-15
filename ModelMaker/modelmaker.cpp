@@ -579,7 +579,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
                           ppt,
                           npt,
                           1,
-                          Scalar( 100, 100,100, 100 ),                  // Set Model Target Zone Alpha = 200
+                          Scalar( 255, 255,255,255 ),
 
                           8,
                           0);
@@ -587,8 +587,8 @@ void ModelMaker::extractModel(cv::Mat origframe)
 
 
                 //Debug
-                                cv::circle(origframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
-                                cv::circle(origframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
+//                                cv::circle(origframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+//                                cv::circle(origframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
 
                                 //cv::circle(polymask,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
                               //  cv::circle(polymask,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
@@ -603,47 +603,26 @@ void ModelMaker::extractModel(cv::Mat origframe)
 
                 qDebug()<<"Roi "<<x1<<"  "<<y1<<"  "<<x2<<"  "<<y2<<"  ";
 
-                //***Crop and Rotate ***//
-              /* No rotate or crop
-                qDebug()<<"crop centered on  "<<scaledcenterx<<"  "<<scaledcentery;
-                //crop the frame based on ROI
-                Point2f src_center(scaledcenterx, scaledcentery);
-                //To do this correctly use getRectSubPix instead of frameMat(MYROI) method
 
-                getRectSubPix(origframe, cv::Size(sqrt(biggestdistancesquared)*2,sqrt(biggestdistancesquared)*2), src_center, origframe);
-                getRectSubPix(subtractedframe, cv::Size(sqrt(biggestdistancesquared)*2,sqrt(biggestdistancesquared)*2), src_center, subtractedframe);
-                getRectSubPix(polymask, cv::Size(sqrt(biggestdistancesquared)*2,sqrt(biggestdistancesquared)*2), src_center, polymask);
-
-                //rotate the cropped frame about the center of the cropped frame.
-                qDebug()<<"Rotate that image  "<<angle;
-                origframe = rotateImage(origframe, angle);//Rotate full image about this center
-                subtractedframe = rotateImage(subtractedframe, angle);//Rotate full image about this center
-               polymask = rotateImage(polymask, angle);//Rotate full image about this center
-
-                //after I rotate clear the global angle
-                angle =0;
-                //debug
-                angle=-1;
-
-                */
 cv::cvtColor(polymask,polymask, CV_RGB2GRAY);
 
 
 //Full alpha mask = polygon selection (a =200) + BG subtracted organism (a= 255) + Center Mark ( a = 250) + head mark (a = 240)
 //Set Head to alpha=240
 //Set Center to Alpha = 250
-//Everything inside mask == alpha 100
-//Everything outside alpha=0;
+//Everything inside mask == alpha 200
+//Everything outside alpha=100;
 //BG subtracted ant = 255
 
 Mat maskedsubtraction;
 subtractedframe.copyTo(maskedsubtraction,polymask); // note that m.copyTo(m,mask) will have no masking effect
 cvtColor(maskedsubtraction, maskedsubtraction,CV_BGR2GRAY);
-
+polymask = polymask+155;   //255 moves to 255, 0 moves to 155
+polymask = polymask - 55;  //255 moves to 200, 155 moves to 100
 maskedsubtraction = polymask+maskedsubtraction;
 
-cv::circle(maskedsubtraction,cv::Point(scaledcenterx,scaledcentery),1,Scalar(250),2);
-cv::circle(maskedsubtraction,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2);
+cv::circle(maskedsubtraction,cv::Point(scaledcenterx,scaledcentery),1,Scalar(250),2); //Encode the Center
+cv::circle(maskedsubtraction,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2); //encode the head
 
                 Mat bgr;
                 bgr=origframe.clone();
@@ -684,6 +663,38 @@ cv::circle(maskedsubtraction,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2)
                imwrite(modelfilename.toStdString(),bgra);
 
                 qDebug()<<"Saved out: "<<modelfilename;
+
+                //***Crop and Rotate ***//
+                qDebug()<<"crop centered on  "<<scaledcenterx<<"  "<<scaledcentery;
+                //crop the frame based on ROI
+                Point2f src_center(scaledcenterx, scaledcentery);
+                //To do this correctly use getRectSubPix instead of frameMat(MYROI) method
+                // getRectSubPix only works with certain image formats (this is undocumented in opencv : P
+                // so we have to do that cutting and mixing again!
+                getRectSubPix(bgr, cv::Size(sqrt(biggestdistancesquared)*2,sqrt(biggestdistancesquared)*2), src_center, bgr);
+                getRectSubPix(alpha, cv::Size(sqrt(biggestdistancesquared)*2,sqrt(biggestdistancesquared)*2), src_center, alpha);
+
+            Mat bgracropped;
+            cvtColor(bgr, bgracropped,CV_BGR2BGRA); //Copy the origframe, we'll write over it next
+            Mat inagain[] = { bgr, alpha };
+            int from_to2[] = { 0,0,  1,1,  2,2,  3,3 };
+
+            //Note: the height and width dimensions have to be the same for the inputs and outputs
+                mixChannels( inagain, 2, &bgracropped, 1, from_to2, 4 ); // input array, number of files in input array, destination, number of files in destination, from-to array, number of pairs in from-to
+
+
+                //rotate the cropped frame about the center of the cropped frame.
+                qDebug()<<"Rotate that image  "<<angle;
+                bgracropped = rotateImage(bgracropped, angle);//Rotate full image about this center
+
+                //after I rotate clear the global angle
+                angle =0;
+                //debug
+                angle=-1;
+
+
+
+                imwrite(modelfilename.toStdString()+"_rotated",bgracropped);
 
 
                 centroids.clear();
