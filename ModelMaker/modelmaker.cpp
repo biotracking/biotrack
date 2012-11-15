@@ -573,20 +573,31 @@ void ModelMaker::extractModel(cv::Mat origframe)
                 const Point* ppt[1] = { poly_points };
                 int npt[] = { polygon.size() };
 
+                //Set Head to alpha=254
+                //Set Center to Alpha = 255
+                //Everything inside mask == alpha 200
+                //Everything outside alpha=0;
+
                 fillPoly( polymask,
                           ppt,
                           npt,
                           1,
-                          Scalar( 255, 255,255, 255 ),
+                          Scalar( 200, 200,200, 200 ),                  // Set Model Target Zone Alpha = 200
+
                           8,
                           0);
 
 
 
                 //Debug
-//                                cv::circle(frameMat,cv::Point(scaledcenterx,scaledcentery),3,Scalar(255,255,255),2);
-//                                cv::circle(frameMat,cv::Point(scaledheadx,scaledheady),3,Scalar(255,0,255),2);
-                //cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),3,Scalar(255,255,0, 5),2);
+                                cv::circle(origframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+                                cv::circle(origframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
+
+                                cv::circle(polymask,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+                                cv::circle(polymask,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
+
+                                cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(255,255,255,255),2);
+                                cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(255,0,255, 254),2);
 
 
 
@@ -596,6 +607,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
                 qDebug()<<"Roi "<<x1<<"  "<<y1<<"  "<<x2<<"  "<<y2<<"  ";
 
                 //***Crop and Rotate ***//
+              /* No rotate or crop
                 qDebug()<<"crop centered on  "<<scaledcenterx<<"  "<<scaledcentery;
                 //crop the frame based on ROI
                 Point2f src_center(scaledcenterx, scaledcentery);
@@ -616,6 +628,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
                 //debug
                 angle=-1;
 
+                */
 cv::cvtColor(polymask,polymask, CV_RGB2GRAY);
 //cv::copy(subtractedframe,subtractedframe,polymask);
 Mat subtractedframenew;
@@ -623,10 +636,10 @@ subtractedframe.copyTo(subtractedframenew,polymask); // note that m.copyTo(m,mas
 
 subtractedframe=subtractedframenew.clone();
 
-                //Set Head to alpha=253
-                //Set Center to Alpha = 254
-                //Everything inside mask == alpha 255
-                //Everything outside alpha=0;
+cv::circle(subtractedframe,cv::Point(scaledcenterx,scaledcentery),1,Scalar(250),2);
+cv::circle(subtractedframe,cv::Point(scaledheadx,scaledheady),1,Scalar(240),2);
+
+
 
                // Mat BGRa( 100, 100, CV_8UC4, Scalar(1,2,3,4) );
                // Mat bgr( BGRa.rows, BGRa.cols, CV_8UC3 );
@@ -653,16 +666,20 @@ subtractedframe=subtractedframenew.clone();
 
 
                 QString ext = ".png";
-//                QString modelfilename = savepath+paintCanvas->polyNames.at(i)+"_"+QString::number(centroids[i].x())+"_"+QString::number(centroids[i].y())+"_"+QString::number(currentFrame)+ext;
+                QString fullframe = savepath+paintCanvas->polyNames.at(i)+"_"+QString::number(centroids[i].x())+"_"+QString::number(centroids[i].y())+"_"+QString::number(currentFrame)+ext;
               QString modelfilename = savepath+paintCanvas->polyNames.at(i)+"_f"+QString::number(currentFrame)+ext;
-                // imwrite(modelfilename.toStdString()+"_subtraction",subtractedframe);
-               // imwrite(modelfilename.toStdString()+"_polymask",polymask);
+
+
+              imwrite(modelfilename.toStdString()+"_subtraction",subtractedframe);
+                imwrite(modelfilename.toStdString()+"_polymask",polymask);
 
 
 
                 //save out Model
-               //Cropped
-               // imwrite(modelfilename.toStdString(),cropframe);
+               //Full Frame
+                imwrite(fullframe.toStdString(),polymask);
+                qDebug()<<"Saved out: "<<fullframe;
+
                 //rotated
                imwrite(modelfilename.toStdString(),bgra);
 
