@@ -153,74 +153,21 @@ ICPTracker::~ICPTracker()
     data_cloud.clear();
 }
 
-
-
-
-void ICPTracker::track(Mat scene_img, int timeIndex)
-{
-    Track* track;
-    vector<Model> currentTrackModelPoints;
-    currentTrackModelPoints = models;
-
-
-
-    /////////////////////////
-    // update all tracks
-    /////////////////////////
-    frameIndex = timeIndex;
-
-    ///////////////////////////
-    /// Prep the current Frame
-    //get current frame to track
-    ////////////////////////////
-
-
-
-
-    // bg subtraction
-
-    absdiff(scene_img, bgImage,bgSubImage);
-
-    cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray //NOTE!!!! Never do a cvtColor(img,img, CVBGR2GRAY). if src and dst are same you get ERRORS!
-    cv::threshold(bgSubImageGray,bgSubImageGray,bgsubstractionThreshold,255,CV_THRESH_BINARY);
-
-
-    /// Draw contours
-    /// If we want to track just the outlines of the detections, let's give it a go!
-    if(isContourTracking){
-        bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
-    }
-
-    /*Mask  */
-    if(maskImageGray.empty()){//Don't care about mask
-    }    else{//Only mix in mask image if it exists
-        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //TODO check modeler for alternate method of applying mask
-    }
-
-    ////////////////////////////////////////////////////
-    ///TODO add user-controllable function for pre-filtering images (like blurring and stuff)
-    /*additional Filters*/
-    // median filter bgSubImageGray
-    //cvSmooth(bgSubImageGray, bgSubImageGray, CV_MEDIAN, 3);
-    /////////////////////////////////////////////////
+void ICPTracker::MattoCloudDetections(Mat img){
 
     //Rescale from full size down to our resampled size
     cv::resize(bgSubImageGray, bgSubImageGraySmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier);
 
     Mat imgsmall;
-    cv::resize(scene_img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
+    cv::resize(img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
     Mat imgsmallgray;
     cvtColor(imgsmall,imgsmallgray,CV_BGR2GRAY);
     Mat imgsmallHSV;
     cvtColor(imgsmall,imgsmallHSV,CV_BGR2HSV);
 
 
-    /// examine our subtraction to make sure we are doing things correctly
-    //    namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
-    //    imshow( "Gray image", gray_image );
-
     ///////////////
-    /// The Big Loop
+    /// The Biggest Loop
     /////////////
 
 
@@ -309,7 +256,80 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     /// End Big Loop
+    qDebug()<<"!!!!!!!!!ICP update Tracks!!!!!!!!!!!!";
+    qDebug()<<"Total data_cloud  pts "<<data_cloud.size()<<"  totalDatacloudpts "<<temp_data_cloud.size();
+    qDebug()<<" data_cloud Before track removal "<<data_cloud.size();
 
+
+}
+
+
+/*
+  This is the ICPTracker's main action function
+  it
+  0 ) Checks for keyframes and adds tracking there
+  1) Updates pre-existing tracks
+  2) Adds
+  */
+
+void ICPTracker::track(Mat scene_img, int timeIndex)
+{
+    Track* track;
+    vector<Model> currentTrackModelPoints;
+    currentTrackModelPoints = models;
+
+
+
+    /////////////////////////
+    // update all tracks
+    /////////////////////////
+    frameIndex = timeIndex;
+
+    ///////////////////////////
+    /// Prep the current Frame
+    //get current frame to track
+    ////////////////////////////
+
+
+
+    /////////////////
+    // background subtraction
+    ////////////////
+    absdiff(scene_img, bgImage,bgSubImage);
+
+    cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray //NOTE!!!! Never do a cvtColor(img,img, CVBGR2GRAY). if src and dst are same you get ERRORS!
+    cv::threshold(bgSubImageGray,bgSubImageGray,bgsubstractionThreshold,255,CV_THRESH_BINARY);
+
+
+    /// Draw contours
+    /// If we want to track just the outlines of the detections, let's give it a go!
+    if(isContourTracking){
+        bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
+    }
+
+    /*Mask  */
+    if(maskImageGray.empty()){//Don't care about mask
+    }    else{//Only mix in mask image if it exists
+        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //TODO check modeler for alternate method of applying mask
+    }
+
+    ////////////////////////////////////////////////////
+    ///TODO add user-controllable function for pre-filtering images (like blurring and stuff)
+    /*additional Filters*/
+    // median filter bgSubImageGray
+    //cvSmooth(bgSubImageGray, bgSubImageGray, CV_MEDIAN, 3);
+    /////////////////////////////////////////////////
+
+
+
+    /// examine our subtraction to make sure we are doing things correctly
+    //    namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
+    //    imshow( "Gray image", gray_image );
+
+   // end bg subtraction
+
+    //Load the "detection" pixels into a point cloud
+    MattoCloudDetections(scene_img);
 
 
     /////////////////////////////////////////////////////////////////
@@ -317,9 +337,6 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
     // precondition: data_cloud (data points) vector is populated for the current frame
     // postcondition: tracks vector is updated for the current frame
     /////////////////////////////////////////////////////////////////
-    qDebug()<<"!!!!!!!!!ICP update Tracks!!!!!!!!!!!!";
-    qDebug()<<"Total data_cloud  pts "<<data_cloud.size()<<"  totalDatacloudpts "<<temp_data_cloud.size();
-    qDebug()<<" data_cloud Before track removal "<<data_cloud.size();
 
 
     // for each track, update its transform and remove closest data points from detection

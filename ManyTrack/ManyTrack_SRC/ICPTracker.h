@@ -131,6 +131,9 @@ Model loadModelPoints(Model modelBGRAimg);
     template<typename T>
     void alphaBlendBGRA(const Mat& src1, const Mat& src2, Mat& dst);
 
+    void MattoCloudDetections(Mat img);
+
+
     Mat runContourDetection(Mat img);
     int resolutionFractionMultiplier;
 

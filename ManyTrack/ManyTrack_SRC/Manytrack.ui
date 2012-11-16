@@ -308,8 +308,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>357</width>
-                <height>76</height>
+                <width>23</width>
+                <height>16</height>
                </rect>
               </property>
               <widget class="QListView" name="listView">
@@ -697,6 +697,19 @@
                  <property name="fieldGrowthPolicy">
                   <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
                  </property>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="label_7">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Color Registration Factor 
+ (Pixels Distance / Hue Space)</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="1" column="1">
                   <widget class="QDoubleSpinBox" name="colorRegSpinBox">
                    <property name="font">
@@ -715,25 +728,6 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="1">
-                  <widget class="QSpinBox" name="recheckIDspinBox">
-                   <property name="suffix">
-                    <string> frames</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="label_8">
-                   <property name="font">
-                    <font>
-                     <pointsize>8</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Recheck ID</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="2" column="0" colspan="2">
                   <widget class="QCheckBox" name="DuplicatescheckBox">
                    <property name="font">
@@ -749,16 +743,37 @@
                    </property>
                   </widget>
                  </item>
-                 <item row="1" column="0">
-                  <widget class="QLabel" name="label_7">
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="label_8">
                    <property name="font">
                     <font>
                      <pointsize>8</pointsize>
                     </font>
                    </property>
                    <property name="text">
-                    <string>Color Registration Factor 
- (Pixels Distance / Hue Space)</string>
+                    <string>Recheck ID</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QSpinBox" name="recheckIDspinBox">
+                   <property name="suffix">
+                    <string> frames</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QCheckBox" name="usekeyframecheckBox">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Use Keyframes</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
