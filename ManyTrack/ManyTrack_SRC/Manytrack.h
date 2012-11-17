@@ -52,7 +52,6 @@ public:
 
 public slots:
     void toggleTracking();
-    void toggleSubtractionView();
     void toggleContourTracking();
     void bgThresholdSpinValueChanged(int value);
 	void blobBirthAreaThresholdValueChanged();

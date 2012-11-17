@@ -328,7 +328,6 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
         //Other Parameters
 
-        //        icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unless it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
 //        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 
@@ -373,8 +372,6 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
 
         //Other Parameters
-        // icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
-
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
 //        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 

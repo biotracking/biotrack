@@ -43,20 +43,35 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
     uiICP=uiPass;
     thefps=fps;
 
-    //Set some default values
-    showSearchRadius=true;
-    showRemovalRadii=true;
-    showModel=true;
-    showTrails = true;
-
-    bgsubstractionThreshold = 58;
-    modelTOdataThreshold = 20; // percentage of model points to be considered healthy
-
-
     numOfTracks = 0;
-    isVideoShowing = true;
-    resolutionFractionMultiplier = 4; // 4 for 1/4 resolution, 2 for 1/2 resolution, 1 for full resolution
-    separationThreshold=6;    
+
+    //Set some default values
+    //Initialize values based on UI now!
+
+    //TODO fix redundancies
+    showSearchRadius=uiICP.trackDistanceViewCheck->isChecked();
+    showRemovalRadii=uiICP.separationViewCheck->isChecked();
+    showModel=uiICP.modelViewcheckBox->isChecked();
+    showTrails = uiICP.showTrailscheckBox->isChecked();
+    showBox =  uiICP.showBoxcheckBox->isChecked();
+
+    resolutionFractionMultiplier = uiICP.resolutionSpinBox->value(); // 4 for 1/4 resolution, 2 for 1/2 resolution, 1 for full resolution
+
+    bgsubstractionThreshold = uiICP.bgSubThresholdSpinBox->value();
+    modelTOdataThreshold = uiICP.healthyPercentageThresholdSpinBox->value(); // percentage of model points to be considered healthy
+    trackDeathThreshold=uiICP.trackdeathSpinBox->value();
+
+
+//    isVideoShowing = true;
+    separationThreshold=uiICP.separationSpinBox->value();
+    icpMatchDistanceThreshold = uiICP.trackdistanceSpinBox->value();
+    Ticp_maxIter=uiICP.ICP_MaxIterspinBox->value();
+    Ticp_transformationEpsilon=uiICP.ICP_TransEpsilondoubleSpinBox->value();
+    Ticp_euclideanDistance=uiICP.ICP_EuclideanDistdoubleSpinBox->value();
+    colorRegScale=uiICP.colorRegSpinBox->value();
+
+
+
 
     /*
       * Load All canned data
@@ -105,12 +120,9 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
 
     qDebug()<< "Number of Models loaded:" << models.size();
 
-    trackToBlobDistanceThreshold = 0;
-    trackDeathThreshold=20;
 
-    colorRegScale=uiICP.colorRegSpinBox->value();
-
-    /**/  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+    // 3D Visualization Stuff
+    /**  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
     viewer2->setBackgroundColor (0, 0, 0);
     //  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
@@ -251,7 +263,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
     data_cloud = temp_data_cloud;
     pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
-    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
+//    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
 
 
 
@@ -303,14 +315,14 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
     /// Draw contours
     /// If we want to track just the outlines of the detections, let's give it a go!
-    if(isContourTracking){
-        bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
-    }
+//    if(isContourTracking){
+//    //    bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
+//    }
 
     /*Mask  */
     if(maskImageGray.empty()){//Don't care about mask
     }    else{//Only mix in mask image if it exists
-        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //TODO check modeler for alternate method of applying mask
+        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //One way of applying a mask (Modelmaker has an alternative)
     }
 
     ////////////////////////////////////////////////////
@@ -345,7 +357,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
         currentTrackModelPoints = models;
 
-        data_cloud=  activeTracks[i]->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,trackToBlobDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        data_cloud=  activeTracks[i]->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,icpMatchDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
 
     }
 
@@ -372,8 +384,8 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
         }
 
         currentTrackModelPoints = models;
-        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, trackToBlobDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
-        data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, trackToBlobDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, icpMatchDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
+        data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, icpMatchDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
         {
             activeTracks.push_back(track);
@@ -412,20 +424,16 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     data_cloud.clear();
-    if (isVideoShowing && uiICP.display_pushButton->isChecked())
-    {
-        drawTrackResult(scene_img);
-    }
-    else
-    {
+
         //Show what the computer actually sees (at 1/resolution)
         //!!!! Change to have user control size of screen!)
-        cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
         if (uiICP.display_pushButton->isChecked())
         {
+            cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
+
             drawTrackResult(bgSubImage);
         }
-    }
+
 
 
 
@@ -510,11 +518,15 @@ void ICPTracker::drawTrackResult(Mat img)
     //    int thickness = 40;
     char label[10];
     trackResultImage =img.clone();
-    trackResultImage.setTo(0);
+
+
     Mat trackResultAlpha;
     cvtColor(trackResultImage,trackResultAlpha,CV_BGR2BGRA);
     cvtColor(trackResultImage,trackResultImage,CV_BGR2BGRA);
-    trackResultImage.setTo(Scalar(0,0,255,0));
+
+    if(!uiICP.subtractioncheckBox->isChecked()){
+trackResultImage.setTo(Scalar(0,0,255,0));
+    }
 
 
 
@@ -606,7 +618,7 @@ void ICPTracker::drawTrackResult(Mat img)
         ///Draw Detection Cirlce
         /////////////
         if(showSearchRadius){
-            cv::circle(trackResultImage,Point(activeTracks[i]->getX(),activeTracks[i]->getY()),(trackToBlobDistanceThreshold),Scalar(255,255,255,150),3);
+            cv::circle(trackResultImage,Point(activeTracks[i]->getX(),activeTracks[i]->getY()),(icpMatchDistanceThreshold),Scalar(255,255,255,150),3);
         }
         ///////////////
         ///Draw ICP Model Templates

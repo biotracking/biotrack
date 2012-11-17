@@ -54,7 +54,7 @@ QString mFolderPath;
 
     }
     void setMatchDistanceThreshold(int t){
-        trackToBlobDistanceThreshold=t;
+        icpMatchDistanceThreshold=t;
     }
     void setTrackDeathThreshold(int t){
         trackDeathThreshold=t;
@@ -62,8 +62,8 @@ QString mFolderPath;
 
     void outputInteractionsReport();
     void outputBTF(QString projectdirectory,QString icpprojectname);
-    void setVideoShowing(bool showing) { isVideoShowing = showing; }
-    void setContourTracking(bool cTracking) { isContourTracking = cTracking;	models=loadModelClouds(mFolderPath); }
+//    void setVideoShowing(bool showing) { isVideoShowing = showing; }
+  //  void setContourTracking(bool cTracking) { isContourTracking = cTracking;	models=loadModelClouds(mFolderPath); }
 
     bool showSearchRadius;
     bool showRemovalRadii;
@@ -100,7 +100,7 @@ private:
     vector<pair <PointCloud<PointXYZRGB> , QString> > ModelPairs;
 
 //    Point modelDimensions;
-    bool isVideoShowing;
+//    bool isVideoShowing;
     bool isContourTracking;
     float thefps;
 
@@ -123,7 +123,7 @@ Model loadModelPoints(Model modelBGRAimg);
 
 
     int frameIndex;
-    int trackToBlobDistanceThreshold;
+    int icpMatchDistanceThreshold;
     void drawTrackResult(Mat img);
     void drawTrackResultOriginal(Mat img);
     void processInteractions(Track* ta, Track* tb, FILE* fp);
@@ -138,7 +138,7 @@ Model loadModelPoints(Model modelBGRAimg);
     int resolutionFractionMultiplier;
 
 //    boost::shared_ptr<pcl::visualization::CloudViewer> cMviewer;
-    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
+//    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
 
      //   pcl::visualization::CloudViewer viewer("Cloud Viewer");
 

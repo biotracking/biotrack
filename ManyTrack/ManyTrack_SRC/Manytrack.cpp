@@ -24,7 +24,7 @@ Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
     icpTracker= NULL;
     imageLabel = ui.imageLabel;
 
-
+imageLabel->setScaledContents(true);
 
 
     isTracking = false;
@@ -195,8 +195,8 @@ void Manytrack::bgThresholdSpinValueChanged(int value)
 void Manytrack::blobBirthAreaThresholdValueChanged()
 {
     if (bgpath!=nopath && videopath!=nopath && modelfolder!=nopath)
-        if(ui.blobBirthAreaThresholdSpinBox->value() > 0){
-            icpTracker->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
+        if(ui.healthyPercentageThresholdSpinBox->value() > 0){
+            icpTracker->setTrackBirthAreaThreshold(ui.healthyPercentageThresholdSpinBox->value());
         }
 }
 
@@ -282,19 +282,6 @@ void Manytrack::toggleTracking()
 
 }
 
-void Manytrack::toggleSubtractionView()
-{
-    if(ui.subtractioncheckBox->isChecked())
-
-    {
-        icpTracker->setVideoShowing(false);
-    }
-    if(!ui.subtractioncheckBox->isChecked())
-
-    {
-        icpTracker->setVideoShowing(true);
-    }
-}
 
 void Manytrack::updateVideoImage(Mat dataimage)
 {
@@ -303,10 +290,11 @@ void Manytrack::updateVideoImage(Mat dataimage)
     qimage = QImage((const uchar*)dataimage.data, dataimage.cols, dataimage.rows, QImage::Format_RGB888);
     qimage = qimage.rgbSwapped();
 
-    qimage = qimage.scaled(displayWidth, displayHeight);
+//    qimage = qimage.scaled(displayWidth, displayHeight);
+
    // qimage = qimage.scaledToWidth(displayWidth);
 
-    imageLabel->setPixmap(QPixmap::fromImage(qimage));
+    imageLabel->setPixmap(QPixmap::fromImage(qimage).scaledToWidth((int) displayWidth));
 
 
     return;
@@ -317,10 +305,9 @@ void Manytrack::updateVisualization(Mat qImgARGB)
     QImage qimage;
     qimage = QImage((const uchar*)qImgARGB.data, qImgARGB.cols, qImgARGB.rows,qImgARGB.step, QImage::Format_ARGB32);
     qimage = qimage.rgbSwapped();
-    qimage = qimage.scaled(displayWidth, displayHeight);
 //    qimage = qimage.scaled(displayWidth, displayHeight);
 
-    ui.visualizationLabel->setPixmap(QPixmap::fromImage(qimage));
+    ui.visualizationLabel->setPixmap(QPixmap::fromImage(qimage).scaledToWidth((int) displayWidth));
 }
 
 
@@ -478,7 +465,7 @@ void Manytrack::loadDefaults(){
     ///Bring in nice defaults for people
     //SpinBoxes
     ui.bgSubThresholdSpinBox->setValue(55);
-    ui.blobBirthAreaThresholdSpinBox->setValue(20);
+    ui.healthyPercentageThresholdSpinBox->setValue(20);
     ui.resolutionSpinBox->setValue(8);
     ui.trackdistanceSpinBox->setValue(50);
     ui.trackdeathSpinBox->setValue(17);
@@ -502,7 +489,7 @@ void Manytrack::loadSettings(){
 
         //SpinBoxes
         ui.bgSubThresholdSpinBox->setValue(settings.value("bgsubthresh",ui.bgSubThresholdSpinBox->value()).toInt());
-        ui.blobBirthAreaThresholdSpinBox->setValue(settings.value("blobbirth", ui.blobBirthAreaThresholdSpinBox->value()).toInt());
+        ui.healthyPercentageThresholdSpinBox->setValue(settings.value("blobbirth", ui.healthyPercentageThresholdSpinBox->value()).toInt());
         ui.resolutionSpinBox->setValue(settings.value("resolutionAnal", ui.resolutionSpinBox->value()).toInt());
         ui.trackdistanceSpinBox->setValue(settings.value("trackdist", ui.trackdistanceSpinBox->value()).toInt());
         ui.trackdeathSpinBox->setValue(settings.value("trackdeath",ui.trackdeathSpinBox->value()).toInt());
@@ -563,7 +550,7 @@ void Manytrack::saveSettings(){
         QSettings settings(savesetpath, QSettings::IniFormat);
         //SpinBoxes
         settings.setValue("bgsubthresh", ui.bgSubThresholdSpinBox->value());
-        settings.setValue("blobbirth", ui.blobBirthAreaThresholdSpinBox->value());
+        settings.setValue("blobbirth", ui.healthyPercentageThresholdSpinBox->value());
         settings.setValue("resolutionAnal", ui.resolutionSpinBox->value());
         settings.setValue("trackdist", ui.trackdistanceSpinBox->value());
         settings.setValue("trackdeath", ui.trackdeathSpinBox->value());
@@ -607,7 +594,7 @@ void Manytrack::writeSettings()
 
     //SpinBoxes
     settings.setValue("bgsubthresh", ui.bgSubThresholdSpinBox->value());
-    settings.setValue("blobbirth", ui.blobBirthAreaThresholdSpinBox->value());
+    settings.setValue("blobbirth", ui.healthyPercentageThresholdSpinBox->value());
     settings.setValue("resolutionAnal", ui.resolutionSpinBox->value());
     settings.setValue("trackdist", ui.trackdistanceSpinBox->value());
     settings.setValue("trackdeath", ui.trackdeathSpinBox->value());
@@ -643,7 +630,7 @@ void Manytrack::readSettings()
     //settings.beginGroup("MainWindow");
     //SpinBoxes
     ui.bgSubThresholdSpinBox->setValue(settings.value("bgsubthresh",ui.bgSubThresholdSpinBox->value()).toInt());
-    ui.blobBirthAreaThresholdSpinBox->setValue(settings.value("blobbirth", ui.blobBirthAreaThresholdSpinBox->value()).toInt());
+    ui.healthyPercentageThresholdSpinBox->setValue(settings.value("blobbirth", ui.healthyPercentageThresholdSpinBox->value()).toInt());
     ui.resolutionSpinBox->setValue(settings.value("resolutionAnal", ui.resolutionSpinBox->value()).toInt());
     ui.trackdistanceSpinBox->setValue(settings.value("trackdist", ui.trackdistanceSpinBox->value()).toInt());
     ui.trackdeathSpinBox->setValue(settings.value("trackdeath",ui.trackdeathSpinBox->value()).toInt());
@@ -711,29 +698,7 @@ completedTracking=false;
         //All items checked out OK continue!
         icpTracker = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
-        //FIX TODO -- put all these commands into the constructor ofthe ICPtracker
-        icpTracker->showModel=ui.modelViewcheckBox->isChecked();
-        icpTracker->showRemovalRadii=ui.separationViewCheck->isChecked();
-        icpTracker->showSearchRadius= ui.trackDistanceViewCheck->isChecked();
-        icpTracker->showTrails = ui.showTrailscheckBox->isChecked();
-        icpTracker->showBox= ui.showBoxcheckBox->isChecked();
 
-
-        //Load UI settings into Tracker
-        icpTracker->setResolutionFraction(ui.resolutionSpinBox->value());
-        icpTracker->setTrackDeathThreshold(ui.trackdeathSpinBox->value());
-        icpTracker->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
-        icpTracker->setSeparationThreshold(ui.separationSpinBox->value());
-
-
-        icpTracker->setBgSubThreshold(ui.bgSubThresholdSpinBox->value());
-        icpTracker->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
-
-        icpTracker->Ticp_maxIter=ui.ICP_MaxIterspinBox->value();
-
-        icpTracker->Ticp_transformationEpsilon=ui.ICP_TransEpsilondoubleSpinBox->value();
-
-        icpTracker->Ticp_euclideanDistance=ui.ICP_EuclideanDistdoubleSpinBox->value();
 
         pHour =0;
         pMin=0;
@@ -746,7 +711,6 @@ completedTracking=false;
         ui.resetButton->setEnabled(false);
         ui.stopButton->setEnabled(true);
         ui.stopButton->setText(tr("PLAY"));
-        toggleSubtractionView();
         ui.toolbartabWidget->setCurrentWidget(ui.controlsTabWidget); // if they are all set with the files, switch automatically to controls.
     }
     else{     ui.stopButton->setEnabled(false);
@@ -904,15 +868,13 @@ void Manytrack::on_displaycomboBox_currentIndexChanged(int index)
                   }
                   else if(index==0){ //Fit to Window mode
                       displayWidth = ui.scrollArea->width() -20;
-
-//                      displayHeight = displayWidth*(bgImage.rows/ bgImage.cols);
-//                                        displayHeight = 100;
-
-                      displayHeight = (int)(((double)bgImage.rows/ (double)bgImage.cols)*(double)displayWidth);
+                             displayHeight = ui.scrollArea->height()-20;
+                     // displayWidth = ui.scrollArea->width();
+                      //displayHeight = (int)(((double)bgImage.rows/ (double)bgImage.cols)*(double)displayWidth);
                       //   qimage = qimage.scaledToWidth(ui.scrollArea->width());
                       // ui.scrollAreaWidgetContents->setGeometry(0,0,ui.imageLabel->width(), ui.imageLabel->height());
-                      qDebug()<<
-                                 displayHeight <<"DISPLAY HEIGHT";
+//                      qDebug()<<
+//                                 displayHeight <<"DISPLAY HEIGHT";
 
                   }
               }
@@ -940,7 +902,6 @@ void Manytrack::connectUI()
     //ui.blobsButton->setEnabled(false);
     //connect(ui.blobsButton, SIGNAL(clicked()), this, SLOT(toggleBlobsView()));
     ui.subtractioncheckBox->setChecked(false);
-    connect(ui.subtractioncheckBox, SIGNAL(clicked()), this, SLOT(toggleSubtractionView()));
 
 
 
@@ -969,7 +930,7 @@ void Manytrack::connectUI()
     connect(ui.bgSubThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(bgThresholdSpinValueChanged(int)));
     //connect(ui.bgsubSlider, SIGNAL(sliderMoved(int)), ui.bgSubThresholdSpinBox, SIGNAL(bgThresholdSpinValueChanged(int)));
 
-    connect(ui.blobBirthAreaThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(blobBirthAreaThresholdValueChanged()));
+    connect(ui.healthyPercentageThresholdSpinBox, SIGNAL(valueChanged(int)), this, SLOT(blobBirthAreaThresholdValueChanged()));
     connect(ui.resolutionSpinBox, SIGNAL(valueChanged(int)), this, SLOT(resolutionFractionValueChanged()));
     connect(ui.trackdistanceSpinBox, SIGNAL(valueChanged(int)), this, SLOT(trackdistanceValueChanged()));
 
@@ -1030,7 +991,7 @@ void Manytrack::on_blobBirthAreaThresholdSpinBox_valueChanged(int arg1)
 
 void Manytrack::on_matchSlider_sliderMoved(int position)
 {
-    ui.blobBirthAreaThresholdSpinBox->setValue(position);
+    ui.healthyPercentageThresholdSpinBox->setValue(position);
 }
 
 void Manytrack::on_trackdeathSpinBox_valueChanged(int arg1)
@@ -1120,33 +1081,12 @@ void Manytrack::on_previewtrackingButton_clicked()
 
         //Load New preview Tracker
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
-        icpTrackerpreview->showModel=ui.modelViewcheckBox->isChecked();
-        icpTrackerpreview->showRemovalRadii=ui.separationViewCheck->isChecked();
-        icpTrackerpreview->showSearchRadius= ui.trackDistanceViewCheck->isChecked();
-        icpTrackerpreview->showTrails = ui.showTrailscheckBox->isChecked();
-        icpTrackerpreview->showBox= ui.showBoxcheckBox->isChecked();
-
-
-        //Load UI settings into Tracker
-        icpTrackerpreview->setResolutionFraction(ui.resolutionSpinBox->value());
-        icpTrackerpreview->setTrackDeathThreshold(ui.trackdeathSpinBox->value());
-        icpTrackerpreview->setMatchDistanceThreshold(ui.trackdistanceSpinBox->value());
-        icpTrackerpreview->setSeparationThreshold(ui.separationSpinBox->value());
-
-
-        icpTrackerpreview->setBgSubThreshold(ui.bgSubThresholdSpinBox->value());
-        icpTrackerpreview->setTrackBirthAreaThreshold(ui.blobBirthAreaThresholdSpinBox->value());
-
-        icpTrackerpreview->Ticp_maxIter=ui.ICP_MaxIterspinBox->value();
-
-        icpTrackerpreview->Ticp_transformationEpsilon=ui.ICP_TransEpsilondoubleSpinBox->value();
-
-        icpTrackerpreview->Ticp_euclideanDistance=ui.ICP_EuclideanDistdoubleSpinBox->value();
 
 
   icpTrackerpreview->track(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
 
         updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());
+delete icpTrackerpreview;
 
 }
