@@ -31,6 +31,8 @@ INCLUDEPATH +=  "/usr/local/include/pcl-1.6/" \
                  "/usr/include/openni/" \
                  "/usr/include/vtk-5.8/" \
           "/usr/lib/libvtkCommon.so.5.8" \
+            "/usr/lib/libvtkWidgets.so.5.8.0"
+
 
 
 
@@ -49,7 +51,8 @@ LIBS += -lpcl_common \
           "/usr/lib/libvtkCommon.so.5.8" \
           "/usr/lib/libvtkFiltering.so.5.8" \
           "/usr/lib/libvtkRendering.so.5.8" \
-          "/usr/lib/libvtkGraphics.so.5.8"
+          "/usr/lib/libvtkGraphics.so.5.8" \
+            "/usr/lib/libvtkWidgets.so.5.8.0"
 
 
 
