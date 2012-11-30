@@ -279,22 +279,20 @@ void ICPTracker::MattoCloudDetections(Mat img){
 /*
   This is the ICPTracker's main action function
   it
-  0 ) Checks for keyframes and adds tracking there
-  1) Updates pre-existing tracks
-  2) Adds
+  0) Checks for keyframes and adds tracks there, Removes nearby detections
+  1) Updates pre-existing tracks, removes nearby detections
+  2) Adds new tracks to remaining detections
+  3) Deletes tracks that have died
+
   */
 
-void ICPTracker::track(Mat scene_img, int timeIndex)
+void ICPTracker::trackFrame(Mat scene_img, int timeIndex)
 {
     Track* track;
     vector<Model> currentTrackModelPoints;
     currentTrackModelPoints = models;
 
 
-
-    /////////////////////////
-    // update all tracks
-    /////////////////////////
     frameIndex = timeIndex;
 
     ///////////////////////////
@@ -343,11 +341,14 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
     //Load the "detection" pixels into a point cloud
     MattoCloudDetections(scene_img);
 
+    ////////////////
+    /// 0) TODO check for keyframes for this frame
+    //////////////////
 
     /////////////////////////////////////////////////////////////////
-    // Use ICP to update current tracks
-    // precondition: data_cloud (data points) vector is populated for the current frame
-    // postcondition: tracks vector is updated for the current frame
+    // 1) Use ICP to update current tracks
+    //      precondition: data_cloud (data points) vector is populated for the current frame
+    //      postcondition: tracks vector is updated for the current frame
     /////////////////////////////////////////////////////////////////
 
 
@@ -357,7 +358,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
         currentTrackModelPoints = models;
 
-        data_cloud=  activeTracks[i]->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,icpMatchDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        data_cloud=  activeTracks[i]->updatePosition(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,icpMatchDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
 
     }
 
@@ -370,7 +371,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     /////////////////////////
-    // add new tracks
+    // 2) add new tracks
     /////////////////////////
 
     //  dpoints associated with tracks were removed in previous update step
@@ -385,7 +386,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
         currentTrackModelPoints = models;
         track = new Track(timeIndex, data_cloud.points[i], numOfTracks, icpMatchDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
-        data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, icpMatchDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        data_cloud=  track->updatePosition(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, icpMatchDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
         {
             activeTracks.push_back(track);
@@ -401,7 +402,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     /////////////////////////
-    // delete old tracks
+    // 3) delete old tracks
     /////////////////////////
     // Iterate over tracks that were not updated this round and kill them
     // Why would a track not be updated? If the number of continuous zombie frames
@@ -736,6 +737,25 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
  */
 Model ICPTracker::loadModelPoints(Model modelBGRAimg)
 {
+
+    /**
+      Models contain spatial information coded in the Alpha channel
+      right now they are set to
+        //Set Head to alpha=240
+        //Set Center to Alpha = 250
+        //BG subtracted body mask = 255
+
+        ...All spatial information should be >200
+
+
+        //Everything inside rough mask == alpha 200
+        //Everything outside rough mask alpha=100;
+
+
+
+      **/
+
+
     Model outputModelWCloud = modelBGRAimg;
     Point coordinate;
     Mat imgBGRAsmall;
@@ -801,7 +821,7 @@ Model ICPTracker::loadModelPoints(Model modelBGRAimg)
 
 
             //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
-            if (pixvalAlpha > 2)
+            if (pixvalAlpha > 200)
             {
 
                 coordinate.x = x*resolutionFractionMultiplier - modelDimensions.x/2; // center //scale back into full res coordinates

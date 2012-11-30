@@ -123,7 +123,7 @@ public:
     double getRotationAngle(int idx=-1);
     void getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB>& modelPts, int idx=-1);
     bool isBirthFrame;
-    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector<Model> modelPTS_clouds,
+    pcl::PointCloud<pcl::PointXYZRGB> updatePosition(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector<Model> modelPTS_clouds,
                                           int areaThreshold,  int separateThreshold, int matchDThresh,
                                           int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST);
 
@@ -154,20 +154,20 @@ public:
     float recentFitness;
 
 //    Correspondences stuff
-    void estimateKeypoints (const PointCloud<PointXYZ>::Ptr &src,
-                       const PointCloud<PointXYZ>::Ptr &tgt,
-                       PointCloud<PointXYZ> &keypoints_src,
-                       PointCloud<PointXYZ> &keypoints_tgt);
-    void estimateNormals (const PointCloud<PointXYZ>::Ptr &src,
-                     const PointCloud<PointXYZ>::Ptr &tgt,
+    void estimateKeypoints (const PointCloud<PointXYZRGB>::Ptr &src,
+                       const PointCloud<PointXYZRGB>::Ptr &tgt,
+                       PointCloud<PointXYZRGB> &keypoints_src,
+                       PointCloud<PointXYZRGB> &keypoints_tgt);
+    void estimateNormals (const PointCloud<PointXYZRGB>::Ptr &src,
+                     const PointCloud<PointXYZRGB>::Ptr &tgt,
                      PointCloud<Normal> &normals_src,
                      PointCloud<Normal> &normals_tgt);
-    void estimateFPFH (const PointCloud<PointXYZ>::Ptr &src,
-                       const PointCloud<PointXYZ>::Ptr &tgt,
+    void estimateFPFH (const PointCloud<PointXYZRGB>::Ptr &src,
+                       const PointCloud<PointXYZRGB>::Ptr &tgt,
                        const PointCloud<Normal>::Ptr &normals_src,
                        const PointCloud<Normal>::Ptr &normals_tgt,
-                       const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                       const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
+                       const PointCloud<PointXYZRGB>::Ptr &keypoints_src,
+                       const PointCloud<PointXYZRGB>::Ptr &keypoints_tgt,
                        PointCloud<FPFHSignature33> &fpfhs_src,
                        PointCloud<FPFHSignature33> &fpfhs_tgt);
   void  findCorrespondences (const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
@@ -175,12 +175,12 @@ public:
                          Correspondences &all_correspondences);
 
   void  rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
-                              const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                              const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
+                              const PointCloud<PointXYZRGB>::Ptr &keypoints_src,
+                              const PointCloud<PointXYZRGB>::Ptr &keypoints_tgt,
                               Correspondences &remaining_correspondences);
 
-  void  computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
-                           const PointCloud<PointXYZ>::Ptr &tgt,
+  void  computeTransformation (const PointCloud<PointXYZRGB>::Ptr &src,
+                           const PointCloud<PointXYZRGB>::Ptr &tgt,
                            Eigen::Matrix4f &transform);
 
   void
@@ -201,7 +201,7 @@ private:
 
     //ICP alignment
     Eigen::Matrix4f update2DTransformPCL(pcl::PointCloud<pcl::PointXY> data_cloud,pcl::PointCloud<pcl::PointXY> model_cloud);
-    Eigen::Matrix4f updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
+    Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
 //        Eigen::Matrix4f updateTransformPCL(pcl::PointCloud<PointT> data_cloud,pcl::PointCloud<PointT> model_cloud);
 
     double matchScore;

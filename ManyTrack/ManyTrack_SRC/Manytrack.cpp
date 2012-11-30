@@ -72,20 +72,15 @@ void Manytrack::timerEvent(QTimerEvent*) {
         // and stop at the end, ready to repeat or let the user change parameters
 
 
-
-
-
-
 //        Mat img = updateFrame();
         currentFrameImg = updateFrame();
         if(completedTracking==false){
-            icpTracker->track(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+
+            icpTracker->trackFrame(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+
             if(ui.display_pushButton->isChecked()){
-
             updateVideoImage(currentFrameImg);
-
             updateVisualization(icpTracker->getTrackResultImage());
-
            }
         }
         updateStatusBar();
@@ -1083,7 +1078,7 @@ void Manytrack::on_previewtrackingButton_clicked()
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
 
-  icpTrackerpreview->track(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+  icpTrackerpreview->trackFrame(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
 
         updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());
