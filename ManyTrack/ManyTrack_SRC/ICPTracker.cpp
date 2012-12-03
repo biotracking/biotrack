@@ -276,6 +276,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
     for (int j=0; j<irows; j++) {
 
         Body body;
+
         cv::parallel_for(cv::Range(0, icols-1), body);
     }
 
@@ -345,6 +346,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
   */
 
 void ICPTracker::trackFrame(Mat scene_img, int timeIndex)
+
 
 {
     Track* track;

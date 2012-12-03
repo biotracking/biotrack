@@ -87,9 +87,9 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
     //leave open for other possible ICP methods
-    bool doPCL=true;
+    bool doPCL=false;
     //PCL implementation of ICP
-    if(!doPCL){
+    if(doPCL){
 
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {

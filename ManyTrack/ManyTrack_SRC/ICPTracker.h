@@ -37,6 +37,7 @@ int largestNumofModelPoints;
 QString mFolderPath;
     void updateImage(Mat img) { image = img; }
     void trackFrame(Mat scene_img, int timeIndex);
+
     Mat getBackgroundImage() { return bgImage; }
     Mat getBackgroundSubImage() { return bgSubImage; }
     Mat getTrackResultImage() { return trackResultImage; }
