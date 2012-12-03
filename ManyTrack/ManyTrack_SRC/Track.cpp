@@ -86,25 +86,28 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
     modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
+    //STRIP 3D data
+    PointCloud<PointXY> dataPTS_cloud2D;
+    copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
+    PointCloud<PointXY> modelPTS_cloud2D;
+    copyPointCloud(modelToProcess_cloud,modelPTS_cloud2D);
+
+             PointCloud<PointXYZRGB> dataPTS_cloudStripped;
+             copyPointCloud(dataPTS_cloud2D,dataPTS_cloudStripped);
+
+             PointCloud<PointXYZRGB> modelPTS_cloudStripped;
+             copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
+
+
     //leave open for other possible ICP methods
-    bool doPCL=false;
+    bool doPCL=true;
+
     //PCL implementation of ICP
     if(doPCL){
 
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {
 
-            //STRIP 3D data
-            PointCloud<PointXY> dataPTS_cloud2D;
-            copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
-            PointCloud<PointXY> modelPTS_cloud2D;
-            copyPointCloud(modelToProcess_cloud,modelPTS_cloud2D);
-
-                     PointCloud<PointXYZRGB> dataPTS_cloudStripped;
-                     copyPointCloud(dataPTS_cloud2D,dataPTS_cloudStripped);
-
-                     PointCloud<PointXYZRGB> modelPTS_cloudStripped;
-                     copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
 
 
 
@@ -116,6 +119,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
             //Apply the Transformation
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
+            pcl::transformPointCloud(modelPTS_cloudStripped,modelPTS_cloudStripped, T);
+
 
         }
 
@@ -135,7 +140,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
 
-             //std::cerr << transform << std::endl;
+//            qDebug()<< T;
 
         }
     }
@@ -150,10 +155,14 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
       **/
     pcl::PointCloud<pcl::PointXYZRGB> dataPTSreduced_cloud;
 
-    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
+//    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
+       removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
     pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
     totalRemovedPoints = totalpointsBeforeRemoval - dataPTSreduced_cloud.size();
+
+
+    qDebug()<<"Removed Points from Track  "<<totalRemovedPoints;
 
 
 
@@ -175,33 +184,32 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
         if ( totalRemovedPoints>birthAssociationsThreshold ) //matchScore >birthAssociationsThreshold && //Need new check for birthAssociationsthresh//  closestToModel.size() >= birthAssociationsThreshold)
         {
             isBirthable=true;
+            /// For Debugging we can visualize the Pointcloud
+                     /**
+                        pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
+                      //  copyPointCloud(modelPTS_cloud,)
+                        transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
 
+                        pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].cloud));
 
+                        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+                        viewer.showCloud(dataPTS_cloud_ptr);
 
-         /**  /// For Debugging we can visualize the Pointcloud
-            pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
-          //  copyPointCloud(modelPTS_cloud,)
-            transformPointCloud(modelPTS_clouds[modelIndex].first,modelPTS_clouds[modelIndex].first,T);
+                    int sw=0;
+                                while (!viewer.wasStopped())
+                                {
+                                    if(sw==0){
+                                    viewer.showCloud(model_cloud_ptrTempTrans);
+                                    sw=1;
+                                    }
+                                    else{
+                                        viewer.showCloud(dataPTS_cloud_ptr);
+                    sw=0;
+                                    }
 
-            pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].first));
+                                }
+                    /**/
 
-            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-            viewer.showCloud(dataPTS_cloud_ptr);
-
-        int sw=0;
-                    while (!viewer.wasStopped())
-                    {
-                        if(sw==0){
-                        viewer.showCloud(model_cloud_ptrTempTrans);
-                        sw=1;
-                        }
-                        else{
-                            viewer.showCloud(dataPTS_cloud_ptr);
-        sw=0;
-                        }
-
-                    }
-        /**/
 
         }
 
@@ -823,18 +831,19 @@ computeTransformation (const PointCloud<PointXYZRGB>::Ptr &src,
                             keypoints_tgt (new PointCloud<PointXYZRGB>);
 
   estimateKeypoints (src, tgt, *keypoints_src, *keypoints_tgt);
-  //print_info ("Found %zu and %zu keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
+  qDebug("Found %zu and %zu keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
 
   // Compute normals for all points keypoint
   PointCloud<Normal>::Ptr normals_src (new PointCloud<Normal>),
                           normals_tgt (new PointCloud<Normal>);
   estimateNormals (src, tgt, *normals_src, *normals_tgt);
-  //print_info ("Estimated %zu and %zu normals for the source and target datasets.\n", normals_src->points.size (), normals_tgt->points.size ());
+  qDebug("Estimated %zu and %zu normals for the source and target datasets.\n", normals_src->points.size (), normals_tgt->points.size ());
 
   // Compute FPFH features at each keypoint
   PointCloud<FPFHSignature33>::Ptr fpfhs_src (new PointCloud<FPFHSignature33>),
                                    fpfhs_tgt (new PointCloud<FPFHSignature33>);
   estimateFPFH (src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
+  qDebug("Computer %zu and %zu FPFH features for the source and target datasets.\n", fpfhs_src->points.size (), fpfhs_tgt->points.size ());
 
   // Copy the data and save it to disk
 /*  PointCloud<PointNormal> s, t;
@@ -850,20 +859,25 @@ computeTransformation (const PointCloud<PointXYZRGB>::Ptr &src,
   CorrespondencesPtr all_correspondences (new Correspondences),
                      good_correspondences (new Correspondences);
   findCorrespondences (fpfhs_src, fpfhs_tgt, *all_correspondences);
+  qDebug()<<"All Correspondences size  "<<all_correspondences->size();
 
   // Reject correspondences based on their XYZ distance
   rejectBadCorrespondences (all_correspondences, keypoints_src, keypoints_tgt, *good_correspondences);
-
+  qDebug()<<"Good Correspondences size  "<<good_correspondences->size();
   for (int i = 0; i < good_correspondences->size (); ++i)
     std::cerr << good_correspondences->at (i) << std::endl;
   // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
   pcl::registration::TransformationEstimationSVD<PointXYZRGB, PointXYZRGB> trans_est;
-  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
+//  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
+  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *all_correspondences, transform);
+
+//  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, transform); // leads to a crash
+//  trans_est.estimateRigidTransformation (*src, *tgt, transform); //leads to a crash
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void Track::
-icp (const PointCloud<Point>::Ptr &src,
+void Track::icp (const PointCloud<Point>::Ptr &src,
      const PointCloud<Point>::Ptr &tgt,
      Eigen::Matrix4d &transform)
 {/**

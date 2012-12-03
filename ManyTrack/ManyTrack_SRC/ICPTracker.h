@@ -130,6 +130,7 @@ private:
     int separationThreshold;
     std::vector<Model> loadModelClouds(QString mPath);
 
+    int numDetectionsinFrame;
 vector<Model> modelFilesToMAT(QString modelFolderPath);
 Model loadModelPoints(Model modelBGRAimg);
 

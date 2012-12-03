@@ -272,12 +272,12 @@ void ICPTracker::MattoCloudDetections(Mat img){
     int minVal=100, maxVal=200;
 
 /** //Loop in para
-
+const int SIZECOL = icols -1;
     for (int j=0; j<irows; j++) {
 
-        Body body;
+        const Body body;
 
-        cv::parallel_for(cv::Range(0, icols-1), body);
+        cv::parallel_for(cv::Range(0, SIZECOL), body);
     }
 
 /**/
@@ -329,7 +329,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
     /// End Big Loop
     qDebug()<<"!!!!!!!!!ICP update Tracks!!!!!!!!!!!!";
     qDebug()<<"Total data_cloud  pts "<<data_cloud.size()<<"  totalDatacloudpts "<<temp_data_cloud.size();
-    qDebug()<<" data_cloud Before track removal "<<DetectionsinFrame;
+    qDebug()<<" data_cloud Before track removal "<<numDetectionsinFrame;
 
 
 }
