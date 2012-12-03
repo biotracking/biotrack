@@ -12,7 +12,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
-
+#include <parallel/par_loop.h>
 #include "ui_Manytrack.h"
 
 
@@ -81,6 +81,17 @@ QString mFolderPath;
     double Ticp_euclideanDistance;
 
 //void    viewerOneOff (pcl::visualization::PCLVisualizer& viewer);
+
+    //************  Filters *******
+
+//    int dilation_type;
+//      if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
+//      else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
+//      else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+    void Dilation( int dilation_elem, int dilation_size, Mat &src );
+
+      Mat element;
+       int dilation_type;
 
 
 
@@ -152,6 +163,11 @@ private slots:
 
     void on_framesspinBox_valueChanged(int arg1);
     void on_framesSlider_sliderMoved(int position);
+
+
+
+
+
 };
 
 #endif // ICPTRACKER_H

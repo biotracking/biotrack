@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1254</width>
-    <height>811</height>
+    <height>820</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -163,8 +163,11 @@
       <property name="tabPosition">
        <enum>QTabWidget::East</enum>
       </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="filesTabWidget">
        <attribute name="title">
@@ -308,8 +311,8 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>23</width>
-                <height>16</height>
+                <width>357</width>
+                <height>76</height>
                </rect>
               </property>
               <widget class="QListView" name="listView">
@@ -956,6 +959,60 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="filtersTabWidget">
+       <attribute name="title">
+        <string>Filters</string>
+       </attribute>
+       <widget class="QSpinBox" name="dilatespinbox">
+        <property name="geometry">
+         <rect>
+          <x>360</x>
+          <y>40</y>
+          <width>60</width>
+          <height>27</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="dilatelabel">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>50</y>
+          <width>66</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Dilate</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="blurlabel">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>130</y>
+          <width>66</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Blur</string>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="blurspinBox">
+        <property name="geometry">
+         <rect>
+          <x>360</x>
+          <y>130</y>
+          <width>60</width>
+          <height>27</height>
+         </rect>
+        </property>
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
+      </widget>
      </widget>
     </item>
     <item row="3" column="0" colspan="4">
@@ -994,7 +1051,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>48</y>
+         <y>53</y>
          <width>688</width>
          <height>498</height>
         </rect>

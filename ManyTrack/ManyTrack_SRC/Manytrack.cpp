@@ -281,6 +281,8 @@ void Manytrack::toggleTracking()
 void Manytrack::updateVideoImage(Mat dataimage)
 {
 
+    //TEST FOR FILTERing
+//    blur(dataimage,dataimage,cv::Size(ui.blurspinBox->value(),ui.blurspinBox->value()));
 
     qimage = QImage((const uchar*)dataimage.data, dataimage.cols, dataimage.rows, QImage::Format_RGB888);
     qimage = qimage.rgbSwapped();
@@ -1079,6 +1081,7 @@ void Manytrack::on_previewtrackingButton_clicked()
 
 
   icpTrackerpreview->trackFrame(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+
 
         updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());
