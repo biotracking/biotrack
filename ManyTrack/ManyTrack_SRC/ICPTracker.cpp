@@ -271,18 +271,18 @@ void ICPTracker::MattoCloudDetections(Mat img){
     int myTab[SIZE];
     int minVal=100, maxVal=200;
 
-/** //Loop in para
+/**/ //Loop in para
 
     for (int j=0; j<irows; j++) {
 
-        Body body;
+        const Body body;
         cv::parallel_for(cv::Range(0, icols-1), body);
     }
 
 /**/
 
 //Original
-    /**/
+    /**
     for (int y=0; y < irows; y++)
     {
         for (int x=0; x < icols; x++)
