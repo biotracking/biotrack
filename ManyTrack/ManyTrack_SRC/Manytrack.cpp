@@ -79,7 +79,7 @@ void Manytrack::timerEvent(QTimerEvent*) {
 //        Mat img = updateFrame();
         currentFrameImg = updateFrame();
         if(completedTracking==false){
-            icpTracker->track(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+            icpTracker->runtracking(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
             if(ui.display_pushButton->isChecked()){
 
             updateVideoImage(currentFrameImg);
@@ -286,6 +286,8 @@ void Manytrack::toggleTracking()
 void Manytrack::updateVideoImage(Mat dataimage)
 {
 
+    //TEST FOR FILTERing
+//    blur(dataimage,dataimage,cv::Size(ui.blurspinBox->value(),ui.blurspinBox->value()));
 
     qimage = QImage((const uchar*)dataimage.data, dataimage.cols, dataimage.rows, QImage::Format_RGB888);
     qimage = qimage.rgbSwapped();
@@ -1083,7 +1085,7 @@ void Manytrack::on_previewtrackingButton_clicked()
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
 
-  icpTrackerpreview->track(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+  icpTrackerpreview->runtracking(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
 
         updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());

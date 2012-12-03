@@ -1,6 +1,41 @@
 #include "ICPTracker.h"
+//try to scan pixels in Parallel
+template <class type>
 
+class Parallel_LoopPixels: public cv::ParallelLoopBody
+{
+private:
+  type *bufferToClip;
+  type minValue, maxValue;
 
+public:
+  Parallel_LoopPixels(type* bufferToProcess, const type min, const type max)
+    : bufferToClip(bufferToProcess), minValue(min), maxValue(max){}
+
+  virtual void operator()( const cv::Range &r ) const {
+    register type *inputOutputBufferPTR=bufferToClip+r.start;
+    for (register int jf = r.start; jf != r.end; ++jf, ++inputOutputBufferPTR)
+    {
+        if (*inputOutputBufferPTR>maxValue)
+            *inputOutputBufferPTR=maxValue;
+        else if (*inputOutputBufferPTR<minValue)
+            *inputOutputBufferPTR=minValue;
+    }
+  }
+};
+
+class Body : public cv::ParallelLoopBody
+{
+public:
+    void operator ()(const cv::Range& range) const
+    {
+        for (int i = range.start; i < range.end; ++i){
+            int z;
+        z++;
+        }
+
+    }
+};
 
 void
 viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
@@ -231,6 +266,23 @@ void ICPTracker::MattoCloudDetections(Mat img){
     //        data_cloud.points.resize (data_cloud.width * data_cloud.height);
     pcl::PointCloud<pcl::PointXYZRGB> temp_data_cloud;
 
+    //TODO Loop pixels in parallel
+    const int SIZE=10;
+    int myTab[SIZE];
+    int minVal=100, maxVal=200;
+
+/** //Loop in para
+
+    for (int j=0; j<irows; j++) {
+
+        Body body;
+        cv::parallel_for(cv::Range(0, icols-1), body);
+    }
+
+/**/
+
+//Original
+    /**/
     for (int y=0; y < irows; y++)
     {
         for (int x=0; x < icols; x++)
@@ -260,6 +312,9 @@ void ICPTracker::MattoCloudDetections(Mat img){
             }
         }
     }
+
+    /**/
+
     data_cloud = temp_data_cloud;
     pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
@@ -284,7 +339,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
   2) Adds
   */
 
-void ICPTracker::track(Mat scene_img, int timeIndex)
+void ICPTracker::runtracking(Mat scene_img, int timeIndex)
 {
     Track* track;
     vector<Model> currentTrackModelPoints;
@@ -328,10 +383,10 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
     ////////////////////////////////////////////////////
     ///TODO add user-controllable function for pre-filtering images (like blurring and stuff)
     /*additional Filters*/
-    // median filter bgSubImageGray
-    //cvSmooth(bgSubImageGray, bgSubImageGray, CV_MEDIAN, 3);
     /////////////////////////////////////////////////
 
+  //  Dilation(0,uiICP.dilatespinbox->value(),bgSubImageGray);
+   // blur(scene_img,scene_img,cv::Size(uiICP.blurspinBox->value(),uiICP.blurspinBox->value()));
 
 
     /// examine our subtraction to make sure we are doing things correctly
@@ -1187,4 +1242,18 @@ Mat ICPTracker::runContourDetection(Mat img){
 
 
 
+/** @function Dilation */
+void ICPTracker::Dilation( int dilation_elem, int dilation_size, Mat &src )
+{
 
+  if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
+  else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
+  else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+
+  Mat element = getStructuringElement( dilation_type,
+                                       Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                       Point( dilation_size, dilation_size ) );
+  /// Apply the dilation operation
+  erode( src, src, element );
+//  imshow( "Dilation Demo", src );
+}
