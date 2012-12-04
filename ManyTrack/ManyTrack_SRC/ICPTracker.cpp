@@ -1,40 +1,113 @@
 #include "ICPTracker.h"
 //try to scan pixels in Parallel
-template <class type>
 
-class Parallel_LoopPixels: public cv::ParallelLoopBody
+class Scan_Pix_Parallel_row : public cv::ParallelLoopBody
 {
 private:
-  type *bufferToClip;
-  type minValue, maxValue;
+pcl:: PointCloud<PointXYZRGB>* cloudptr;
+int y;
+
+Mat* grayimg;
+Mat* image;
+Mat*  HSV;
+
+
+int istep;
+int ielemsize;
+
+//Color values
+int cirows;
+int cicols;
+int cistep;
+int cielemsize;
+int gistep;
+int gielemsize;
+
+int HSVistep;
+int HSVielemsize;
+double colorRegScale;
+int resolutionFractionMultiplier;
+
 
 public:
-  Parallel_LoopPixels(type* bufferToProcess, const type min, const type max)
-    : bufferToClip(bufferToProcess), minValue(min), maxValue(max){}
+    Scan_Pix_Parallel_row(Mat* imggray, Mat* img, Mat* imgHSV,  pcl:: PointCloud<PointXYZRGB>* Cloud_PTR, int graystep, int grayelemsize,
+                          int cstep, int celemsize, int HSVstep, int HSVelemsize, int j, double colorscale, int resFracMultiplier){
+      cloudptr= Cloud_PTR;
+        y = j;
 
-  virtual void operator()( const cv::Range &r ) const {
-    register type *inputOutputBufferPTR=bufferToClip+r.start;
-    for (register int jf = r.start; jf != r.end; ++jf, ++inputOutputBufferPTR)
-    {
-        if (*inputOutputBufferPTR>maxValue)
-            *inputOutputBufferPTR=maxValue;
-        else if (*inputOutputBufferPTR<minValue)
-            *inputOutputBufferPTR=minValue;
+        image = img;
+        grayimg=imggray;
+        HSV=imgHSV;
+
+        istep = graystep;
+        ielemsize = grayelemsize;
+
+        cistep = celemsize;
+        cielemsize=celemsize;
+
+        HSVistep = HSVstep;
+        HSVielemsize = HSVelemsize;
+        colorRegScale = colorscale;
+
+resolutionFractionMultiplier = resFracMultiplier;
+
+
+
+
     }
-  }
-};
+     ~Scan_Pix_Parallel_row(){
 
-class Body : public cv::ParallelLoopBody
+    }
+     void operator() (const Range& range) const
 {
-public:
-    void operator ()(const cv::Range& range) const
+         //This constructor needs to be here otherwise it is considered an abstract class.
+             qDebug()<<"This should never be called";
+}
+
+     pcl:: PointCloud<PointXYZRGB>* getPointCloud(){
+         return cloudptr;
+     }
+
+    void operator ()(const cv::BlockedRange& range) const
     {
-        for (int i = range.start; i < range.end; ++i){
-            int z;
-        z++;
+//        qDebug()<<"This should be called often";
+     uchar   pixval = 0;
+        uchar pixvalcolorR = 0;
+        uchar pixvalcolorG = 0;
+         uchar pixvalcolorB = 0;
+       uchar pixvalGray = 0;
+         uchar pixvalHue = 0;
+        for (int x = range.begin(); x < range.end(); ++x){
+            pixval=aPixel(uchar,grayimg->data,istep,ielemsize,x,y,0);
+            pixvalcolorB=aPixel(uchar,image->data,cistep,cielemsize,x,y,0);
+            pixvalcolorG=aPixel(uchar,image->data,cistep,cielemsize,x,y,1);
+            pixvalcolorR=aPixel(uchar,image->data,cistep,cielemsize,x,y,2);
+            pixvalHue=aPixel(uchar, HSV->data,HSVistep,HSVielemsize,x,y,0);
+
+
+
+//             qDebug()<<"RGB  "<<pixvalcolorR <<"  "<<pixvalcolorG;
+
+
+
+            //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
+            if (pixval > 2)
+            {
+                cloudptr->push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
+                cloudptr->back().x=                                              x*resolutionFractionMultiplier;
+                cloudptr->back().y=                                              y*resolutionFractionMultiplier;
+                cloudptr->back().z=   pixvalHue*colorRegScale; //0;
+//                qDebug()<<"lastclouptr  "<<cloudptr->back().x <<"  "<<cloudptr->back().y;
+
+
+            }
         }
 
     }
+
+
+
+
 };
 
 void
@@ -227,22 +300,22 @@ void ICPTracker::MattoCloudDetections(Mat img){
 
     // cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray
     //Get as many hard coded values as possible before we go through expensive looping!
-    int irows=bgSubImageGraySmall.rows; // number of lines
-    int icols = bgSubImageGraySmall.cols; // number of columns
-    int istep = bgSubImageGraySmall.step;
-    int ielemsize= bgSubImageGraySmall.elemSize();
+    int grayrows=bgSubImageGraySmall.rows; // number of lines
+    int graycols = bgSubImageGraySmall.cols; // number of columns
+    int graystep = bgSubImageGraySmall.step;
+    int grayelemsize= bgSubImageGraySmall.elemSize();
 
     //Color values
-    int cirows=imgsmall.rows; // number of lines
-    int cicols = imgsmall.cols; // number of columns
-    int cistep = imgsmall.step;
-    int cielemsize= imgsmall.elemSize();
+    int crows=imgsmall.rows; // number of lines
+    int ccols = imgsmall.cols; // number of columns
+    int cstep = imgsmall.step;
+    int celemsize= imgsmall.elemSize();
 
-    int gistep = imgsmallgray.step;
-    int gielemsize= imgsmallgray.elemSize();
+    int gstep = imgsmallgray.step;
+    int gelemsize= imgsmallgray.elemSize();
 
-    int HSVistep = imgsmallHSV.step;
-    int HSVielemsize= imgsmallHSV.elemSize();
+    int HSVstep = imgsmallHSV.step;
+    int HSVelemsize= imgsmallHSV.elemSize();
 
     uchar pixval = 0;
     uchar pixvalcolorR = 0;
@@ -257,43 +330,43 @@ void ICPTracker::MattoCloudDetections(Mat img){
 
 
 
-    //Functions //Fancy Define
+    //This is a quick define for fast pixel access
 #define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
 
-    //        data_cloud->width    = pts.size();
-    //        data_cloud.height   = 1;
-    //        data_cloud.is_dense = false; // should be true?
-    //        data_cloud.points.resize (data_cloud.width * data_cloud.height);
     pcl::PointCloud<pcl::PointXYZRGB> temp_data_cloud;
+    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
 
     //TODO Loop pixels in parallel
-    const int SIZE=10;
-    int myTab[SIZE];
-    int minVal=100, maxVal=200;
 
-/** //Loop in para
-const int SIZECOL = icols -1;
-    for (int j=0; j<irows; j++) {
+/**/ //Loop in para
+const int SIZECOL = graycols -1;
+    for (int j=0; j<grayrows; j++) {
 
-        const Body body;
+        const Scan_Pix_Parallel_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+                                         &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
+                                         j, colorRegScale, resolutionFractionMultiplier );
+        const cv::BlockedRange range(0, SIZECOL);
 
-        cv::parallel_for(cv::Range(0, SIZECOL), body);
+        cv::parallel_for(range, body);
+//body.getPointCloud();
+
     }
 
 /**/
 
 //Original
-    /**/
-    for (int y=0; y < irows; y++)
+    /**
+    for (int y=0; y < grayrows; y++)
     {
-        for (int x=0; x < icols; x++)
+        for (int x=0; x < graycols; x++)
         {
-            pixval=aPixel(uchar,bgSubImageGraySmall.data,istep,ielemsize,x,y,0);
-            pixvalcolorB=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,0);
-            pixvalcolorG=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,1);
-            pixvalcolorR=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,2);
-            pixvalGray=aPixel(uchar, imgsmallgray.data,gistep,gielemsize,x,y,0);
-            pixvalHue=aPixel(uchar, imgsmallHSV.data,HSVistep,HSVielemsize,x,y,0);
+            pixval=aPixel(uchar,bgSubImageGraySmall.data,graystep,grayelemsize,x,y,0);
+            pixvalcolorB=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,0);
+            pixvalcolorG=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,1);
+            pixvalcolorR=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,2);
+//            pixvalGray=aPixel(uchar, imgsmallgray.data,gstep,gelemsize,x,y,0);
+            pixvalHue=aPixel(uchar, imgsmallHSV.data,HSVstep,HSVelemsize,x,y,0);
 
 
 
@@ -314,10 +387,9 @@ const int SIZECOL = icols -1;
         }
     }
 
-    /**/
 
     data_cloud = temp_data_cloud;
-    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+    /**/
 
 //    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
 
@@ -731,22 +803,6 @@ trackResultImage.setTo(Scalar(0,0,255,0));
 
     Mat qImgARGB;
     cvtColor(trackResultImage,qImgARGB,CV_BGRA2RGBA);
-
-
-
-
-    //Todo find  better way of overlaying images using alpha channels
-
-
-//    Mat imgBGRA;
-//    cvtColor(img,imgBGRA,CV_BGR2BGRA);
-    //    cvtColor(trackResultImage,trackResultImage,CV_BGR2BGRA);
-
-//    alphaBlendBGRA<uchar>(imgBGRA,trackResultImage,trackResultImage);
-    //    addWeighted(trackResultImage,1,imgBGRA,.5,0,trackResultImage);
-    //   add(trackResultImage,imgBGRA, trackResultImage);
-
-//    cvtColor(trackResultImage,trackResultImage,CV_BGRA2BGR);
 
     trackResultImage = qImgARGB;
     return;

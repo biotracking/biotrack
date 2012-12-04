@@ -100,10 +100,10 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
 
     //leave open for other possible ICP methods
-    bool doPCL=true;
+    bool doPCL_ICP=true;
 
     //PCL implementation of ICP
-    if(doPCL){
+    if(doPCL_ICP){
 
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {
@@ -164,6 +164,31 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
     qDebug()<<"Removed Points from Track  "<<totalRemovedPoints;
 
+    /// For Debugging we can visualize the Pointcloud
+             /**
+                pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
+              //  copyPointCloud(modelPTS_cloud,)
+                transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
+
+                pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].cloud));
+
+                pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+                viewer.showCloud(dataPTS_cloud_ptr);
+
+            int sw=0;
+                        while (!viewer.wasStopped())
+                        {
+                            if(sw==0){
+                            viewer.showCloud(model_cloud_ptrTempTrans);
+                            sw=1;
+                            }
+                            else{
+                                viewer.showCloud(dataPTS_cloud_ptr);
+            sw=0;
+                            }
+
+                        }
+            /**/
 
 
 
@@ -184,31 +209,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
         if ( totalRemovedPoints>birthAssociationsThreshold ) //matchScore >birthAssociationsThreshold && //Need new check for birthAssociationsthresh//  closestToModel.size() >= birthAssociationsThreshold)
         {
             isBirthable=true;
-            /// For Debugging we can visualize the Pointcloud
-                     /**
-                        pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
-                      //  copyPointCloud(modelPTS_cloud,)
-                        transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
-
-                        pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].cloud));
-
-                        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-                        viewer.showCloud(dataPTS_cloud_ptr);
-
-                    int sw=0;
-                                while (!viewer.wasStopped())
-                                {
-                                    if(sw==0){
-                                    viewer.showCloud(model_cloud_ptrTempTrans);
-                                    sw=1;
-                                    }
-                                    else{
-                                        viewer.showCloud(dataPTS_cloud_ptr);
-                    sw=0;
-                                    }
-
-                                }
-                    /**/
 
 
         }
@@ -869,10 +869,11 @@ computeTransformation (const PointCloud<PointXYZRGB>::Ptr &src,
   // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
   pcl::registration::TransformationEstimationSVD<PointXYZRGB, PointXYZRGB> trans_est;
 //  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
-  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *all_correspondences, transform);
+//  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
 
 //  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, transform); // leads to a crash
-//  trans_est.estimateRigidTransformation (*src, *tgt, transform); //leads to a crash
+  trans_est.estimateRigidTransformation (*src, *tgt, transform); //leads to a crash
+ // trans_est.estimateRigidTransformation();
 
 }
 

@@ -30,6 +30,9 @@ public:
     ICPTracker(float fps, QString bgImagepath,  QString modelFolderpath, QString maskImagepath,  Ui::ManytrackClass uiPass);
     ~ICPTracker();
 
+    //This is a quick define for fast pixel access
+#define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
+
 
     std::vector<Model> models;
 int fewestNumofModelPoints;
