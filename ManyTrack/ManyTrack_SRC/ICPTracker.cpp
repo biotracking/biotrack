@@ -1,7 +1,7 @@
 #include "ICPTracker.h"
 //try to scan pixels in Parallel
 
-class Scan_Pix_Parallel_row : public cv::ParallelLoopBody
+class Parallel_Scan_Pix_row : public cv::ParallelLoopBody
 {
 private:
 pcl:: PointCloud<PointXYZRGB>* cloudptr;
@@ -30,7 +30,7 @@ int resolutionFractionMultiplier;
 
 
 public:
-    Scan_Pix_Parallel_row(Mat* imggray, Mat* img, Mat* imgHSV,  pcl:: PointCloud<PointXYZRGB>* Cloud_PTR, int graystep, int grayelemsize,
+    Parallel_Scan_Pix_row(Mat* imggray, Mat* img, Mat* imgHSV,  pcl:: PointCloud<PointXYZRGB>* Cloud_PTR, int graystep, int grayelemsize,
                           int cstep, int celemsize, int HSVstep, int HSVelemsize, int j, double colorscale, int resFracMultiplier){
       cloudptr= Cloud_PTR;
         y = j;
@@ -55,7 +55,7 @@ resolutionFractionMultiplier = resFracMultiplier;
 
 
     }
-     ~Scan_Pix_Parallel_row(){
+     ~Parallel_Scan_Pix_row(){
 
     }
      void operator() (const Range& range) const
@@ -343,7 +343,7 @@ void ICPTracker::MattoCloudDetections(Mat img){
 const int SIZECOL = graycols -1;
     for (int j=0; j<grayrows; j++) {
 
-        const Scan_Pix_Parallel_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+        const Parallel_Scan_Pix_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
                                          &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
                                          j, colorRegScale, resolutionFractionMultiplier );
         const cv::BlockedRange range(0, SIZECOL);

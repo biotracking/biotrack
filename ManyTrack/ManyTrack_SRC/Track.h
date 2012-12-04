@@ -187,6 +187,7 @@ public:
   icp (const PointCloud<Point>::Ptr &src,
        const PointCloud<Point>::Ptr &tgt,
        Eigen::Matrix4d &transform);
+  Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud,int* fitness);
 
 private:
     //Ui::ManytrackClass uitrack;
@@ -201,7 +202,6 @@ private:
 
     //ICP alignment
     Eigen::Matrix4f update2DTransformPCL(pcl::PointCloud<pcl::PointXY> data_cloud,pcl::PointCloud<pcl::PointXY> model_cloud);
-    Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
 //        Eigen::Matrix4f updateTransformPCL(pcl::PointCloud<PointT> data_cloud,pcl::PointCloud<PointT> model_cloud);
 
     double matchScore;
@@ -222,6 +222,69 @@ private:
 
 
 protected:
+
+};
+
+class Identify_Parallel : public cv::ParallelLoopBody
+{
+private:
+pcl:: PointCloud<PointXYZRGB> dataPTS_cloud;
+double fit;
+int identitynum;
+vector<pair<int,double> >* id_scores;
+
+vector<Model> modelgroup;
+//Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, int* fitness);
+
+Track* atrack;
+
+public:
+    Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores){
+        copyPointCloud(data_cloud,dataPTS_cloud);
+        modelgroup= allmodelgroup;
+        atrack = thetrack;
+        id_scores=idandscores;
+    }
+     ~Identify_Parallel(){
+
+    }
+     void operator() (const Range& range) const
+{
+         //This constructor needs to be here otherwise it is considered an abstract class.
+             qDebug()<<"This should never be called";
+}
+
+
+
+//     vector<pair<int,double> > returnpairedscores(){
+//         return id_scores;
+//     }
+
+    void operator ()(const cv::BlockedRange& range) const
+    {
+//        qDebug()<<"This should be called often";
+
+
+        ///   Check the fit of different models in parallel
+        for (int modelgroupnum = range.begin(); modelgroupnum < range.end()-1; ++modelgroupnum){ //Not sure if we need -1?
+            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
+            PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
+
+            int recentfitness;
+
+            atrack->calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentfitness);
+            pair<int,double> id_score;
+            id_score.first=modelgroupnum;
+            id_score.second=recentfitness;
+
+            id_scores->push_back(id_score);
+
+        }
+
+    }
+
+
+
 
 };
 
