@@ -338,8 +338,10 @@ void ICPTracker::MattoCloudDetections(Mat img){
 
 
     //TODO Loop pixels in parallel
+    double t = (double)getTickCount();
 
-/**/ //Loop in para
+/** //Loop in parallel
+
 const int SIZECOL = graycols -1;
     for (int j=0; j<grayrows; j++) {
 
@@ -351,12 +353,17 @@ const int SIZECOL = graycols -1;
         cv::parallel_for(range, body);
 //body.getPointCloud();
 
-    }
 
+    }
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "Parallel Scan time " << t << endl;
 /**/
 
 //Original
-    /**
+    /**/
+
+   t = (double)getTickCount();
+
     for (int y=0; y < grayrows; y++)
     {
         for (int x=0; x < graycols; x++)
@@ -389,6 +396,10 @@ const int SIZECOL = graycols -1;
 
 
     data_cloud = temp_data_cloud;
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "Regular Scan time " << t << endl;
+
     /**/
 
 //    viewer->updatePointCloud(data_cloud_PTR,"datacloud");

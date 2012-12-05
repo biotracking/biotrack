@@ -239,11 +239,10 @@ vector<Model> modelgroup;
 Track* atrack;
 
 public:
-    Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores){
-        copyPointCloud(data_cloud,dataPTS_cloud);
-        modelgroup= allmodelgroup;
-        atrack = thetrack;
-        id_scores=idandscores;
+    Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores)
+        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack),id_scores(idandscores)
+    {
+
     }
      ~Identify_Parallel(){
 
@@ -255,18 +254,13 @@ public:
 }
 
 
-
-//     vector<pair<int,double> > returnpairedscores(){
-//         return id_scores;
-//     }
-
     void operator ()(const cv::BlockedRange& range) const
     {
 //        qDebug()<<"This should be called often";
 
 
         ///   Check the fit of different models in parallel
-        for (int modelgroupnum = range.begin(); modelgroupnum < range.end()-1; ++modelgroupnum){ //Not sure if we need -1?
+        for (int modelgroupnum = range.begin(); modelgroupnum < range.end(); ++modelgroupnum){ //Not sure if we need -1?
             qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
             PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
 

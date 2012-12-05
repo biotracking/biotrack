@@ -249,33 +249,44 @@ int fitnessin;
 
 int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgroup){
 
+    /// Timing
+    double t = (double)getTickCount();
+
+
     float fit=DBL_MAX;
     int identity=0;
     vector<pair<int,double> > id_scores;
 
-//    id_score.first=0;
-//    id_score.second=DBL_MAX;
+
 
     /**/ // parallel testing
     const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
 
-    const cv::BlockedRange range(0, modelgroup.size()-1);
+    const cv::BlockedRange range(0, modelgroup.size());
 
     cv::parallel_for(range, body);
 
     //Compare the Results
-   double bestfit = id_scores.at(0).second;
+   double bestfit = DBL_MAX; // id_scores.at(0).second;
     identity=0;
-    for (int i=1; i< (id_scores.size());i++){
+    for (int i=0; i< (id_scores.size());i++){
+        qDebug()<<"score checking iterator "<<i<<" id "<< id_scores.at(i).first<<" scores "<< id_scores.at(i).second <<" current bestfit"<<bestfit;
+
         if(id_scores.at(i).second<bestfit){
             bestfit= id_scores.at(i).second;
                 identity =        id_scores.at(i).first;
          }
     }
 
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "ID parallel time " << t << endl;
+     t = (double)getTickCount();
+    qDebug()<<"end Parallel ID testing, selected value was: "<<modelgroup[identity].name<< "  scores:   "<<id_scores.at(identity).second;
+
+
     /**/
 
-    /** // Regular Testing
+    /**/ // Regular Testing
     for (int i=0; i<modelgroup.size();i++){
 
         qDebug()<<"Model Cloud "<<modelgroup[i].name<<"  idx "<<i;
@@ -283,17 +294,23 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
         PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[i].cloud;
         int recentFit;
                  calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentFit);
+                 qDebug()<<"score checking  "<<i<<" recentfit "<<recentFit<<"  bestfit"<<fit;
+
                  if(recentFit<fit){
                      fit = recentFit;
-                  identity = i;
+//                  identity = i;
                  }
 
 
     }
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "Regular ID time " << t << endl;
+    qDebug()<<"end Regular ID testing, selected value was: "+modelgroup[identity].name;
+
     /**/
 
 
-    qDebug()<<"end ID testing, selected value was: "+modelgroup[identity].name;
 
     return identity;
 
