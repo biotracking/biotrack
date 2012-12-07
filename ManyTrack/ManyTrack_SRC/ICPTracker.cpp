@@ -29,6 +29,7 @@ double colorRegScale;
 int resolutionFractionMultiplier;
 
 
+
 public:
     Parallel_Scan_Pix_row(Mat* imggray, Mat* img, Mat* imgHSV,  pcl:: PointCloud<PointXYZRGB>* Cloud_PTR, int graystep, int grayelemsize,
                           int cstep, int celemsize, int HSVstep, int HSVelemsize, int j, double colorscale, int resFracMultiplier){
@@ -55,20 +56,19 @@ resolutionFractionMultiplier = resFracMultiplier;
 
 
     }
-     ~Parallel_Scan_Pix_row(){
-
-    }
-     void operator() (const Range& range) const
-{
-         //This constructor needs to be here otherwise it is considered an abstract class.
-             qDebug()<<"This should never be called";
-}
+//     ~Parallel_Scan_Pix_row(){
+//    }
+//     void operator() (const Range& range) const
+//{
+//         //This constructor needs to be here otherwise it is considered an abstract class.
+//             qDebug()<<"This should never be called";
+//}
 
      pcl:: PointCloud<PointXYZRGB>* getPointCloud(){
          return cloudptr;
      }
 
-    void operator ()(const cv::BlockedRange& range) const
+    void operator ()(const cv::Range& range) const
     {
 //        qDebug()<<"This should be called often";
      uchar   pixval = 0;
@@ -77,7 +77,7 @@ resolutionFractionMultiplier = resFracMultiplier;
          uchar pixvalcolorB = 0;
        uchar pixvalGray = 0;
          uchar pixvalHue = 0;
-        for (int x = range.begin(); x < range.end(); ++x){
+        for (int x = range.start; x < range.end; ++x){
             pixval=aPixel(uchar,grayimg->data,istep,ielemsize,x,y,0);
             pixvalcolorB=aPixel(uchar,image->data,cistep,cielemsize,x,y,0);
             pixvalcolorG=aPixel(uchar,image->data,cistep,cielemsize,x,y,1);
@@ -91,7 +91,7 @@ resolutionFractionMultiplier = resFracMultiplier;
 
 
             //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
-            if (pixval > 2)
+            if (pixval > 2) //If there is  a detection at this pixel it should be 255, if not 0;
             {
                 cloudptr->push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
                 cloudptr->back().x=                                              x*resolutionFractionMultiplier;
@@ -109,6 +109,50 @@ resolutionFractionMultiplier = resFracMultiplier;
 
 
 };
+
+
+
+class Parallel_Test : public cv::ParallelLoopBody
+{
+private:
+double* const mypointer;
+
+
+
+public:
+Parallel_Test(double* pointer)
+: mypointer(pointer){
+
+}
+//     void operator() (const Range& range) const
+//{
+//         //This constructor needs to be here otherwise it is considered an abstract class.
+////             qDebug()<<"This should never be called";
+//}
+
+    void operator ()(const cv::Range& range) const
+    {
+
+        for (int x = range.start; x < range.end; ++x){
+
+            for(int i=0; i<range.size();i++){
+            double num =x*i;
+            mypointer[x]=num;
+
+            }
+
+        }
+
+
+    }
+
+
+
+};
+
+
+
+
 
 void
 viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
@@ -338,7 +382,8 @@ void ICPTracker::MattoCloudDetections(Mat img){
 
 
     //TODO Loop pixels in parallel
-    double t = (double)getTickCount();
+     double t = (double)getTickCount();
+
 
 /** //Loop in parallel
 
@@ -348,9 +393,9 @@ const int SIZECOL = graycols -1;
         const Parallel_Scan_Pix_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
                                          &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
                                          j, colorRegScale, resolutionFractionMultiplier );
-        const cv::BlockedRange range(0, SIZECOL);
+        const cv::Range range(0, SIZECOL);
 
-        cv::parallel_for(range, body);
+        cv::parallel_for_(range, body);
 //body.getPointCloud();
 
 
@@ -575,8 +620,11 @@ void ICPTracker::trackFrame(Mat scene_img, int timeIndex)
         if (uiICP.display_pushButton->isChecked())
         {
             cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
-
+        double t = (double)getTickCount();
             drawTrackResult(bgSubImage);
+            t = ((double)getTickCount() - t)/getTickFrequency();
+            qDebug() << "Draw Track Result time " << t << endl;
+
         }
 
 

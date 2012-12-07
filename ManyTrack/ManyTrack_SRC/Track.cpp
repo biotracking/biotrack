@@ -260,11 +260,12 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
 
 
     /**/ // parallel testing
-    const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
+//    const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
 
-    const cv::BlockedRange range(0, modelgroup.size());
+//    const cv::BlockedRange range(0, modelgroup.size());
+//    cv::parallel_for(range, body);
+        cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_scores) );
 
-    cv::parallel_for(range, body);
 
     //Compare the Results
    double bestfit = DBL_MAX; // id_scores.at(0).second;
@@ -450,8 +451,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     recentFitness = icp.getFitnessScore();
 
-    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
-    qDebug();
+//    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+//    qDebug();
 
     matchScore = icp.getFitnessScore();
     didConverge = icp.hasConverged();
@@ -482,8 +483,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
             recentFitness=icp2.getFitnessScore();
 
         }
-        qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
-        qDebug();
+//        qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+//        qDebug();
         *fitness=recentFitness;
 
         //Temp invert!

@@ -231,7 +231,7 @@ private:
 pcl:: PointCloud<PointXYZRGB> dataPTS_cloud;
 double fit;
 int identitynum;
-vector<pair<int,double> >* id_scores;
+vector<pair<int,double> >* idscores;
 
 vector<Model> modelgroup;
 //Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, int* fitness);
@@ -240,28 +240,32 @@ Track* atrack;
 
 public:
     Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores)
-        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack),id_scores(idandscores)
+        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack),idscores(idandscores)
     {
 
     }
-     ~Identify_Parallel(){
+//     ~Identify_Parallel(){
+//    }
 
-    }
-     void operator() (const Range& range) const
-{
-         //This constructor needs to be here otherwise it is considered an abstract class.
-             qDebug()<<"This should never be called";
-}
+//     void operator() (const Range& range) const
+//{
+//         //This constructor needs to be here otherwise it is considered an abstract class.
+////             qDebug()<<"This should never be called";
+//}
 
 
-    void operator ()(const cv::BlockedRange& range) const
+    void operator ()(const cv::Range& range) const
     {
 //        qDebug()<<"This should be called often";
 
+        vector<pair<int,double> > *id_scores = idscores;
+
 
         ///   Check the fit of different models in parallel
-        for (int modelgroupnum = range.begin(); modelgroupnum < range.end(); ++modelgroupnum){ //Not sure if we need -1?
-            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
+//        for (int modelgroupnum = range.begin(); modelgroupnum < range.end(); ++modelgroupnum){ //Not sure if we need -1?
+                for (size_t modelgroupnum = range.start; modelgroupnum!= range.end; ++modelgroupnum){ //Not sure if we need -1?
+
+        //            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
             PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
 
             int recentfitness;
