@@ -6,7 +6,7 @@
 
 using namespace std;
 
-QString prefix("../data/B144/Feeder_1.6M/");
+QString prefix("../data/B166/Feeder_1.6M/");
 int maxFrames = 22000;
 string fileIDs = string("----,BBGY,BGBY,BPPO,")+
                  string("BPWP,GBGP,GO-B,GG-O,")+

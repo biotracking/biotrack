@@ -8,7 +8,7 @@
 
 using namespace std;
 
-QString prefix("../data/B144/Feeder_0.4M/");
+QString prefix("../data/");
 bool aviOut = false;
 bool showDebug = false;
 int numParkingSpots = 40;
@@ -44,20 +44,48 @@ int **spotIDs; //[frame, spot] => ID
 QString IDbuff[ ] = {
         QString("-ER-"),
         QString("----"),
+        QString("--BP"),
+        QString("--G-"),
+        QString("-B--"),
+        QString("-BYR"),
+        QString("-RPG"),
+        QString("-W--"),
+        QString("-WGR"),
+        QString("-WRG"),
+        QString("-Y--"),
+        QString("-YRW"),
         QString("BBGY"),
         QString("BGBY"),
+        QString("BGY-"),
+        QString("BPPG"),
         QString("BPPO"),
         QString("BPWP"),
-        QString("GBGP"),
+        QString("BPYB"),
+        QString("BRWR"),
+        QString("BY--"),
+        QString("BYBG"),
+        QString("BYPB"),
+        QString("BYYP"),
+        QString("GB--"),
         QString("GB-O"),
+        QString("GBBY"),
+        QString("GBGP"),
+        QString("GBRB"),
         QString("GG-O"),
+        QString("GGGB"),
         QString("GO-B"),
         QString("GOYP"),
         QString("GPBW"),
+        QString("GPGY"),
+        QString("GPPR"),
+        QString("GRBW"),
+        QString("GRGP"),
         QString("GW--"),
         QString("GWBG"),
         QString("GWOW"),
         QString("GWPB"),
+        QString("GY--"),
+        QString("GYPG"),
         QString("OGPG"),
         QString("OOO-"),
         QString("OOOW"),
@@ -68,7 +96,16 @@ QString IDbuff[ ] = {
         QString("PGOP"),
         QString("PP--"),
         QString("PYWB"),
+        QString("R-BP"),
+        QString("RBGB"),
+        QString("RBRG"),
+        QString("RGGP"),
+        QString("RRBG"),
+        QString("RWYB"),
+        QString("RYRP"),
+        QString("RYYG"),
         QString("WPWO")};
+
 CvScalar colors[ ] = {
         cvScalar(0, 0, 0, 0),
         cvScalar(255, 0, 0, 0),
@@ -177,10 +214,10 @@ void processClip(int clipNum){
 					}
 				}
 				else{
-					int max = 0, votesForID[20];
-					for(int k=0; k<20; k++) votesForID[k]=0;
+                    int max = 0, votesForID[80];
+                    for(int k=0; k<80; k++) votesForID[k]=0;
 					for(int i=start; i<end; i++) votesForID[blurBuffer[i][j]]++;
-					for(int k=0; k<20; k++)	if(votesForID[k] > votesForID[max]) max = k;
+                    for(int k=0; k<80; k++)	if(votesForID[k] > votesForID[max]) max = k;
 					for(int i=start; i<end; i++){
 						spotIDs[i][j] = max;
 						blurBuffer[i][j] = -1;
@@ -381,6 +418,10 @@ void processClip(int clipNum){
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    if(argc == 2)
+        prefix+=argv[1];
+    else
+        prefix+="B144/Feeder_1.6M/";
 
     for(int clip=1; clip<=8; clip++)
         processClip(clip);

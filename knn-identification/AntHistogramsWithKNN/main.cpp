@@ -3,10 +3,14 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    QString activeFolder = QString("/B144/Feeder_1.6M/");
+    if(argc != 2){
+        std::cout<<"Invalid Arguments. Usage: \"./AntHistogramsWithKNN Folder_Name/\""<<std::endl;
+        return -1;
+    }
+    QString activeFolder = QString(argv[1]);
 
     int clipNum = 0;
-    QString header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf"+activeFolder;
+    QString header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf/"+activeFolder;
     QDir unkDir(header);
     QStringList fileList = unkDir.entryList(QStringList("FeederMugshots_*"));
     QStringList::const_iterator unkIterator;
@@ -128,7 +132,7 @@ void identifyClip(QString activeFolder, int clipNum){
     delete [] YUVsamples;
 
     qDebug()<<"Processing unidentified images...";
-    header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf"+activeFolder;
+    header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf/"+activeFolder;
 
     for(int i=0; i<maxFrames; i++){
         for(int j=0; j<numParkingSpots; j++){
@@ -228,7 +232,7 @@ void identifyClip(QString activeFolder, int clipNum){
 //	}
 //	delete [] unknowns;
 
-    header = "../data"+activeFolder;
+    header = "../data/"+activeFolder;
     QDir dir(header); if (!dir.exists()) dir.mkpath(".");
 
     qDebug()<<"Computing confusion matrix...";
