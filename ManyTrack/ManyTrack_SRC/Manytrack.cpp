@@ -1013,6 +1013,12 @@ void Manytrack::on_matchSlider_sliderMoved(int position)
     ui.healthyPercentageThresholdSpinBox->setValue(position);
 }
 
+void Manytrack::on_healthyPercentageThresholdSpinBox_valueChanged(int arg1)
+{
+    ui.matchSlider->setValue(arg1);
+}
+
+
 void Manytrack::on_trackdeathSpinBox_valueChanged(int arg1)
 {
     ui.deathSlider->setValue(arg1);

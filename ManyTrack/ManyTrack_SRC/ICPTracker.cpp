@@ -751,8 +751,37 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
         imgAndPath.img = modelImg;
         imgAndPath.name=current;
         imgAndPath.filepath=fullpath;
+        imgAndPath.rotated = 0.0;
+
+        namedWindow("0");
+        imshow("0", modelImg);
 
         output.push_back(imgAndPath);
+
+
+        //Now make a model version that is the same just flipped 180 degrees
+        Model imgAndPathF;
+        QString fullpathF;
+        QString currentF = *it;
+
+        qDebug()<<currentF<<" current modelFile Flipped   "<<current;
+        fullpathF = modelFolderPath+"/"+current;
+        Mat modelImgF;
+        modelImgF =imread(fullpathF.toStdString(),-1); //flags of zero means force grayscale load
+        //Rotate the whole thing 180Degrees
+        modelImgF = rotateImage(modelImgF, 180.0);//Rotate full image about this center 180 degrees
+
+        namedWindow("180");
+        imshow("180", modelImgF);
+
+        imgAndPathF.img = modelImgF;
+        imgAndPathF.name=current+"_180";
+        imgAndPathF.filepath=fullpathF;
+        imgAndPathF.rotated=180.0;
+
+        output.push_back(imgAndPathF);
+
+
 
     }
 
@@ -1233,7 +1262,18 @@ Mat ICPTracker::runContourDetection(Mat img){
 }
 
 
-
+//rotates about center
+cv::Mat ICPTracker::rotateImage(const Mat& source, double angle)
+{
+//    qDebug()<<"Angle in rad"<<anglerad;
+//    double angle  = ((anglerad*180)/CV_PI);
+    qDebug()<<"Angle in deg"<<angle;
+    Point2f src_center(source.cols/2.0F, source.rows/2.0F);
+    Mat rot_mat = getRotationMatrix2D(src_center, angle, 1.0);
+    Mat dst;
+    warpAffine(source, dst, rot_mat, source.size());
+    return dst;
+}
 
 
 
@@ -1252,3 +1292,6 @@ void ICPTracker::Dilation( int dilation_elem, int dilation_size, Mat &src )
   erode( src, src, element );
 //  imshow( "Dilation Demo", src );
 }
+
+
+

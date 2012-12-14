@@ -151,6 +151,8 @@ private slots:
      void on_bgsubSlider_sliderMoved(int position);
      void on_blobBirthAreaThresholdSpinBox_valueChanged(int arg1);
      void on_matchSlider_sliderMoved(int position);
+     void on_healthyPercentageThresholdSpinBox_valueChanged(int arg1);
+
      void on_trackdeathSpinBox_valueChanged(int arg1);
      void on_deathSlider_sliderMoved(int position);
      void on_separationSlider_sliderMoved(int position);

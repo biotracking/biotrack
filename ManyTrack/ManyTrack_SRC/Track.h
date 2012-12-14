@@ -100,6 +100,7 @@ typedef struct Model
     int width;
     int height;
     int maxDimension;
+    float rotated;
 
 }
 Model;

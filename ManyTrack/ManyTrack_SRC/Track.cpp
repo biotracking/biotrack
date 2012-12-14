@@ -63,7 +63,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
         isBirthFrame=true; // Try out Doing extra work aligning the objects if it is the very first frame
         //Determine what model this creature should use
-        if(modelPTS_clouds.size()<2){
+        if(modelPTS_clouds.size()<2){// If there is only one model, just use that one
             modelIndex = 0;
         }
         else{
@@ -114,7 +114,7 @@ double fitnessin;
             // Find transformation from the orgin that will optimize a match between model and target
             T=   calcTransformPCLRGB(dataPTS_cloud, modelToProcess_cloud,&fitnessin); //Use 3D color
 
-            //T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped); // Just 2D
+//            T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped, &fitnessin); // Just 2D
 
 
             //Apply the Transformation
@@ -143,6 +143,7 @@ double fitnessin;
 
 //    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
        removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
+
     pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
     totalRemovedPoints = totalpointsBeforeRemoval - dataPTSreduced_cloud.size();
@@ -151,7 +152,7 @@ double fitnessin;
     qDebug()<<"Removed Points from Track  "<<totalRemovedPoints;
 
     /// For Debugging we can visualize the Pointcloud
-             /**
+             /**/
                 pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
               //  copyPointCloud(modelPTS_cloud,)
                 transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
@@ -269,18 +270,23 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
    double bestfit = DBL_MAX; // id_scores.at(0).second;
     identity=0;
     for (int i=0; i< (id_scores.size());i++){
-        qDebug()<<"score checking iterator "<<i<<" id "<< id_scores.at(i).first<<" scores "<< id_scores.at(i).second <<" current bestfit"<<bestfit;
+        qDebug()<<"score checking iterator "<<i<<" id "<< id_scores.at(i).first<<" name "<<modelgroup[id_scores.at(i).first].name<<" scores "<< id_scores.at(i).second <<" current bestfit"<<bestfit;
 
         if(id_scores.at(i).second<bestfit){
             bestfit= id_scores.at(i).second;
                 identity =        id_scores.at(i).first;
+//                qDebug()<<"Better Fit!  "<<identity<<" name "<<modelgroup[identity].name;
+
+
          }
+//        qDebug()<<"Current Best ID  "<<identity<<" name "<<modelgroup[identity].name;
+
     }
 
     t = ((double)getTickCount() - t)/getTickFrequency();
     qDebug() << "::: ID parallel time " << t << endl;
      t = (double)getTickCount();
-    qDebug()<<"end Parallel ID testing, selected value was: "<<modelgroup[identity].name<< "  scores:   "<<id_scores.at(identity).second;
+    qDebug()<<"end Parallel ID testing, selected value was: "<<modelgroup[identity].name;
 
 
     /**/
@@ -459,10 +465,15 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     didConverge = icp.hasConverged();
 
-     *fitness=icp.getFitnessScore();
+    *fitness=icp.getFitnessScore();
+
+//     *fitness=icp.getFitnessScore(10.0);
+
 //    *fitness=icp.colorfitness; // for ColorICP
 
 
+
+    /* Use the rotated images from the get-go now
 
     if(isBirthFrame&&false ){
 
@@ -499,7 +510,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
         }
 
 
-    }
+    }*/
 //    *fitness=icp.colorfitness;
 
     return ET;

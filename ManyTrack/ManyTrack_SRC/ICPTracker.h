@@ -153,6 +153,7 @@ Model loadModelPoints(Model modelBGRAimg);
     void alphaBlendBGRA(const Mat& src1, const Mat& src2, Mat& dst);
 
     void MattoCloudDetections(Mat img);
+    cv::Mat rotateImage(const Mat& source, double angle);
 
 
     Mat runContourDetection(Mat img);
