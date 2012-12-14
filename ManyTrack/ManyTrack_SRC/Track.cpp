@@ -110,7 +110,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
 
 
-int fitnessin;
+double fitnessin;
             // Find transformation from the orgin that will optimize a match between model and target
             T=   calcTransformPCLRGB(dataPTS_cloud, modelToProcess_cloud,&fitnessin); //Use 3D color
 
@@ -262,8 +262,6 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
     /**/ // parallel testing
 //    const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
 
-//    const cv::BlockedRange range(0, modelgroup.size());
-//    cv::parallel_for(range, body);
         cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_scores) );
 
 
@@ -280,14 +278,14 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
     }
 
     t = ((double)getTickCount() - t)/getTickFrequency();
-    qDebug() << "ID parallel time " << t << endl;
+    qDebug() << "::: ID parallel time " << t << endl;
      t = (double)getTickCount();
     qDebug()<<"end Parallel ID testing, selected value was: "<<modelgroup[identity].name<< "  scores:   "<<id_scores.at(identity).second;
 
 
     /**/
 
-    /**/ // Regular Testing
+    /** // Regular Serial ID Testing
     for (int i=0; i<modelgroup.size();i++){
 
         qDebug()<<"Model Cloud "<<modelgroup[i].name<<"  idx "<<i;
@@ -306,7 +304,7 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
     }
 
     t = ((double)getTickCount() - t)/getTickFrequency();
-    qDebug() << "Regular ID time " << t << endl;
+    qDebug() << "::: Serial  ID time " << t << endl;
     qDebug()<<"end Regular ID testing, selected value was: "+modelgroup[identity].name;
 
     /**/
@@ -332,7 +330,7 @@ void Track::transformCloud(pcl::PointCloud<pcl::PointXYZRGB> modelPTS_cloud, Eig
 
 
 
-Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, int* fitness){
+Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, double* fitness){
 
     Eigen::Matrix4f ET;
     Matrix4f guess,guess180;
@@ -343,6 +341,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+//  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
     icp.setInputCloud(model_cloud_ptr);
     icp.setInputTarget(data_cloud_ptr);
     pcl::PointCloud<pcl::PointXYZRGB> Final;
@@ -450,17 +449,22 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
     ET=icp.getFinalTransformation();
 
     recentFitness = icp.getFitnessScore();
+//    recentFitness = icp.colorfitness; // For ColorICP
 
 //    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
 //    qDebug();
 
     matchScore = icp.getFitnessScore();
+//    matchScore = icp.colorfitness; // For ColorICP
+
     didConverge = icp.hasConverged();
 
+     *fitness=icp.getFitnessScore();
+//    *fitness=icp.colorfitness; // for ColorICP
 
 
 
-    if(isBirthFrame ){
+    if(isBirthFrame&&false ){
 
         //180 flip calculated manually
         //Feed in the results of the previous alignment
@@ -474,7 +478,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
       // guess180= ET*guess180; //For some reason this doesn't work, I thought this would be more optimal? but it misses the flip more often! I must be envisioning the math wrong.The above version even works better, goes 10% faster
         pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp2;
-        icp2=icp;
+//         pcl::IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp2; // Testing Color ICP -- Does not work, get Boost shared
+//        icp2=icp;
 
 
         icp2.align(Final, guess180);
@@ -485,7 +490,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
         }
 //        qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
 //        qDebug();
-        *fitness=recentFitness;
+//        *fitness=recentFitness;
 
         //Temp invert!
         if(icp2.getFitnessScore()<matchScore){
@@ -495,6 +500,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
 
     }
+//    *fitness=icp.colorfitness;
+
     return ET;
 
 }
@@ -663,10 +670,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
             bool *marked= new bool[point_cloud_for_reduction.size()];
             memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
-    //        for(uint q=0; q< point_cloud_for_reduction.size(); q++){
-    //            marked[q]=false;
 
-    //        }
 
             //Make a version of the original data cloud that is flattened to z=0 but with the same indice
             copyPointCloud( point_cloud_for_reduction,point_cloud_flattened);

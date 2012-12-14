@@ -1,154 +1,4 @@
 #include "ICPTracker.h"
-//try to scan pixels in Parallel
-
-class Parallel_Scan_Pix_row : public cv::ParallelLoopBody
-{
-private:
-pcl:: PointCloud<PointXYZRGB>* cloudptr;
-int y;
-
-Mat* grayimg;
-Mat* image;
-Mat*  HSV;
-
-
-int istep;
-int ielemsize;
-
-//Color values
-int cirows;
-int cicols;
-int cistep;
-int cielemsize;
-int gistep;
-int gielemsize;
-
-int HSVistep;
-int HSVielemsize;
-double colorRegScale;
-int resolutionFractionMultiplier;
-
-
-
-public:
-    Parallel_Scan_Pix_row(Mat* imggray, Mat* img, Mat* imgHSV,  pcl:: PointCloud<PointXYZRGB>* Cloud_PTR, int graystep, int grayelemsize,
-                          int cstep, int celemsize, int HSVstep, int HSVelemsize, int j, double colorscale, int resFracMultiplier){
-      cloudptr= Cloud_PTR;
-        y = j;
-
-        image = img;
-        grayimg=imggray;
-        HSV=imgHSV;
-
-        istep = graystep;
-        ielemsize = grayelemsize;
-
-        cistep = celemsize;
-        cielemsize=celemsize;
-
-        HSVistep = HSVstep;
-        HSVielemsize = HSVelemsize;
-        colorRegScale = colorscale;
-
-resolutionFractionMultiplier = resFracMultiplier;
-
-
-
-
-    }
-//     ~Parallel_Scan_Pix_row(){
-//    }
-//     void operator() (const Range& range) const
-//{
-//         //This constructor needs to be here otherwise it is considered an abstract class.
-//             qDebug()<<"This should never be called";
-//}
-
-     pcl:: PointCloud<PointXYZRGB>* getPointCloud(){
-         return cloudptr;
-     }
-
-    void operator ()(const cv::Range& range) const
-    {
-//        qDebug()<<"This should be called often";
-     uchar   pixval = 0;
-        uchar pixvalcolorR = 0;
-        uchar pixvalcolorG = 0;
-         uchar pixvalcolorB = 0;
-       uchar pixvalGray = 0;
-         uchar pixvalHue = 0;
-        for (int x = range.start; x < range.end; ++x){
-            pixval=aPixel(uchar,grayimg->data,istep,ielemsize,x,y,0);
-            pixvalcolorB=aPixel(uchar,image->data,cistep,cielemsize,x,y,0);
-            pixvalcolorG=aPixel(uchar,image->data,cistep,cielemsize,x,y,1);
-            pixvalcolorR=aPixel(uchar,image->data,cistep,cielemsize,x,y,2);
-            pixvalHue=aPixel(uchar, HSV->data,HSVistep,HSVielemsize,x,y,0);
-
-
-
-//             qDebug()<<"RGB  "<<pixvalcolorR <<"  "<<pixvalcolorG;
-
-
-
-            //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
-            if (pixval > 2) //If there is  a detection at this pixel it should be 255, if not 0;
-            {
-                cloudptr->push_back(pcl::PointXYZRGB(pixvalcolorR,pixvalcolorG,pixvalcolorB));
-                cloudptr->back().x=                                              x*resolutionFractionMultiplier;
-                cloudptr->back().y=                                              y*resolutionFractionMultiplier;
-                cloudptr->back().z=   pixvalHue*colorRegScale; //0;
-//                qDebug()<<"lastclouptr  "<<cloudptr->back().x <<"  "<<cloudptr->back().y;
-
-
-            }
-        }
-
-    }
-
-
-
-
-};
-
-
-
-class Parallel_Test : public cv::ParallelLoopBody
-{
-private:
-double* const mypointer;
-
-
-
-public:
-Parallel_Test(double* pointer)
-: mypointer(pointer){
-
-}
-//     void operator() (const Range& range) const
-//{
-//         //This constructor needs to be here otherwise it is considered an abstract class.
-////             qDebug()<<"This should never be called";
-//}
-
-    void operator ()(const cv::Range& range) const
-    {
-
-        for (int x = range.start; x < range.end; ++x){
-
-            for(int i=0; i<range.size();i++){
-            double num =x*i;
-            mypointer[x]=num;
-
-            }
-
-        }
-
-
-    }
-
-
-
-};
 
 
 
@@ -378,7 +228,9 @@ void ICPTracker::MattoCloudDetections(Mat img){
 #define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
 
     pcl::PointCloud<pcl::PointXYZRGB> temp_data_cloud;
-    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+    pcl:: PointCloud<PointXYZRGB> senddata_cloud;// (new pcl::PointCloud<PointXYZRGB> (data_cloud));
+
+    copyPointCloud(data_cloud, temp_data_cloud);
 
 
     //TODO Loop pixels in parallel
@@ -390,18 +242,20 @@ void ICPTracker::MattoCloudDetections(Mat img){
 const int SIZECOL = graycols -1;
     for (int j=0; j<grayrows; j++) {
 
-        const Parallel_Scan_Pix_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
-                                         &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
-                                         j, colorRegScale, resolutionFractionMultiplier );
-        const cv::Range range(0, SIZECOL);
+//        const Parallel_Scan_Pix_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+//                                         &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
+//                                         j, colorRegScale, resolutionFractionMultiplier );
+//        const cv::Range range(0, SIZECOL);
 
-        cv::parallel_for_(range, body);
-//body.getPointCloud();
+//        cv::parallel_for_(range, body);
+        cv::parallel_for_(Range(0, SIZECOL), Parallel_Scan_Pix_row(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+                                                                        &senddata_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
+                                                                   j, colorRegScale, resolutionFractionMultiplier));
 
 
     }
     t = ((double)getTickCount() - t)/getTickFrequency();
-    qDebug() << "Parallel Scan time " << t << endl;
+    qDebug() << "::: Parallel Scan time " << t << endl;
 /**/
 
 //Original
@@ -443,7 +297,7 @@ const int SIZECOL = graycols -1;
     data_cloud = temp_data_cloud;
 
     t = ((double)getTickCount() - t)/getTickFrequency();
-    qDebug() << "Regular Scan time " << t << endl;
+    qDebug() << "::: Serial  Scan time " << t << endl;
 
     /**/
 
@@ -473,7 +327,7 @@ const int SIZECOL = graycols -1;
 
   */
 
-void ICPTracker::trackFrame(Mat scene_img, int timeIndex)
+void ICPTracker::processFrame(Mat scene_img, int timeIndex)
 
 
 {

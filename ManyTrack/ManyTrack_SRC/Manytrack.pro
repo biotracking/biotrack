@@ -55,7 +55,7 @@ LIBS += -lpcl_common \
             "/usr/lib/libvtkWidgets.so.5.8.0"
 
 
-
+ DEFINES += EIGEN_DONT_ALIGN_STATICALLY
 
 ##use the below command when deploying
 
@@ -87,12 +87,15 @@ win32-*{
 SOURCES += main.cpp\
         Manytrack.cpp \
     Track.cpp \
-    ICPTracker.cpp
+    ICPTracker.cpp \
+    icp_color.cpp
 
 HEADERS  += \
     Track.h \
     ICPTracker.h \
-    Manytrack.h
+    Manytrack.h \
+    icp_color.hpp \
+    icp_color.h
 
 FORMS    += Manytrack.ui
 

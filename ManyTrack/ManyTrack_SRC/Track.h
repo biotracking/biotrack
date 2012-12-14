@@ -6,6 +6,7 @@
 #include <QtGui>
 #include <utility>
 
+
 /** OPENCV INCLUDES**/
 #if defined(WIN32) && !defined(linux)
 #include "opencv.hpp" //FOR WINDOWS
@@ -81,6 +82,9 @@
 #include <QDebug>
 //#include "ui_Manytrack.h"
 
+#include "icp_color.h"
+
+
 using namespace cv;
 using namespace std;
 using namespace pcl;
@@ -151,7 +155,7 @@ public:
     double matchDistanceThreshold;
     double nukeDistanceThreshold; // used when a neighborhood of pts close to a model point is nuked
 
-    float recentFitness;
+    double recentFitness;
 
 //    Correspondences stuff
     void estimateKeypoints (const PointCloud<PointXYZRGB>::Ptr &src,
@@ -187,7 +191,7 @@ public:
   icp (const PointCloud<Point>::Ptr &src,
        const PointCloud<Point>::Ptr &tgt,
        Eigen::Matrix4d &transform);
-  Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud,int* fitness);
+  Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud,double *fitness);
 
 private:
     //Ui::ManytrackClass uitrack;
@@ -244,31 +248,21 @@ public:
     {
 
     }
-//     ~Identify_Parallel(){
-//    }
-
-//     void operator() (const Range& range) const
-//{
-//         //This constructor needs to be here otherwise it is considered an abstract class.
-////             qDebug()<<"This should never be called";
-//}
 
 
     void operator ()(const cv::Range& range) const
     {
-//        qDebug()<<"This should be called often";
 
         vector<pair<int,double> > *id_scores = idscores;
 
 
         ///   Check the fit of different models in parallel
-//        for (int modelgroupnum = range.begin(); modelgroupnum < range.end(); ++modelgroupnum){ //Not sure if we need -1?
                 for (size_t modelgroupnum = range.start; modelgroupnum!= range.end; ++modelgroupnum){ //Not sure if we need -1?
 
         //            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
             PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
 
-            int recentfitness;
+            double recentfitness;
 
             atrack->calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentfitness);
             pair<int,double> id_score;

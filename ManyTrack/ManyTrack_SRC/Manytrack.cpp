@@ -71,16 +71,38 @@ void Manytrack::timerEvent(QTimerEvent*) {
         // track each frame
         // and stop at the end, ready to repeat or let the user change parameters
 
+     double   t = (double)getTickCount();
 
 //        Mat img = updateFrame();
         currentFrameImg = updateFrame();
+
+        t = ((double)getTickCount() - t)/getTickFrequency();
+        cout << "::: Get updateFrame() " << t << endl;
+
         if(completedTracking==false){
 
-            icpTracker->trackFrame(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+            t = (double)getTickCount();
+
+            icpTracker->processFrame(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+
+            t = ((double)getTickCount() - t)/getTickFrequency();
+            cout << "::: ICPTracker processFrame() " << t << endl;
+
 
             if(ui.display_pushButton->isChecked()){
+
+                t = (double)getTickCount();
+
             updateVideoImage(currentFrameImg);
-            updateVisualization(icpTracker->getTrackResultImage());
+
+            t = ((double)getTickCount() - t)/getTickFrequency();
+            cout << "::: updateVideoImage() " << t << endl;
+
+
+            t = (double)getTickCount();
+                      updateVisualization(icpTracker->getTrackResultImage());
+                       t = ((double)getTickCount() - t)/getTickFrequency();
+            cout << "::: updateVisualization ()  " << t << endl;
            }
         }
         updateStatusBar();
@@ -1080,7 +1102,7 @@ void Manytrack::on_previewtrackingButton_clicked()
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
 
-  icpTrackerpreview->trackFrame(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+  icpTrackerpreview->processFrame(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
 
 
         updateVideoImage(img);
