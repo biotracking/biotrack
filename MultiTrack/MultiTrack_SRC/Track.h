@@ -55,6 +55,8 @@ class Track
 {
 
 public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
     Track(int index, pcl::PointXYZ initTranslation, int identification, double matchDThresh,int sepThresh, int resFracMultiplier);
     ~Track();
 
@@ -87,6 +89,7 @@ public:
     int id;
     double matchDistanceThreshold;
     double nukeDistanceThreshold; // used when a neighborhood of pts close to a model point is nuked
+
 
 private:
     Ui::MultitrackClass uitrack;

@@ -29,3 +29,6 @@ unix {
         CONFIG += link_pkgconfig
         PKGCONFIG += opencv
 }
+
+RESOURCES += \
+    modelmaker_res.qrc

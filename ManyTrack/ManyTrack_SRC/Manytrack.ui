@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1254</width>
-    <height>811</height>
+    <height>820</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="2">
+    <item row="1" column="3">
      <widget class="QComboBox" name="displaycomboBox">
       <item>
        <property name="text">
@@ -44,10 +44,16 @@
       </item>
      </widget>
     </item>
-    <item row="3" column="0">
+    <item row="4" column="0">
      <layout class="QHBoxLayout" name="displayLayout">
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
       <item>
        <widget class="QPushButton" name="display_pushButton">
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Update Display</string>
         </property>
@@ -117,9 +123,24 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QCheckBox" name="textCheckBox">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Text</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
-    <item row="0" column="3" rowspan="5">
+    <item row="0" column="4" rowspan="6">
      <widget class="QTabWidget" name="toolbartabWidget">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
@@ -142,6 +163,9 @@
       <property name="tabPosition">
        <enum>QTabWidget::East</enum>
       </property>
+      <property name="tabShape">
+       <enum>QTabWidget::Rounded</enum>
+      </property>
       <property name="currentIndex">
        <number>1</number>
       </property>
@@ -153,7 +177,7 @@
         <item>
          <widget class="QGroupBox" name="videobox">
           <property name="title">
-           <string>Video File</string>
+           <string>Video Source</string>
           </property>
           <property name="flat">
            <bool>false</bool>
@@ -259,7 +283,7 @@
           <property name="checkable">
            <bool>false</bool>
           </property>
-          <layout class="QFormLayout" name="formLayout_4">
+          <layout class="QGridLayout" name="gridLayout_3">
            <item row="0" column="0">
             <widget class="QLabel" name="modelFile">
              <property name="styleSheet">
@@ -275,6 +299,33 @@
              <property name="text">
               <string>Load Model</string>
              </property>
+            </widget>
+           </item>
+           <item row="0" column="1" rowspan="2">
+            <widget class="QScrollArea" name="scrollArea_2">
+             <property name="widgetResizable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="scrollAreaWidgetContents_2">
+              <property name="geometry">
+               <rect>
+                <x>0</x>
+                <y>0</y>
+                <width>357</width>
+                <height>76</height>
+               </rect>
+              </property>
+              <widget class="QListView" name="listView">
+               <property name="geometry">
+                <rect>
+                 <x>80</x>
+                 <y>10</y>
+                 <width>256</width>
+                 <height>192</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
             </widget>
            </item>
           </layout>
@@ -461,7 +512,7 @@
             </widget>
            </item>
            <item row="7" column="1">
-            <widget class="QSpinBox" name="blobBirthAreaThresholdSpinBox">
+            <widget class="QSpinBox" name="healthyPercentageThresholdSpinBox">
              <property name="suffix">
               <string> %</string>
              </property>
@@ -643,37 +694,13 @@
                  <string notr="true"/>
                 </property>
                 <property name="title">
-                 <string>Contour Tracking</string>
+                 <string>Color Registration</string>
                 </property>
                 <layout class="QFormLayout" name="formLayout_6">
-                 <item row="0" column="1">
-                  <widget class="QCheckBox" name="contourTrackingcheckBox">
-                   <property name="font">
-                    <font>
-                     <pointsize>8</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Model</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="1">
-                  <widget class="QCheckBox" name="contourTrackingDatacheckBox">
-                   <property name="enabled">
-                    <bool>false</bool>
-                   </property>
-                   <property name="font">
-                    <font>
-                     <pointsize>8</pointsize>
-                    </font>
-                   </property>
-                   <property name="text">
-                    <string>Data</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="2" column="1">
+                 <property name="fieldGrowthPolicy">
+                  <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+                 </property>
+                 <item row="1" column="0">
                   <widget class="QLabel" name="label_7">
                    <property name="font">
                     <font>
@@ -681,11 +708,12 @@
                     </font>
                    </property>
                    <property name="text">
-                    <string>Color Registration Factor (Pixels Distance / Hue Space)</string>
+                    <string>Color Registration Factor 
+ (Pixels Distance / Hue Space)</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="3" column="1">
+                 <item row="1" column="1">
                   <widget class="QDoubleSpinBox" name="colorRegSpinBox">
                    <property name="font">
                     <font>
@@ -699,7 +727,56 @@
                     <double>0.100000000000000</double>
                    </property>
                    <property name="value">
-                    <double>0.003900000000000</double>
+                    <double>1.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0" colspan="2">
+                  <widget class="QCheckBox" name="DuplicatescheckBox">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Allow Duplicate Types</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="label_8">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Recheck ID</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QSpinBox" name="recheckIDspinBox">
+                   <property name="suffix">
+                    <string> frames</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QCheckBox" name="usekeyframecheckBox">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Use Keyframes</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
                    </property>
                   </widget>
                  </item>
@@ -858,7 +935,7 @@
               <string> pix</string>
              </property>
              <property name="maximum">
-              <number>1000</number>
+              <number>99999</number>
              </property>
              <property name="value">
               <number>20</number>
@@ -882,9 +959,63 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="filtersTabWidget">
+       <attribute name="title">
+        <string>Filters</string>
+       </attribute>
+       <widget class="QSpinBox" name="dilatespinbox">
+        <property name="geometry">
+         <rect>
+          <x>360</x>
+          <y>40</y>
+          <width>60</width>
+          <height>27</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="dilatelabel">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>50</y>
+          <width>66</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Dilate</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="blurlabel">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>130</y>
+          <width>66</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Blur</string>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="blurspinBox">
+        <property name="geometry">
+         <rect>
+          <x>360</x>
+          <y>130</y>
+          <width>60</width>
+          <height>27</height>
+         </rect>
+        </property>
+        <property name="value">
+         <number>1</number>
+        </property>
+       </widget>
+      </widget>
      </widget>
     </item>
-    <item row="2" column="0" colspan="3">
+    <item row="3" column="0" colspan="4">
      <layout class="QHBoxLayout" name="playcontrolLayout">
       <item>
        <widget class="QPushButton" name="stopButton">
@@ -902,7 +1033,7 @@
       </item>
      </layout>
     </item>
-    <item row="0" column="0" colspan="3">
+    <item row="0" column="0" colspan="4">
      <widget class="QScrollArea" name="scrollArea">
       <property name="minimumSize">
        <size>
@@ -920,7 +1051,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>68</y>
+         <y>53</y>
          <width>688</width>
          <height>498</height>
         </rect>
@@ -988,16 +1119,26 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
         <property name="text">
          <string>Visualization Overlay</string>
         </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
        </widget>
       </widget>
      </widget>
     </item>
-    <item row="3" column="2">
+    <item row="4" column="3">
      <widget class="QCheckBox" name="visualizationcheckBox">
       <property name="font">
        <font>
-        <pointsize>8</pointsize>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+        <kerning>true</kerning>
        </font>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
       </property>
       <property name="text">
        <string>Visualization</string>
@@ -1007,10 +1148,61 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
       </property>
      </widget>
     </item>
-    <item row="3" column="1">
+    <item row="4" column="1">
      <widget class="QCheckBox" name="ThreeDcheckBox">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
       <property name="text">
        <string>3D</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QSlider" name="framesSlider">
+      <property name="maximum">
+       <number>0</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+      <property name="tickInterval">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QSpinBox" name="framesspinBox">
+      <property name="frame">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <property name="prefix">
+       <string>frame: </string>
+      </property>
+      <property name="maximum">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3">
+     <widget class="QPushButton" name="previewtrackingButton">
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>| Preview Tracking |</string>
       </property>
      </widget>
     </item>
@@ -1035,7 +1227,14 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
     <addaction name="separator"/>
     <addaction name="actionSave_All"/>
    </widget>
+   <widget class="QMenu" name="menuCamera">
+    <property name="title">
+     <string>Camera</string>
+    </property>
+    <addaction name="actionLive_Preview"/>
+   </widget>
    <addaction name="menuSettings"/>
+   <addaction name="menuCamera"/>
   </widget>
   <action name="actionClose">
    <property name="text">
@@ -1065,6 +1264,17 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
   <action name="actionLoad_Defaults">
    <property name="text">
     <string>Load Defaults</string>
+   </property>
+  </action>
+  <action name="actionLive_Preview">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Live Preview</string>
    </property>
   </action>
  </widget>

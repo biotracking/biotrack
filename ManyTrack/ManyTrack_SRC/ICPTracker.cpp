@@ -2,6 +2,8 @@
 
 
 
+
+
 void
 viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
 {
@@ -16,8 +18,6 @@ viewerOneOff (pcl::visualization::PCLVisualizer& viewerT)
     o.z = 0;
     //    viewerT.addSphere (o, 0.25, "sphere", 0);
     qDebug()<< "i only run once";
-
-
 
 }
 
@@ -45,22 +45,39 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
     uiICP=uiPass;
     thefps=fps;
 
-    //Set some default values
-    showSearchRadius=true;
-    showRemovalRadii=true;
-    showModel=true;
-    showTrails = true;
-
-    bgsubstractionThreshold = 58;
-    modelTOdataThreshold = 20; // percentage of model points to be considered healthy
-
-
     numOfTracks = 0;
-    isVideoShowing = true;
-    resolutionFractionMultiplier = 4; // 4 for 1/4 resolution, 2 for 1/2 resolution, 1 for full resolution
-    separationThreshold=6;
 
-    // TODO: move into load function
+    //Set some default values
+    //Initialize values based on UI now!
+
+    //TODO fix redundancies
+    showSearchRadius=uiICP.trackDistanceViewCheck->isChecked();
+    showRemovalRadii=uiICP.separationViewCheck->isChecked();
+    showModel=uiICP.modelViewcheckBox->isChecked();
+    showTrails = uiICP.showTrailscheckBox->isChecked();
+    showBox =  uiICP.showBoxcheckBox->isChecked();
+
+    resolutionFractionMultiplier = uiICP.resolutionSpinBox->value(); // 4 for 1/4 resolution, 2 for 1/2 resolution, 1 for full resolution
+
+    bgsubstractionThreshold = uiICP.bgSubThresholdSpinBox->value();
+    modelTOdataThreshold = uiICP.healthyPercentageThresholdSpinBox->value(); // percentage of model points to be considered healthy
+    trackDeathThreshold=uiICP.trackdeathSpinBox->value();
+
+
+//    isVideoShowing = true;
+    separationThreshold=uiICP.separationSpinBox->value();
+    icpMatchDistanceThreshold = uiICP.trackdistanceSpinBox->value();
+    Ticp_maxIter=uiICP.ICP_MaxIterspinBox->value();
+    Ticp_transformationEpsilon=uiICP.ICP_TransEpsilondoubleSpinBox->value();
+    Ticp_euclideanDistance=uiICP.ICP_EuclideanDistdoubleSpinBox->value();
+    colorRegScale=uiICP.colorRegSpinBox->value();
+
+
+
+
+    /*
+      * Load All canned data
+      */
     //Load background image
     bgImage = imread(bgImagepath.toStdString());
 
@@ -105,12 +122,9 @@ ICPTracker::ICPTracker(float fps, QString bgImagepath, QString modelFolderpath, 
 
     qDebug()<< "Number of Models loaded:" << models.size();
 
-    trackToBlobDistanceThreshold = 0;
-    trackDeathThreshold=20;
 
-    colorRegScale=uiICP.colorRegSpinBox->value();
-
-    /**/  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+    // 3D Visualization Stuff
+    /**  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer2 (new pcl::visualization::PCLVisualizer ("3D Viewer"));
 
     viewer2->setBackgroundColor (0, 0, 0);
     //  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, "sample cloud");
@@ -153,74 +167,21 @@ ICPTracker::~ICPTracker()
     data_cloud.clear();
 }
 
-
-
-
-void ICPTracker::track(Mat scene_img, int timeIndex)
-{
-    Track* track;
-    vector<Model> currentTrackModelPoints;
-    currentTrackModelPoints = models;
-
-
-
-    /////////////////////////
-    // update all tracks
-    /////////////////////////
-    frameIndex = timeIndex;
-
-    ///////////////////////////
-    /// Prep the current Frame
-    //get current frame to track
-    ////////////////////////////
-
-
-
-
-    // bg subtraction
-
-    absdiff(scene_img, bgImage,bgSubImage);
-
-    cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray //NOTE!!!! Never do a cvtColor(img,img, CVBGR2GRAY). if src and dst are same you get ERRORS!
-    cv::threshold(bgSubImageGray,bgSubImageGray,bgsubstractionThreshold,255,CV_THRESH_BINARY);
-
-
-    /// Draw contours
-    /// If we want to track just the outlines of the detections, let's give it a go!
-    if(isContourTracking){
-        bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
-    }
-
-    /*Mask  */
-    if(maskImageGray.empty()){//Don't care about mask
-    }    else{//Only mix in mask image if it exists
-        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //TODO check modeler for alternate method of applying mask
-    }
-
-    ////////////////////////////////////////////////////
-    ///TODO add user-controllable function for pre-filtering images (like blurring and stuff)
-    /*additional Filters*/
-    // median filter bgSubImageGray
-    //cvSmooth(bgSubImageGray, bgSubImageGray, CV_MEDIAN, 3);
-    /////////////////////////////////////////////////
+void ICPTracker::MattoCloudDetections(Mat img){
 
     //Rescale from full size down to our resampled size
     cv::resize(bgSubImageGray, bgSubImageGraySmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier);
 
     Mat imgsmall;
-    cv::resize(scene_img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
+    cv::resize(img, imgsmall, Size(), 1./resolutionFractionMultiplier, 1./resolutionFractionMultiplier); //full color reduced image
     Mat imgsmallgray;
     cvtColor(imgsmall,imgsmallgray,CV_BGR2GRAY);
     Mat imgsmallHSV;
     cvtColor(imgsmall,imgsmallHSV,CV_BGR2HSV);
 
 
-    /// examine our subtraction to make sure we are doing things correctly
-    //    namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
-    //    imshow( "Gray image", gray_image );
-
     ///////////////
-    /// The Big Loop
+    /// The Biggest Loop
     /////////////
 
 
@@ -233,22 +194,22 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
     // cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray
     //Get as many hard coded values as possible before we go through expensive looping!
-    int irows=bgSubImageGraySmall.rows; // number of lines
-    int icols = bgSubImageGraySmall.cols; // number of columns
-    int istep = bgSubImageGraySmall.step;
-    int ielemsize= bgSubImageGraySmall.elemSize();
+    int grayrows=bgSubImageGraySmall.rows; // number of lines
+    int graycols = bgSubImageGraySmall.cols; // number of columns
+    int graystep = bgSubImageGraySmall.step;
+    int grayelemsize= bgSubImageGraySmall.elemSize();
 
     //Color values
-    int cirows=imgsmall.rows; // number of lines
-    int cicols = imgsmall.cols; // number of columns
-    int cistep = imgsmall.step;
-    int cielemsize= imgsmall.elemSize();
+    int crows=imgsmall.rows; // number of lines
+    int ccols = imgsmall.cols; // number of columns
+    int cstep = imgsmall.step;
+    int celemsize= imgsmall.elemSize();
 
-    int gistep = imgsmallgray.step;
-    int gielemsize= imgsmallgray.elemSize();
+    int gstep = imgsmallgray.step;
+    int gelemsize= imgsmallgray.elemSize();
 
-    int HSVistep = imgsmallHSV.step;
-    int HSVielemsize= imgsmallHSV.elemSize();
+    int HSVstep = imgsmallHSV.step;
+    int HSVelemsize= imgsmallHSV.elemSize();
 
     uchar pixval = 0;
     uchar pixvalcolorR = 0;
@@ -263,25 +224,55 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
 
-    //Functions //Fancy Define
+    //This is a quick define for fast pixel access
 #define aPixel(type, dataStart,step,size,x,y,channel)*((type*)(dataStart+step*(y)+(x)*size+channel)) // This says it is fast (maybe a lie)
 
-    //        data_cloud->width    = pts.size();
-    //        data_cloud.height   = 1;
-    //        data_cloud.is_dense = false; // should be true?
-    //        data_cloud.points.resize (data_cloud.width * data_cloud.height);
     pcl::PointCloud<pcl::PointXYZRGB> temp_data_cloud;
+    pcl:: PointCloud<PointXYZRGB> senddata_cloud;// (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
-    for (int y=0; y < irows; y++)
+    copyPointCloud(data_cloud, temp_data_cloud);
+
+
+    //TODO Loop pixels in parallel
+     double t = (double)getTickCount();
+
+
+/** //Loop in parallel
+
+const int SIZECOL = graycols -1;
+    for (int j=0; j<grayrows; j++) {
+
+//        const Parallel_Scan_Pix_row body(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+//                                         &data_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
+//                                         j, colorRegScale, resolutionFractionMultiplier );
+//        const cv::Range range(0, SIZECOL);
+
+//        cv::parallel_for_(range, body);
+        cv::parallel_for_(Range(0, SIZECOL), Parallel_Scan_Pix_row(&bgSubImageGraySmall, &imgsmall, &imgsmallHSV,
+                                                                        &senddata_cloud, graystep,grayelemsize,cstep,celemsize,HSVstep,HSVelemsize,
+                                                                   j, colorRegScale, resolutionFractionMultiplier));
+
+
+    }
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "::: Parallel Scan time " << t << endl;
+/**/
+
+//Original
+    /**/
+
+   t = (double)getTickCount();
+
+    for (int y=0; y < grayrows; y++)
     {
-        for (int x=0; x < icols; x++)
+        for (int x=0; x < graycols; x++)
         {
-            pixval=aPixel(uchar,bgSubImageGraySmall.data,istep,ielemsize,x,y,0);
-            pixvalcolorB=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,0);
-            pixvalcolorG=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,1);
-            pixvalcolorR=aPixel(uchar,imgsmall.data,cistep,cielemsize,x,y,2);
-            pixvalGray=aPixel(uchar, imgsmallgray.data,gistep,gielemsize,x,y,0);
-            pixvalHue=aPixel(uchar, imgsmallHSV.data,HSVistep,HSVielemsize,x,y,0);
+            pixval=aPixel(uchar,bgSubImageGraySmall.data,graystep,grayelemsize,x,y,0);
+            pixvalcolorB=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,0);
+            pixvalcolorG=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,1);
+            pixvalcolorR=aPixel(uchar,imgsmall.data,cstep,celemsize,x,y,2);
+//            pixvalGray=aPixel(uchar, imgsmallgray.data,gstep,gelemsize,x,y,0);
+            pixvalHue=aPixel(uchar, imgsmallHSV.data,HSVstep,HSVelemsize,x,y,0);
 
 
 
@@ -301,25 +292,107 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
             }
         }
     }
-    data_cloud = temp_data_cloud;
-    pcl:: PointCloud<PointXYZRGB>::Ptr data_cloud_PTR (new pcl::PointCloud<PointXYZRGB> (data_cloud));
 
-    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
+
+    data_cloud = temp_data_cloud;
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "::: Serial  Scan time " << t << endl;
+
+    /**/
+
+//    viewer->updatePointCloud(data_cloud_PTR,"datacloud");
+
+    //Simple way to keep track of tracking progress within a frame
+    numDetectionsinFrame =     data_cloud.size();
 
 
 
     /// End Big Loop
-
-
-
-    /////////////////////////////////////////////////////////////////
-    // Use ICP to update current tracks
-    // precondition: data_cloud (data points) vector is populated for the current frame
-    // postcondition: tracks vector is updated for the current frame
-    /////////////////////////////////////////////////////////////////
     qDebug()<<"!!!!!!!!!ICP update Tracks!!!!!!!!!!!!";
     qDebug()<<"Total data_cloud  pts "<<data_cloud.size()<<"  totalDatacloudpts "<<temp_data_cloud.size();
-    qDebug()<<" data_cloud Before track removal "<<data_cloud.size();
+    qDebug()<<" data_cloud Before track removal "<<numDetectionsinFrame;
+
+
+}
+
+
+/*
+  This is the ICPTracker's main action function
+  it
+  0) Checks for keyframes and adds tracks there, Removes nearby detections
+  1) Updates pre-existing tracks, removes nearby detections
+  2) Adds new tracks to remaining detections
+  3) Deletes tracks that have died
+
+  */
+
+void ICPTracker::processFrame(Mat scene_img, int timeIndex)
+
+
+{
+    Track* track;
+    vector<Model> currentTrackModelPoints;
+    currentTrackModelPoints = models;
+
+
+    frameIndex = timeIndex;
+
+    ///////////////////////////
+    /// Prep the current Frame
+    //get current frame to track
+    ////////////////////////////
+
+
+
+    /////////////////
+    // background subtraction
+    ////////////////
+    absdiff(scene_img, bgImage,bgSubImage);
+
+    cvtColor(bgSubImage,bgSubImageGray, CV_BGR2GRAY);// BGR -> gray //NOTE!!!! Never do a cvtColor(img,img, CVBGR2GRAY). if src and dst are same you get ERRORS!
+    cv::threshold(bgSubImageGray,bgSubImageGray,bgsubstractionThreshold,255,CV_THRESH_BINARY);
+
+
+    /// Draw contours
+    /// If we want to track just the outlines of the detections, let's give it a go!
+//    if(isContourTracking){
+//    //    bgSubImage = runContourDetection(bgSubImageGray);//TODO Weird i used to just have bgSubImage
+//    }
+
+    /*Mask  */
+    if(maskImageGray.empty()){//Don't care about mask
+    }    else{//Only mix in mask image if it exists
+        cv::bitwise_and(bgSubImageGray,maskImageGray,bgSubImageGray); //One way of applying a mask (Modelmaker has an alternative)
+    }
+
+    ////////////////////////////////////////////////////
+    ///TODO add user-controllable function for pre-filtering images (like blurring and stuff)
+    /*additional Filters*/
+    /////////////////////////////////////////////////
+
+  //  Dilation(0,uiICP.dilatespinbox->value(),bgSubImageGray);
+   // blur(scene_img,scene_img,cv::Size(uiICP.blurspinBox->value(),uiICP.blurspinBox->value()));
+
+
+    /// examine our subtraction to make sure we are doing things correctly
+    //    namedWindow( "Gray image", CV_WINDOW_AUTOSIZE );
+    //    imshow( "Gray image", gray_image );
+
+   // end bg subtraction
+
+    //Load the "detection" pixels into a point cloud
+    MattoCloudDetections(scene_img);
+
+    ////////////////
+    /// 0) TODO check for keyframes for this frame
+    //////////////////
+
+    /////////////////////////////////////////////////////////////////
+    // 1) Use ICP to update current tracks
+    //      precondition: data_cloud (data points) vector is populated for the current frame
+    //      postcondition: tracks vector is updated for the current frame
+    /////////////////////////////////////////////////////////////////
 
 
     // for each track, update its transform and remove closest data points from detection
@@ -328,7 +401,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
         currentTrackModelPoints = models;
 
-        data_cloud=  activeTracks[i]->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,trackToBlobDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        data_cloud=  activeTracks[i]->updatePosition(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold,icpMatchDistanceThreshold, Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
 
     }
 
@@ -341,7 +414,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     /////////////////////////
-    // add new tracks
+    // 2) add new tracks
     /////////////////////////
 
     //  dpoints associated with tracks were removed in previous update step
@@ -355,8 +428,8 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
         }
 
         currentTrackModelPoints = models;
-        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, trackToBlobDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
-        data_cloud=  track->update(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, trackToBlobDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
+        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, icpMatchDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
+        data_cloud=  track->updatePosition(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, icpMatchDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
         {
             activeTracks.push_back(track);
@@ -372,7 +445,7 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     /////////////////////////
-    // delete old tracks
+    // 3) delete old tracks
     /////////////////////////
     // Iterate over tracks that were not updated this round and kill them
     // Why would a track not be updated? If the number of continuous zombie frames
@@ -395,20 +468,19 @@ void ICPTracker::track(Mat scene_img, int timeIndex)
 
 
     data_cloud.clear();
-    if (isVideoShowing && uiICP.display_pushButton->isChecked())
-    {
-        drawTrackResult(scene_img);
-    }
-    else
-    {
+
         //Show what the computer actually sees (at 1/resolution)
         //!!!! Change to have user control size of screen!)
-        cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
         if (uiICP.display_pushButton->isChecked())
         {
+            cvtColor(bgSubImageGray,bgSubImage,CV_GRAY2BGR);
+        double t = (double)getTickCount();
             drawTrackResult(bgSubImage);
+            t = ((double)getTickCount() - t)/getTickFrequency();
+            qDebug() << "Draw Track Result time " << t << endl;
+
         }
-    }
+
 
 
 
@@ -493,11 +565,15 @@ void ICPTracker::drawTrackResult(Mat img)
     //    int thickness = 40;
     char label[10];
     trackResultImage =img.clone();
-    trackResultImage.setTo(0);
+
+
     Mat trackResultAlpha;
     cvtColor(trackResultImage,trackResultAlpha,CV_BGR2BGRA);
     cvtColor(trackResultImage,trackResultImage,CV_BGR2BGRA);
-    trackResultImage.setTo(Scalar(0,0,255,0));
+
+    if(!uiICP.subtractioncheckBox->isChecked()){
+trackResultImage.setTo(Scalar(0,0,255,0));
+    }
 
 
 
@@ -589,7 +665,7 @@ void ICPTracker::drawTrackResult(Mat img)
         ///Draw Detection Cirlce
         /////////////
         if(showSearchRadius){
-            cv::circle(trackResultImage,Point(activeTracks[i]->getX(),activeTracks[i]->getY()),(trackToBlobDistanceThreshold),Scalar(255,255,255,150),3);
+            cv::circle(trackResultImage,Point(activeTracks[i]->getX(),activeTracks[i]->getY()),(icpMatchDistanceThreshold),Scalar(255,255,255,150),3);
         }
         ///////////////
         ///Draw ICP Model Templates
@@ -627,33 +703,19 @@ void ICPTracker::drawTrackResult(Mat img)
         ///////////////
         ///Draw ID Label Text
         //////////////
+
+        if(uiICP.textCheckBox->isChecked()){
         sprintf(label, "%d", activeTracks[i]->getID());
         //        cv::putText(trackResultImage, label, Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale, Scalar(255,0,0,255));
 
         //Write the name of the model used
         cv::putText(trackResultImage, models[activeTracks[i]->modelIndex].name.toStdString()+" ("+label+")", Point(activeTracks[i]->getX(),activeTracks[i]->getY()), font, fontscale+1, Scalar(255,0,255,255), 2);
-
+}
     }
 
 
     Mat qImgARGB;
     cvtColor(trackResultImage,qImgARGB,CV_BGRA2RGBA);
-
-
-
-
-    //Todo find  better way of overlaying images using alpha channels
-
-
-//    Mat imgBGRA;
-//    cvtColor(img,imgBGRA,CV_BGR2BGRA);
-    //    cvtColor(trackResultImage,trackResultImage,CV_BGR2BGRA);
-
-//    alphaBlendBGRA<uchar>(imgBGRA,trackResultImage,trackResultImage);
-    //    addWeighted(trackResultImage,1,imgBGRA,.5,0,trackResultImage);
-    //   add(trackResultImage,imgBGRA, trackResultImage);
-
-//    cvtColor(trackResultImage,trackResultImage,CV_BGRA2BGR);
 
     trackResultImage = qImgARGB;
     return;
@@ -689,8 +751,37 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
         imgAndPath.img = modelImg;
         imgAndPath.name=current;
         imgAndPath.filepath=fullpath;
+        imgAndPath.rotated = 0.0;
+
+        namedWindow("0");
+        imshow("0", modelImg);
 
         output.push_back(imgAndPath);
+
+
+        //Now make a model version that is the same just flipped 180 degrees
+        Model imgAndPathF;
+        QString fullpathF;
+        QString currentF = *it;
+
+        qDebug()<<currentF<<" current modelFile Flipped   "<<current;
+        fullpathF = modelFolderPath+"/"+current;
+        Mat modelImgF;
+        modelImgF =imread(fullpathF.toStdString(),-1); //flags of zero means force grayscale load
+        //Rotate the whole thing 180Degrees
+        modelImgF = rotateImage(modelImgF, 180.0);//Rotate full image about this center 180 degrees
+
+        namedWindow("180");
+        imshow("180", modelImgF);
+
+        imgAndPathF.img = modelImgF;
+        imgAndPathF.name=current+"_180";
+        imgAndPathF.filepath=fullpathF;
+        imgAndPathF.rotated=180.0;
+
+        output.push_back(imgAndPathF);
+
+
 
     }
 
@@ -705,6 +796,25 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
  */
 Model ICPTracker::loadModelPoints(Model modelBGRAimg)
 {
+
+    /**
+      Models contain spatial information coded in the Alpha channel
+      right now they are set to
+        //Set Head to alpha=240
+        //Set Center to Alpha = 250
+        //BG subtracted body mask = 255
+
+        ...All spatial information should be >200
+
+
+        //Everything inside rough mask == alpha 200
+        //Everything outside rough mask alpha=100;
+
+
+
+      **/
+
+
     Model outputModelWCloud = modelBGRAimg;
     Point coordinate;
     Mat imgBGRAsmall;
@@ -770,7 +880,7 @@ Model ICPTracker::loadModelPoints(Model modelBGRAimg)
 
 
             //     pixval=aPixel(uchar,bgSubImageGraySmall.data,bgSubImageGraySmall.step,bgSubImageGraySmall.elemSize(),x,y,1);
-            if (pixvalAlpha > 2)
+            if (pixvalAlpha > 200)
             {
 
                 coordinate.x = x*resolutionFractionMultiplier - modelDimensions.x/2; // center //scale back into full res coordinates
@@ -871,6 +981,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     QString tsname=projectdirectory+icpprojectname+"/"+"timestamp.btf";
     QString tsname_f=projectdirectory+icpprojectname+"/"+"timestamp_frames.btf";
 
+    QString modelname=projectdirectory+icpprojectname+"/"+"type.btf";
+
     QString idname=projectdirectory+icpprojectname+"/"+"id.btf";
     QString ximagename=projectdirectory+icpprojectname+"/"+"ximage.btf";
     QString yimagename=projectdirectory+icpprojectname+"/"+"yimage.btf";
@@ -884,6 +996,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     FILE* yImageFP = fopen(yimagename.toAscii(),"w");
     FILE* angleFP = fopen(timagename.toAscii(),"w");
     FILE* idFP = fopen(idname.toAscii(),"w");
+    FILE* typeFP = fopen(modelname.toAscii(),"w");
+
     int startFrame = 0;
     int endFrame = 0;
     typedef std::multimap<int, Track*> mapType;
@@ -937,6 +1051,7 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     float angle;
     int timestamp;
     int id;
+    String type;
     for(mapType::const_iterator it = framesToTracksMAP.begin(); it != framesToTracksMAP.end(); ++it)
     {
         fIndex = (*it).first;
@@ -947,6 +1062,9 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
         id = track->getID();
         fprintf(timeStampFP, "%d\n", timestamp);
         fprintf(timeStampFP_f, "%d\n", fIndex); //Fix this: determine if needs to be fIndex+1 or just fIndex
+
+        type =  models[track->modelIndex].name.toStdString();
+        fprintf(typeFP, "%s\n", type.c_str());
 
         fprintf(idFP, "%d\n", id);
         x = track->getX(fIndex+1);
@@ -964,6 +1082,8 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     fclose(xImageFP);
     fclose(yImageFP);
     fclose(angleFP);
+    fclose(typeFP);
+
     fclose(idFP);
 
     return;
@@ -1113,13 +1233,11 @@ void ICPTracker::processInteractions(Track* ta, Track* tb, FILE* fp)
 
 Mat ICPTracker::runContourDetection(Mat img){
 
-    //    Mat canny_output;
     vector<vector<Point> > contours;
     vector<Vec4i> hierarchy;
 
 
     /// Detect edges using canny
-    //Canny( img, img, 50, 50*2, 3 );
     /// Find contours
     findContours( img, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
 
@@ -1142,5 +1260,38 @@ Mat ICPTracker::runContourDetection(Mat img){
 
 
 }
+
+
+//rotates about center
+cv::Mat ICPTracker::rotateImage(const Mat& source, double angle)
+{
+//    qDebug()<<"Angle in rad"<<anglerad;
+//    double angle  = ((anglerad*180)/CV_PI);
+    qDebug()<<"Angle in deg"<<angle;
+    Point2f src_center(source.cols/2.0F, source.rows/2.0F);
+    Mat rot_mat = getRotationMatrix2D(src_center, angle, 1.0);
+    Mat dst;
+    warpAffine(source, dst, rot_mat, source.size());
+    return dst;
+}
+
+
+
+/** @function Dilation */
+void ICPTracker::Dilation( int dilation_elem, int dilation_size, Mat &src )
+{
+
+  if( dilation_elem == 0 ){ dilation_type = MORPH_RECT; }
+  else if( dilation_elem == 1 ){ dilation_type = MORPH_CROSS; }
+  else if( dilation_elem == 2) { dilation_type = MORPH_ELLIPSE; }
+
+  Mat element = getStructuringElement( dilation_type,
+                                       Size( 2*dilation_size + 1, 2*dilation_size+1 ),
+                                       Point( dilation_size, dilation_size ) );
+  /// Apply the dilation operation
+  erode( src, src, element );
+//  imshow( "Dilation Demo", src );
+}
+
 
 

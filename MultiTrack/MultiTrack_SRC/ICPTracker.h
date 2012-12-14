@@ -28,6 +28,7 @@ public:
     ICPTracker(float fps, QString bgImagepath,  QString modelImagepath, QString maskImagepath,  Ui::MultitrackClass uiPass);
     ~ICPTracker();
 
+EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
     void updateImage(Mat img) { image = img; }
     void track(Mat img, int timeIndex);
@@ -116,20 +117,6 @@ private:
 
     Mat runContourDetection(Mat img);
     int resolutionFractionMultiplier;
-
-
-    /** Sample Struct
-    //	typedef struct TargetBlob
-    //	{
-    //		Mat Blobmat;
-    //        Point centroid;
-    //        std::vector<Point> pts;
-    //		bool isMatched;
-    //	}
-    //	TargetBlob;
-    //	std::vector<TargetBlob> blobs;
-
-    **/
 
 protected:
 

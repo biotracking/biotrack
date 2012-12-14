@@ -33,7 +33,7 @@ Track::~Track()
  * to transforms vector and registration transformation from
  * the track's birth frame to absoluteTransforms vector.
  */
-pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<Model> modelPTS_clouds,
+pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<Model> modelPTS_clouds,
                                              int modelTODataThreshold, int separateThreshold, int matchDThresh,
                                              int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST)
 {
@@ -63,7 +63,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
         isBirthFrame=true; // Try out Doing extra work aligning the objects if it is the very first frame
         //Determine what model this creature should use
-        if(modelPTS_clouds.size()<2){
+        if(modelPTS_clouds.size()<2){// If there is only one model, just use that one
             modelIndex = 0;
         }
         else{
@@ -86,39 +86,49 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
     modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
+    //STRIP 3D data
+    PointCloud<PointXY> dataPTS_cloud2D;
+    copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
+    PointCloud<PointXY> modelPTS_cloud2D;
+    copyPointCloud(modelToProcess_cloud,modelPTS_cloud2D);
+
+             PointCloud<PointXYZRGB> dataPTS_cloudStripped;
+             copyPointCloud(dataPTS_cloud2D,dataPTS_cloudStripped);
+
+             PointCloud<PointXYZRGB> modelPTS_cloudStripped;
+             copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
+
+
     //leave open for other possible ICP methods
-    bool doPCL=true;
+    bool doPCL_ICP=true;
+
     //PCL implementation of ICP
-    if(doPCL){
+    if(doPCL_ICP){
 
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {
 
-            //STRIP 3D data
-            PointCloud<PointXY> dataPTS_cloud2D;
-            copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
-            PointCloud<PointXY> modelPTS_cloud2D;
-            copyPointCloud(modelToProcess_cloud,modelPTS_cloud2D);
-
-                     PointCloud<PointXYZRGB> dataPTS_cloudStripped;
-                     copyPointCloud(dataPTS_cloud2D,dataPTS_cloudStripped);
-
-                     PointCloud<PointXYZRGB> modelPTS_cloudStripped;
-                     copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
 
 
-
+double fitnessin;
             // Find transformation from the orgin that will optimize a match between model and target
-            T=   updateTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped);
+            T=   calcTransformPCLRGB(dataPTS_cloud, modelToProcess_cloud,&fitnessin); //Use 3D color
+
+//            T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped, &fitnessin); // Just 2D
 
 
+            //Apply the Transformation
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
+            pcl::transformPointCloud(modelPTS_cloudStripped,modelPTS_cloudStripped, T);
+
 
         }
 
     }
 
-    else{ //no other ICP implementation currently
+    else{ //Other Registration implementations
+
+
     }
 
 
@@ -131,11 +141,41 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
       **/
     pcl::PointCloud<pcl::PointXYZRGB> dataPTSreduced_cloud;
 
-    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
+//    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
+       removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
+
     pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
     totalRemovedPoints = totalpointsBeforeRemoval - dataPTSreduced_cloud.size();
 
+
+    qDebug()<<"Removed Points from Track  "<<totalRemovedPoints;
+
+    /// For Debugging we can visualize the Pointcloud
+             /**/
+                pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
+              //  copyPointCloud(modelPTS_cloud,)
+                transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
+
+                pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].cloud));
+
+                pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
+                viewer.showCloud(dataPTS_cloud_ptr);
+
+            int sw=0;
+                        while (!viewer.wasStopped())
+                        {
+                            if(sw==0){
+                            viewer.showCloud(model_cloud_ptrTempTrans);
+                            sw=1;
+                            }
+                            else{
+                                viewer.showCloud(dataPTS_cloud_ptr);
+            sw=0;
+                            }
+
+                        }
+            /**/
 
 
 
@@ -157,32 +197,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
         {
             isBirthable=true;
 
-
-
-         /**  /// For Debugging we can visualize the Pointcloud
-            pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
-          //  copyPointCloud(modelPTS_cloud,)
-            transformPointCloud(modelPTS_clouds[modelIndex].first,modelPTS_clouds[modelIndex].first,T);
-
-            pcl:: PointCloud<PointXYZRGB>::Ptr model_cloud_ptrTempTrans (new pcl::PointCloud<PointXYZRGB> (modelPTS_clouds[modelIndex].first));
-
-            pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-            viewer.showCloud(dataPTS_cloud_ptr);
-
-        int sw=0;
-                    while (!viewer.wasStopped())
-                    {
-                        if(sw==0){
-                        viewer.showCloud(model_cloud_ptrTempTrans);
-                        sw=1;
-                        }
-                        else{
-                            viewer.showCloud(dataPTS_cloud_ptr);
-        sw=0;
-                        }
-
-                    }
-        /**/
 
         }
 
@@ -236,23 +250,72 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::update(pcl::PointCloud<pcl::PointXYZRGB
 
 int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgroup){
 
+    /// Timing
+    double t = (double)getTickCount();
+
+
     float fit=DBL_MAX;
     int identity=0;
+    vector<pair<int,double> > id_scores;
+
+
+
+    /**/ // parallel testing
+//    const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
+
+        cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_scores) );
+
+
+    //Compare the Results
+   double bestfit = DBL_MAX; // id_scores.at(0).second;
+    identity=0;
+    for (int i=0; i< (id_scores.size());i++){
+        qDebug()<<"score checking iterator "<<i<<" id "<< id_scores.at(i).first<<" name "<<modelgroup[id_scores.at(i).first].name<<" scores "<< id_scores.at(i).second <<" current bestfit"<<bestfit;
+
+        if(id_scores.at(i).second<bestfit){
+            bestfit= id_scores.at(i).second;
+                identity =        id_scores.at(i).first;
+//                qDebug()<<"Better Fit!  "<<identity<<" name "<<modelgroup[identity].name;
+
+
+         }
+//        qDebug()<<"Current Best ID  "<<identity<<" name "<<modelgroup[identity].name;
+
+    }
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "::: ID parallel time " << t << endl;
+     t = (double)getTickCount();
+    qDebug()<<"end Parallel ID testing, selected value was: "<<modelgroup[identity].name;
+
+
+    /**/
+
+    /** // Regular Serial ID Testing
     for (int i=0; i<modelgroup.size();i++){
 
         qDebug()<<"Model Cloud "<<modelgroup[i].name<<"  idx "<<i;
 
-//        vector< pair<PointCloud<pcl::PointXYZRGB>, QString> >
         PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[i].cloud;
-                 updateTransformPCLRGB(dataPTS_cloud, modelTOIdentify);
-                 if(recentFitness<fit){
-                     fit = recentFitness;
-                  identity = i;
+        int recentFit;
+                 calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentFit);
+                 qDebug()<<"score checking  "<<i<<" recentfit "<<recentFit<<"  bestfit"<<fit;
+
+                 if(recentFit<fit){
+                     fit = recentFit;
+//                  identity = i;
                  }
 
 
     }
-    qDebug()<<"end ID testing, selected value was: "+modelgroup[identity].name;
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    qDebug() << "::: Serial  ID time " << t << endl;
+    qDebug()<<"end Regular ID testing, selected value was: "+modelgroup[identity].name;
+
+    /**/
+
+
 
     return identity;
 
@@ -273,7 +336,7 @@ void Track::transformCloud(pcl::PointCloud<pcl::PointXYZRGB> modelPTS_cloud, Eig
 
 
 
-Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud){
+Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, double* fitness){
 
     Eigen::Matrix4f ET;
     Matrix4f guess,guess180;
@@ -284,6 +347,7 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+//  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
     icp.setInputCloud(model_cloud_ptr);
     icp.setInputTarget(data_cloud_ptr);
     pcl::PointCloud<pcl::PointXYZRGB> Final;
@@ -314,7 +378,7 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
               icp.setMaxCorrespondenceDistance (matchDistanceThreshold);
 
         // Set the maximum number of iterations (criterion 1)
-        icp.setMaximumIterations (icp_maxIter*3);  //Timeout
+        icp.setMaximumIterations (icp_maxIter*3); // Work harder on birth frame //Timeout
 
         //Set the transformation epsilon (criterion 2)
         //This is the maximum distance that the model can move between iterations and still be thought to have converged
@@ -328,7 +392,6 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
         //Other Parameters
 
-        //        icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unless it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
 //        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 
@@ -373,8 +436,6 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
 
         //Other Parameters
-        // icp.setRANSACIterations(icp_maxIter); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
-
         icp.setRANSACIterations(0); //RANSAC needs the below parameter to work unles it is zero, default RANSAC properties are 1000 iterations and 0.05 distance threshold
 //        icp.setRANSACOutlierRejectionThreshold(matchDistanceThreshold);
 
@@ -394,17 +455,27 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
     ET=icp.getFinalTransformation();
 
     recentFitness = icp.getFitnessScore();
+//    recentFitness = icp.colorfitness; // For ColorICP
 
-    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
-    qDebug();
+//    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+//    qDebug();
 
     matchScore = icp.getFitnessScore();
+//    matchScore = icp.colorfitness; // For ColorICP
+
     didConverge = icp.hasConverged();
 
+    *fitness=icp.getFitnessScore();
+
+//     *fitness=icp.getFitnessScore(10.0);
+
+//    *fitness=icp.colorfitness; // for ColorICP
 
 
 
-    if(isBirthFrame ){
+    /* Use the rotated images from the get-go now
+
+    if(isBirthFrame&&false ){
 
         //180 flip calculated manually
         //Feed in the results of the previous alignment
@@ -418,16 +489,19 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
 
       // guess180= ET*guess180; //For some reason this doesn't work, I thought this would be more optimal? but it misses the flip more often! I must be envisioning the math wrong.The above version even works better, goes 10% faster
         pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp2;
-        icp2=icp;
+//         pcl::IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp2; // Testing Color ICP -- Does not work, get Boost shared
+//        icp2=icp;
 
 
         icp2.align(Final, guess180);
 
         if(icp2.getFitnessScore()<recentFitness){
             recentFitness=icp2.getFitnessScore();
+
         }
-        qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
-        qDebug();
+//        qDebug() << "180 has converged:" << icp2.hasConverged() << " score: " <<icp2.getFitnessScore()<<"  RANSAC Iterations: " <<icp2.getRANSACIterations()<< "RansacOutlierRejection"<< icp2.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp2.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp2.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+//        qDebug();
+//        *fitness=recentFitness;
 
         //Temp invert!
         if(icp2.getFitnessScore()<matchScore){
@@ -436,7 +510,9 @@ Eigen::Matrix4f Track::updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> d
         }
 
 
-    }
+    }*/
+//    *fitness=icp.colorfitness;
+
     return ET;
 
 }
@@ -577,6 +653,7 @@ void Track::getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB> &modelPts, int i
  * within the distanceThreshold  to dirtyPts.
  *
  * @param dataPTSreduced_cloud a reference to a vector of Points
+ * @param point_cloud_for_reduction   the collection of points that we want to delete some points from
   * @param distanceThreshold an integer Euclidean distance
  */
 pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::PointCloud<pcl::PointXYZRGB> point_cloud_for_reduction,pcl::PointCloud<pcl::PointXYZRGB> removal_Cloud, int distanceThreshold){
@@ -593,6 +670,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
         float point_radius = distanceThreshold;
 
+        PointCloud<pcl::PointXYZRGB> point_cloud_flattened;//Point cloud with extra Hue Dimension crushed to 0
+
         PointCloud<pcl::PointXYZRGB> point_cloud_for_return;
         point_cloud_for_return.reserve(point_cloud_for_reduction.size());
 
@@ -602,12 +681,18 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
             bool *marked= new bool[point_cloud_for_reduction.size()];
             memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
-    //        for(uint q=0; q< point_cloud_for_reduction.size(); q++){
-    //            marked[q]=false;
 
-    //        }
 
-            pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_for_reduction));
+            //Make a version of the original data cloud that is flattened to z=0 but with the same indice
+            copyPointCloud( point_cloud_for_reduction,point_cloud_flattened);
+
+            for(int q=0; q<point_cloud_flattened.size();q++){
+
+                point_cloud_flattened.at(q).z=0;
+
+            }
+
+           pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_flattened));
 
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
@@ -626,7 +711,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
                 searchPoint.x = removal_Cloud.points[c].x;
                 searchPoint.y = removal_Cloud.points[c].y;
-                searchPoint.z = removal_Cloud.points[c].z;
+               //Need to take z as zero when using a flattened data point cloud
+               searchPoint.z = 0;
 
                 // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
                 if ( kdtree.radiusSearch (searchPoint, point_radius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0 )
@@ -667,222 +753,4 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
 
 
-//Functions for Correspondences API
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-estimateKeypoints (const PointCloud<PointXYZ>::Ptr &src,
-                   const PointCloud<PointXYZ>::Ptr &tgt,
-                   PointCloud<PointXYZ> &keypoints_src,
-                   PointCloud<PointXYZ> &keypoints_tgt)
-{
-  PointCloud<int> keypoints_src_idx, keypoints_tgt_idx;
-  // Get an uniform grid of keypoints
-  UniformSampling<PointXYZ> uniform;
-  uniform.setRadiusSearch (matchDistanceThreshold);  // 1m
-
-  uniform.setInputCloud (src);
-  uniform.compute (keypoints_src_idx);
-  copyPointCloud<PointXYZ, PointXYZ> (*src, keypoints_src_idx.points, keypoints_src);
-
-  uniform.setInputCloud (tgt);
-  uniform.compute (keypoints_tgt_idx);
-  copyPointCloud<PointXYZ, PointXYZ> (*tgt, keypoints_tgt_idx.points, keypoints_tgt);
-
-  // For debugging purposes only: uncomment the lines below and use pcd_viewer to view the results, i.e.:
-  // pcd_viewer source_pcd keypoints_src.pcd -ps 1 -ps 10
-  //savePCDFileBinary ("keypoints_src.pcd", keypoints_src);
- // savePCDFileBinary ("keypoints_tgt.pcd", keypoints_tgt);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-estimateNormals (const PointCloud<PointXYZ>::Ptr &src,
-                 const PointCloud<PointXYZ>::Ptr &tgt,
-                 PointCloud<Normal> &normals_src,
-                 PointCloud<Normal> &normals_tgt)
-{
-  NormalEstimation<PointXYZ, Normal> normal_est;
-  normal_est.setInputCloud (src);
-  normal_est.setRadiusSearch (matchDistanceThreshold);  // 50cm
-  normal_est.compute (normals_src);
-
-  normal_est.setInputCloud (tgt);
-  normal_est.compute (normals_tgt);
-
- /* // For debugging purposes only: uncomment the lines below and use pcd_viewer to view the results, i.e.:
-  // pcd_viewer normals_src.pcd
-  PointCloud<PointNormal> s, t;
-  copyPointCloud<PointXYZ, PointNormal> (*src, s);
-  copyPointCloud<Normal, PointNormal> (normals_src, s);
-  copyPointCloud<PointXYZ, PointNormal> (*tgt, t);
-  copyPointCloud<Normal, PointNormal> (normals_tgt, t);
-  //savePCDFileBinary ("normals_src.pcd", s);
-  //savePCDFileBinary ("normals_tgt.pcd", t);*/
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-estimateFPFH (const PointCloud<PointXYZ>::Ptr &src,
-              const PointCloud<PointXYZ>::Ptr &tgt,
-              const PointCloud<Normal>::Ptr &normals_src,
-              const PointCloud<Normal>::Ptr &normals_tgt,
-              const PointCloud<PointXYZ>::Ptr &keypoints_src,
-              const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
-              PointCloud<FPFHSignature33> &fpfhs_src,
-              PointCloud<FPFHSignature33> &fpfhs_tgt)
-{
-  FPFHEstimation<PointXYZ, Normal, FPFHSignature33> fpfh_est;
-  fpfh_est.setInputCloud (keypoints_src);
-  fpfh_est.setInputNormals (normals_src);
-  fpfh_est.setRadiusSearch (matchDistanceThreshold); // 1m
-  fpfh_est.setSearchSurface (src);
-  fpfh_est.compute (fpfhs_src);
-
-  fpfh_est.setInputCloud (keypoints_tgt);
-  fpfh_est.setInputNormals (normals_tgt);
-  fpfh_est.setSearchSurface (tgt);
-  fpfh_est.compute (fpfhs_tgt);
-
-  // For debugging purposes only: uncomment the lines below and use pcd_viewer to view the results, i.e.:
-  /*// pcd_viewer fpfhs_src.pcd
-  PointCloud2 s, t, out;
-  toROSMsg (*keypoints_src, s); toROSMsg (fpfhs_src, t); concatenateFields (s, t, out);
-  savePCDFile ("fpfhs_src.pcd", out);
-  toROSMsg (*keypoints_tgt, s); toROSMsg (fpfhs_tgt, t); concatenateFields (s, t, out);
-  savePCDFile ("fpfhs_tgt.pcd", out);*/
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-findCorrespondences (const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
-                     const PointCloud<FPFHSignature33>::Ptr &fpfhs_tgt,
-                     Correspondences &all_correspondences)
-{
-  pcl::registration::CorrespondenceEstimation <FPFHSignature33, FPFHSignature33> est;
-  est.setInputCloud (fpfhs_src);
-  est.setInputTarget (fpfhs_tgt);
-  est.determineReciprocalCorrespondences (all_correspondences);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
-                          const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                          const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
-                          Correspondences &remaining_correspondences)
-{
-//  pcl::registration::CorrespondenceRejectorMedianDistance rej; //they didn't just have rejector distance
-  pcl::registration::CorrespondenceRejectorDistance rej;
-  rej.setInputCloud<PointXYZ> (keypoints_src);
-  rej.setInputTarget<PointXYZ> (keypoints_tgt);
-  //rej.setMedianFactor(matchDistanceThreshold);
-  rej.setMaximumDistance (matchDistanceThreshold);    // 1m
-  rej.setInputCorrespondences (all_correspondences);
-  rej.getCorrespondences (remaining_correspondences);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-void Track::
-computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
-                       const PointCloud<PointXYZ>::Ptr &tgt,
-                       Eigen::Matrix4f &transform)
-{
-  // Get an uniform grid of keypoints
-  PointCloud<PointXYZ>::Ptr keypoints_src (new PointCloud<PointXYZ>),
-                            keypoints_tgt (new PointCloud<PointXYZ>);
-
-  estimateKeypoints (src, tgt, *keypoints_src, *keypoints_tgt);
-  //print_info ("Found %zu and %zu keypoints for the source and target datasets.\n", keypoints_src->points.size (), keypoints_tgt->points.size ());
-
-  // Compute normals for all points keypoint
-  PointCloud<Normal>::Ptr normals_src (new PointCloud<Normal>),
-                          normals_tgt (new PointCloud<Normal>);
-  estimateNormals (src, tgt, *normals_src, *normals_tgt);
-  //print_info ("Estimated %zu and %zu normals for the source and target datasets.\n", normals_src->points.size (), normals_tgt->points.size ());
-
-  // Compute FPFH features at each keypoint
-  PointCloud<FPFHSignature33>::Ptr fpfhs_src (new PointCloud<FPFHSignature33>),
-                                   fpfhs_tgt (new PointCloud<FPFHSignature33>);
-  estimateFPFH (src, tgt, normals_src, normals_tgt, keypoints_src, keypoints_tgt, *fpfhs_src, *fpfhs_tgt);
-
-  // Copy the data and save it to disk
-/*  PointCloud<PointNormal> s, t;
-  copyPointCloud<PointXYZ, PointNormal> (*keypoints_src, s);
-  copyPointCloud<Normal, PointNormal> (normals_src, s);
-  copyPointCloud<PointXYZ, PointNormal> (*keypoints_tgt, t);
-  copyPointCloud<Normal, PointNormal> (normals_tgt, t);
-*/
-
-
-
-  // Find correspondences between keypoints in FPFH space
-  CorrespondencesPtr all_correspondences (new Correspondences),
-                     good_correspondences (new Correspondences);
-  findCorrespondences (fpfhs_src, fpfhs_tgt, *all_correspondences);
-
-  // Reject correspondences based on their XYZ distance
-  rejectBadCorrespondences (all_correspondences, keypoints_src, keypoints_tgt, *good_correspondences);
-
-  for (int i = 0; i < good_correspondences->size (); ++i)
-    std::cerr << good_correspondences->at (i) << std::endl;
-  // Obtain the best transformation between the two sets of keypoints given the remaining correspondences
-  pcl::registration::TransformationEstimationSVD<PointXYZ, PointXYZ> trans_est;
-  trans_est.estimateRigidTransformation (*keypoints_src, *keypoints_tgt, *good_correspondences, transform);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void Track::
-icp (const PointCloud<Point>::Ptr &src,
-     const PointCloud<Point>::Ptr &tgt,
-     Eigen::Matrix4d &transform)
-{/**
-  CorrespondencesPtr all_correspondences (new Correspondences),
-                     good_correspondences (new Correspondences);
-
-  PointCloud<Point>::Ptr output (new PointCloud<Point>);
-  *output = *src;
-
-  Eigen::Matrix4d final_transform (Eigen::Matrix4d::Identity ());
-
-  int iterations = 0;
-//  DefaultConvergenceCriteria<double> converged (iterations, transform, *good_correspondences);
-
-  // ICP loop
-//  do
-//  {
-    // Find correspondences
-    findCorrespondences (output, tgt, *all_correspondences);
-    PCL_DEBUG ("Number of correspondences found: %d\n", all_correspondences->size ());
-
-    if (rejection)
-    {
-      // Reject correspondences
-      rejectBadCorrespondences (all_correspondences, output, tgt, *good_correspondences);
-      PCL_DEBUG ("Number of correspondences remaining after rejection: %d\n", good_correspondences->size ());
-    }
-    else
-      *good_correspondences = *all_correspondences;
-
-    // Find transformation
-    findTransformation (output, tgt, good_correspondences, transform);
-
-    // Obtain the final transformation
-    final_transform = transform * final_transform;
-
-    // Transform the data
-    transformPointCloudWithNormals (*src, *output, final_transform.cast<float> ());
-
-    // Check if convergence has been reached
-    ++iterations;
-
-    // Visualize the results
-    view (output, tgt, good_correspondences);
-//  }
-//  while (!converged);
-  transform = final_transform;
-
-  /**/
-}
 

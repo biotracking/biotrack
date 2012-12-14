@@ -4,6 +4,22 @@
 #include <iostream>
 #include <fstream>
 #include <typeinfo>
+#include <algorithm>
+
+void TrackletRectItem::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    //std::cout<<"Pressed!"<<std::endl;
+    if(event != NULL) event = event; //get rid of that stupid squiggly
+    QBrush tmp = this->brush();
+    if(selected){
+        tmp.setColor(color);
+        this->setBrush(tmp);
+        selected = false;
+    } else {
+        tmp.setColor(color.lighter(150));
+        this->setBrush(tmp);
+        selected = true;
+    }
+}
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -12,73 +28,66 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     ui->statusBar->setSizeGripEnabled(true);
 	fps = 30.0;
-    //timerID=startTimer(100 / fps);  // timer
     timerID=-1;
     paused = true;
     timestamp_idx = x_idx = y_idx = t_idx = id_idx = -1;
     scaleFactor = 1.0;
     frame_count=0;
     ui->imageLabel->setScaledContents(true);
+    ui->graphicsView->setScene(&scene);
+    curFrameLine = NULL;
+    frame_tracklets.clear();
 }
 
 
 MainWindow::~MainWindow()
 {
+    clearBTFData();
     delete ui;
 }
 
 void MainWindow::clearBTFData(){
-	for(unsigned int i=0; i<btf_data.size();i++){
-		btf_data[i].clear();
-	}
-	btf_data.clear();
-	for(unsigned int i=0;i<frame_data.size();i++){
-		frame_data[i].clear();
-	}
-	frame_data.clear();
-	flip_data.clear();
+
+    //for(unsigned int i=0; i<btf_data.size();i++){
+    //	btf_data[i].clear();
+    //}
+    //btf_data.clear();
+    for(unsigned int i=0;i<frame_tracklets.size();i++){
+        frame_tracklets.at(i).clear();
+    }
+    frame_tracklets.clear();
+    //for(unsigned int i=0;i<frame_data.size();i++){
+    //	frame_data[i].clear();
+    //}
+    //frame_data.clear();
+    //flip_data.clear();
 	btf_names.clear();
+    for(int i=0; i<ui->graphicsView->scene()->items().count();i++){
+        ui->graphicsView->scene()->removeItem(ui->graphicsView->scene()->items().at(i));
+    }
+    for(unsigned int i=0;i<tracklets.size();i++){
+        TrackletRectItem* tmp= tracklets.at(i);
+        delete tmp;
+    }
+    tracklets.clear();
 }
 
 void MainWindow::loadVideo(std::string fname){
-    //loadedVideo.clear();
-    //cv::VideoCapture cap;
     cap.open(fname);
     fps = cap.get(CV_CAP_PROP_FPS);
     std::cout<<"Video FPS:"<<fps<<std::endl;
     frame_count = cap.get(CV_CAP_PROP_FRAME_COUNT);
     std::cout<<"Frames:"<<frame_count<<std::endl;
     cv::Mat in,out;
-    /*
-    std::cout<<"Loading video ["<<fname<<"]";
-    std::cout.flush();
-    int ctr = 0;
-    while(cap.read(in)){
-        loadedVideo.push_back(in.clone());
-        ctr++;
-        if(ctr%(int)(fps*10)==0){
-            std::cout<<".";
-            std::cout.flush();
-        }
-        if(in.cols == 0 || in.rows==0){
-            std::cout<<"Whoops!"<<std::endl;
-        }
-    }
-    std::cout<<" Done! ["<<loadedVideo.size()<<" frames loaded]"<<std::endl;
-    */
     paused = true;
     ui->horizontalSlider->setMinimum(0);
     ui->horizontalSlider->setMaximum(frame_count);
     ui->horizontalSlider->setValue(0);
     cap.read(in);
-    //in = loadedVideo.at(0);
-    //ui->imageLabel->setMaximumSize(in.cols,in.rows);
     out = in.clone();
     cv::cvtColor(in,out,CV_BGR2RGB);
     QImage img = Mat2QImage(out);
     ui->imageLabel->setPixmap(QPixmap::fromImage(img));
-    //updateGeometry();
-    //ui->imageLabel->resize(800,600);
 }
 
 void MainWindow::loadBTF(std::string dname){
@@ -88,10 +97,12 @@ void MainWindow::loadBTF(std::string dname){
     filters<<"*.btf";
     QDir dir(dname.c_str());
     files = dir.entryList(filters);
-    for(unsigned int i=0;i<btf_data.size();i++){
-        btf_data.at(i).clear();
-    }
-    btf_data.clear();
+    std::vector<std::vector<std::string> > btf_data;
+    std::vector<std::vector<int> > frame_data;
+    //for(unsigned int i=0;i<btf_data.size();i++){
+    //    btf_data.at(i).clear();
+    //}
+    //btf_data.clear();
     btf_names.clear();
     for(int i=0;i<files.size();i++){
         btf_names.push_back(files.at(i).toStdString());
@@ -131,46 +142,102 @@ void MainWindow::loadBTF(std::string dname){
     }
     std::cout<<"BTF data for ["<<frame_data.size()<<"] frames"<<std::endl;
     //load up all the ID's through the video
-    for(unsigned int i=0;i<btf_data.at(id_idx).size();i++){
-        std::string id = btf_data.at(id_idx).at(i);
-        if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
-            ui->listWidget->addItem(QString(id.c_str()));
+    std::vector<std::pair<std::string,int> > idsAndStarts, scratch;
+    double maxID = 0.0;
+    for(unsigned int i=0;i<frame_data.size();i++){
+        scratch.clear();
+        bool *marked = new bool[idsAndStarts.size()];
+        for(unsigned int flarfle = 0;flarfle<idsAndStarts.size();flarfle++) marked[flarfle]=false;
+        for(unsigned int j=0;j<frame_data.at(i).size();j++){
+            bool found = false;
+            for(unsigned int k=0;k<idsAndStarts.size();k++){
+                if(idsAndStarts.at(k).first.compare(btf_data.at(id_idx).at(frame_data.at(i).at(j))) == 0){
+                    marked[k] = true;
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                std::pair<std::string,int> tmpPair;
+                tmpPair.first = btf_data.at(id_idx).at(frame_data.at(i).at(j)); //ant ID
+                tmpPair.second = i; //frame number
+                scratch.push_back(tmpPair);
+            }
         }
+        for(unsigned int k=0;k<idsAndStarts.size();k++){
+            if(marked[k]){
+                scratch.push_back(idsAndStarts.at(k));
+            } else {
+                int x,y,width,height;
+                x = idsAndStarts.at(k).second;
+                y = atoi(idsAndStarts.at(k).first.c_str())*20;
+                width = i-x;
+                height = 19;
+                if(y+height > maxID) maxID = y+height;
+                TrackletRectItem *tr = new TrackletRectItem();
+                tr->ximage.clear();
+                tr->yimage.clear();
+                tr->timage.clear();
+                tr->setRect(x,y,width,height);
+                tr->startFrame = idsAndStarts.at(k).second;
+                tr->endFrame = i;
+                tr->color = Qt::yellow;
+                tr->flipped = tr->nuked = tr->selected = false;
+                tr->antID = atoi(idsAndStarts.at(k).first.c_str());
+                tr->setBrush(QBrush(Qt::yellow));
+                tracklets.push_back(tr);
+                ui->graphicsView->scene()->addItem(tr);
+            }
+        }
+        delete [] marked;
+        idsAndStarts = scratch;
     }
-    ui->listWidget->sortItems();
-    /*
-    std::cout<<"Frame 684 contains lines: [";
-    for(unsigned int i=0;i<frame_data.at(684).size();i++){
-        std::cout<<frame_data.at(684).at(i)<<" ";
+    for(unsigned int i=0;i<idsAndStarts.size();i++){
+        int x,y,width,height;
+        x = idsAndStarts.at(i).second;
+        y = atoi(idsAndStarts.at(i).first.c_str())*20;
+        width = frame_data.size()-x;
+        height = 19;
+        if(y+height > maxID) maxID = y+height;
+        TrackletRectItem *tr = new TrackletRectItem();
+        tr->ximage.clear();
+        tr->yimage.clear();
+        tr->timage.clear();
+        tr->setRect(x,y,width,height);
+        tr->startFrame = idsAndStarts.at(i).second;
+        tr->endFrame = frame_data.size();
+        tr->color = Qt::yellow;
+        tr->flipped = tr->nuked = tr->selected = false;
+        tr->antID = atoi(idsAndStarts.at(i).first.c_str());
+        tr->setBrush(QBrush(Qt::yellow));
+        tracklets.push_back(tr);
+        ui->graphicsView->scene()->addItem(tr);
     }
-    std::cout<<"]"<<std::endl;
-    */
-    /*
-    std::cout<<"Done!"<<std::endl;
-    for(unsigned int i=0;i<btf_names.size();i++){
-        if(btf_names.at(i).compare(std::string("id.btf")) == 0){
-            for(unsigned int j=0;j<btf_data.at(i).size();j++){
-                std::string id = btf_data.at(i).at(j);
-                if(ui->listWidget->findItems(QString(id.c_str()),Qt::MatchExactly).size()<=0){
-                    ui->listWidget->addItem(QString(id.c_str()));
+    curFrameLine = ui->graphicsView->scene()->addLine(0,0,0,maxID,QPen(Qt::red));
+    for(int i=0;i<=(maxID-19)/20;i++){
+        std::stringstream thisisdumb;
+        thisisdumb<<i;
+        ui->graphicsView->scene()->addText(thisisdumb.str().c_str())->setPos(0,i*20);
+    }
+    curFrameLine->setZValue(1.0);
+    std::vector<TrackletRectItem*> trackletsInFrame;
+    for(unsigned int i=0;i<frame_data.size();i++){
+        trackletsInFrame.clear();
+        for(unsigned int j=0;j<frame_data.at(i).size();j++){
+            int curID = atoi(btf_data.at(id_idx).at(frame_data.at(i).at(j)).c_str());
+            for(unsigned int k=0;k<tracklets.size();k++){
+                if(tracklets.at(k)->antID == curID && tracklets.at(k)->startFrame <= (int)i && tracklets.at(k)->endFrame > (int)i){
+                    tracklets.at(k)->ximage.push_back(atof(btf_data.at(x_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->yimage.push_back(atof(btf_data.at(y_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->timage.push_back(atof(btf_data.at(t_idx).at(frame_data.at(i).at(j)).c_str()));
+                    tracklets.at(k)->timestamp.push_back(atof(btf_data.at(timestamp_idx).at(frame_data.at(i).at(j)).c_str()));
+                    trackletsInFrame.push_back(tracklets.at(k));
                 }
             }
         }
-        if(btf_names.at(i).compare(std::string("timestamp.btf")) == 0){
-            int count=0;
-            std::string lastTS = "33";
-            for(unsigned int j=0;j<btf_data.at(i).size();j++){
-                if(lastTS.compare(btf_data.at(i).at(j))!=0){
-                    count++;
-                    lastTS=btf_data.at(i).at(j);
-                }
-                std::stringstream thisisdumb;
-                thisisdumb<<count;
-                btf_frameno.push_back(thisisdumb.str());
-            }
-        }
+        frame_tracklets.push_back(trackletsInFrame);
     }
-    */
+
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -249,8 +316,14 @@ void MainWindow::on_pushButton_5_clicked()
 void MainWindow::on_actionLoad_video_file_triggered()
 {
     ui->statusBar->showMessage("Loading video...");
-    loadVideo( QFileDialog::getOpenFileName(this).toStdString() );
-    ui->statusBar->showMessage("Done!");
+    QString vidName = QFileDialog::getOpenFileName(this);
+    if(vidName.isNull()){
+        ui->statusBar->showMessage("Cancled loading video");
+        return;
+    } else {
+        loadVideo(vidName.toStdString());
+        ui->statusBar->showMessage("Done!");
+    }
 }
 
 void MainWindow::on_horizontalSlider_valueChanged(int value)
@@ -264,55 +337,34 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     
     cap.set(CV_CAP_PROP_POS_FRAMES,curFrame);
     cap.read(in);
-    //in = loadedVideo[curFrame];
     
     out = in.clone();
     cv::cvtColor(in,out,CV_BGR2RGB);
-    for(int i=0;i<ui->listWidget->count();i++){
-        bool found = false;
-        std::string trackId = ui->listWidget->item(i)->text().toStdString();
-        if(value<((int)frame_data.size())){
-            for(unsigned int j=0;j<frame_data.at(value).size();j++){
-                if(trackId.compare(btf_data.at(id_idx).at(frame_data.at(value).at(j)))==0){
-                    double scaledX = (scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()));
-                    double scaledY = (scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()));
-                    bool flip_coeff = false;
-                    for(unsigned int flip_idx=0;flip_idx<flip_data.size();flip_idx++){
-                        if(flip_data.at(flip_idx).second<value){
-                            if(trackId.compare(flip_data.at(flip_idx).first)==0){
-                                flip_coeff = !flip_coeff;
-                                //std::cout<<"FLIPPED"<<std::endl;
-                            }
-                        }
-                    }
-                    double theta = ((flip_coeff)?M_PI:0)+atof(btf_data.at(t_idx).at(frame_data.at(value).at(j)).c_str());
-                    int radius = 10;
-                    int lineWidth = 2;
-                    //std::cout<<"(";
-                    //std::cout<<(int)(scaleFactor*atof(btf_data.at(x_idx).at(frame_data.at(value).at(j)).c_str()))<<", ";
-                    //std::cout<<(int)(scaleFactor*atof(btf_data.at(y_idx).at(frame_data.at(value).at(j)).c_str()))<<") ";
-                    //std::cout<<"("<<in.cols<<", "<<in.rows<<")"<<std::endl;
-                    cv::Scalar btfColor(255,0,0);
-                    cv::circle(out,cv::Point(scaledX,scaledY),radius,btfColor,lineWidth);
-                    double endPtX = (radius*cos(theta))+scaledX;
-                    double endPtY = (radius*sin(theta))+scaledY;
-                    cv::line(out,cv::Point(scaledX,scaledY),cv::Point(endPtX,endPtY),btfColor,lineWidth);
-                    cv::putText(out,trackId,cv::Point(scaledX,scaledY),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255),2);
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if(found){
-            ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(255,255,255)));
-        } else {
-            ui->listWidget->item(i)->setBackground(QBrush(QColor::fromRgb(200,200,200)));
+    if(value<((int)frame_tracklets.size())){
+        for(unsigned int j=0;j<frame_tracklets.at(value).size();j++){
+            if(frame_tracklets.at(value).at(j)->nuked) continue;
+            thisisdumb.str("");
+            thisisdumb.clear();
+            thisisdumb<<frame_tracklets.at(value).at(j)->antID;
+            std::string trackId = thisisdumb.str();
+            int trackletStart = frame_tracklets.at(value).at(j)->startFrame;
+            double scaledX = (scaleFactor*frame_tracklets.at(value).at(j)->ximage.at(value-trackletStart));
+            double scaledY = (scaleFactor*frame_tracklets.at(value).at(j)->yimage.at(value-trackletStart));
+            bool flip_coeff = frame_tracklets.at(value).at(j)->flipped;
+            double theta = ((flip_coeff)?M_PI:0)+frame_tracklets.at(value).at(j)->timage.at(value-trackletStart);
+            int radius = 10;
+            int lineWidth = 2;
+            cv::Scalar btfColor(255,0,0);
+            cv::circle(out,cv::Point(scaledX,scaledY),radius,btfColor,lineWidth);
+            double endPtX = (radius*cos(theta))+scaledX;
+            double endPtY = (radius*sin(theta))+scaledY;
+            cv::line(out,cv::Point(scaledX,scaledY),cv::Point(endPtX,endPtY),btfColor,lineWidth);
+            cv::putText(out,trackId,cv::Point(scaledX,scaledY),cv::FONT_HERSHEY_PLAIN,1.5,cv::Scalar(0,0,255),2);
         }
     }
     QImage img = Mat2QImage(out);
-    //img.scaledToHeight(ui->imageLabel->height());
-    //ui->imageLabel->setPixmap(QPixmap::fromImage(img));
     ui->imageLabel->setPixmap(QPixmap::fromImage(img).scaledToWidth((int)(out.cols*ui->doubleSpinBox->value())));
+    if(curFrameLine != NULL) curFrameLine->setPos(value,0);
 }
 
 void MainWindow::on_actionLoad_BTF_triggered()
@@ -327,12 +379,18 @@ void MainWindow::on_actionLoad_BTF_triggered()
 }
 
 void MainWindow::on_pushButton_6_clicked(){
-    for(int i=0;i<ui->listWidget->selectedItems().size();i++){
-        std::pair<std::string,int> tmpPair;
-        tmpPair.first = ui->listWidget->selectedItems().at(i)->text().toStdString();
-        tmpPair.second = ui->horizontalSlider->value();
-        flip_data.push_back(tmpPair);
-        //std::cout<<"Added flip:["<<tmpPair.first<<", "<<tmpPair.second<<"]"<<std::endl;
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->selected){
+            tracklets.at(i)->flipped = !(tracklets.at(i)->flipped);
+            QBrush tmp = tracklets.at(i)->brush();
+            if(tracklets.at(i)->flipped){
+                tracklets.at(i)->color = Qt::green;
+            } else {
+                tracklets.at(i)->color = Qt::yellow;
+            }
+            tmp.setColor(tracklets.at(i)->color.lighter(150));
+            tracklets.at(i)->setBrush(tmp);
+        }
     }
 }
 
@@ -343,13 +401,17 @@ void MainWindow::on_pushButton_7_clicked()
     dir_name = dir_name+"/";
     std::cout<<"Writting BTF to ["<<dir_name.toStdString()<<"]"<<std::endl;
     std::cout<<"Ignored tracks: [ ";
-    for(unsigned int i=0;i<removed_tracks.size();i++){
-        std::cout<<removed_tracks[i]<<" ";
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->nuked){
+            std::cout<<tracklets.at(i)->antID<<"@("<<tracklets.at(i)->startFrame<<","<<tracklets.at(i)->endFrame<<") ";
+        }
     }
     std::cout<<"]"<<std::endl;
     std::cout<<"Track flips: [ ";
-    for(unsigned int i=0;i<flip_data.size();i++){
-        std::cout<<"("<<flip_data.at(i).first<<", "<<flip_data.at(i).second<<") ";
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->flipped){
+            std::cout<<tracklets.at(i)->antID<<"@("<<tracklets.at(i)->startFrame<<","<<tracklets.at(i)->endFrame<<") ";
+        }
     }
     std::cout<<"]"<<std::endl;
     std::vector<std::fstream* > files;
@@ -358,53 +420,19 @@ void MainWindow::on_pushButton_7_clicked()
         a_file->open((dir_name+btf_names.at(i).c_str()).toStdString().c_str(),std::fstream::out);
         files.push_back(a_file);
     }
-
-    unsigned int frameNo = 0;
-    for(unsigned int i=0;i<btf_data.at(id_idx).size()-1;i++){
-        //figure out which frame this line belongs to
-        for(;frameNo<frame_data.size();frameNo++){
-            bool foundIt = false;
-            for(unsigned int j=0;j<frame_data.at(frameNo).size();j++){
-                if(frame_data.at(frameNo).at(j)==i){
-                    foundIt = true;
-                    break;
-                }
-            }
-            if(foundIt) break;
-        }
-        //figure out which ID this belongs to
-        std::string trackId = btf_data.at(id_idx).at(i);
-        bool ignored = false;
-        for(unsigned int j=0;j<removed_tracks.size();j++){
-            if(removed_tracks.at(j)==atoi(trackId.c_str())){
-                ignored=true;
-                break;
-            }
-        }
-        if(ignored) continue;
-        //figure out what un-corrected theta is
-        //std::stringstream alsodumb(btf_data.at(t_idx).at(i));
-        double theta;
-        theta = atof(btf_data.at(t_idx).at(i).c_str());
-        //count how many times this ID's theta has flipped between start and this frame
-        bool flip_coeff = false;
-        for(unsigned int j=0;j<flip_data.size();j++){
-            if(flip_data.at(j).second<frameNo){
-                if(trackId.compare(flip_data.at(j).first)==0){
-                    flip_coeff = !flip_coeff;
-                }
-            }
-        }
-        //write out correct theta
-        theta = ((flip_coeff)?M_PI:0)+theta;
-        if(theta>(2*M_PI)) theta=theta-(2*M_PI);
-        for(unsigned int j=0;j<files.size();j++){
-            if(j==t_idx){
-                files.at(j)->precision(15);
-                (*files.at(j))<<theta<<std::endl;
-            } else {
-                (*files.at(j))<<btf_data.at(j).at(i)<<std::endl;
-            }
+    for(unsigned int i=0;i<frame_tracklets.size();i++){
+        for(unsigned int j=0;j<frame_tracklets.at(i).size();j++){
+            //if nuked, ignore this tracklet
+            if(frame_tracklets.at(i).at(j)->nuked)
+                continue;
+            //otherwise, write out the x and y
+            int trackletStart = frame_tracklets.at(i).at(j)->startFrame;
+            (*(files.at(x_idx)))<<frame_tracklets.at(i).at(j)->ximage.at(i-trackletStart)<<std::endl;
+            (*(files.at(y_idx)))<<frame_tracklets.at(i).at(j)->yimage.at(i-trackletStart)<<std::endl;
+            //flip theta?
+            (*(files.at(t_idx)))<<((frame_tracklets.at(i).at(j)->flipped)?M_PI:0)+frame_tracklets.at(i).at(j)->timage.at(i-trackletStart)<<std::endl;
+            (*(files.at(timestamp_idx)))<<frame_tracklets.at(i).at(j)->timestamp.at(i-trackletStart)<<std::endl;
+            (*(files.at(id_idx)))<<frame_tracklets.at(i).at(j)->antID<<std::endl;
         }
     }
     for(unsigned int i=0;i<files.size();i++){
@@ -416,17 +444,137 @@ void MainWindow::on_pushButton_7_clicked()
 
 void MainWindow::on_pushButton_8_clicked()
 {
-    for(int i=0;i<ui->listWidget->selectedItems().size();i++){
-        int trackNo = ui->listWidget->selectedItems().at(i)->text().toInt();
-        bool found = false;
-        for(std::vector<int>::iterator j=removed_tracks.begin(); j<removed_tracks.end(); j++){
-            if(*j == trackNo){
-                removed_tracks.erase(j);
-                found=true;
+    for(unsigned int i=0;i<tracklets.size();i++){
+        if(tracklets.at(i)->selected){
+            tracklets.at(i)->nuked = !(tracklets.at(i)->nuked);
+            QBrush tmp = tracklets.at(i)->brush();
+            if(tracklets.at(i)->nuked){
+                tmp.setStyle(Qt::DiagCrossPattern);
+            } else {
+                tmp.setStyle(Qt::SolidPattern);
+            }
+            tracklets.at(i)->setBrush(tmp);
+        }
+    }
+}
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    //split button
+    int currentFrame = ui->horizontalSlider->value();
+    if(currentFrame >=0 && currentFrame < (int)frame_tracklets.size()){
+        for(unsigned int i=0;i<tracklets.size();i++){
+            if(tracklets.at(i)->selected){
+                int x,y,width,height;
+                x = currentFrame;
+                y = tracklets.at(i)->antID*20;
+                width = (tracklets.at(i)->endFrame)-currentFrame;
+                height = 19;
+                TrackletRectItem *tr = new TrackletRectItem();
+                tr->ximage.clear();
+                tr->yimage.clear();
+                tr->timage.clear();
+                tr->setRect(x,y,width,height);
+                tr->startFrame = currentFrame;
+                tr->endFrame = tracklets.at(i)->endFrame;
+                tr->color = Qt::yellow;
+                tr->flipped = tr->nuked = tr->selected = false;
+                tr->antID = tracklets.at(i)->antID;
+                //find the split point in the relative tracks
+                int newEnd = currentFrame-tracklets.at(i)->startFrame;
+                //remove tracklets.at(i) from frame_tracklets at all
+                //the frames between currentFrame and endFrame
+                //and add tr to frame_tracklets at all the frames
+                //between currentFrame and endFrame
+                for(int j=currentFrame;j<tr->endFrame;j++){
+                    for(unsigned int k=0;k<frame_tracklets.at(j).size();k++){
+                        if(frame_tracklets.at(j).at(k)->antID == tr->antID){
+                            //std::cout<<"Removing Ant "<<tr->antID<<" from frame "<<j<<std::endl;
+                            frame_tracklets.at(j).erase(frame_tracklets.at(j).begin()+k);
+                        }
+                    }
+                    frame_tracklets.at(j).push_back(tr);
+                }
+                //now add the track data to the new tracklet
+                //X pos
+                tr->ximage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->ximage.size();j++){
+                    tr->ximage.push_back(tracklets.at(i)->ximage.at(j));
+                }
+                //Y pos
+                tr->yimage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->yimage.size();j++){
+                    tr->yimage.push_back(tracklets.at(i)->yimage.at(j));
+                }
+                //Theta
+                tr->timage.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->timage.size();j++){
+                    tr->timage.push_back(tracklets.at(i)->timage.at(j));
+                }
+                //Timestamp
+                tr->timestamp.reserve(width);
+                for(int j=newEnd;j<(int)tracklets.at(i)->timestamp.size();j++){
+                    tr->timestamp.push_back(tracklets.at(i)->timestamp.at(j));
+                }
+                tr->setBrush(QBrush(Qt::yellow));
+                tracklets.push_back(tr);
+                x = tracklets.at(i)->startFrame;
+                y = tracklets.at(i)->antID*20;
+                width = currentFrame - tracklets.at(i)->startFrame;
+                height = 19;
+                tracklets.at(i)->endFrame = currentFrame;
+                //now remove the split data from the old tracklet
+                tracklets.at(i)->ximage.erase(tracklets.at(i)->ximage.begin()+(newEnd),
+                                              tracklets.at(i)->ximage.end());
+                tracklets.at(i)->yimage.erase(tracklets.at(i)->yimage.begin()+(newEnd),
+                                              tracklets.at(i)->yimage.end());
+                tracklets.at(i)->timage.erase(tracklets.at(i)->timage.begin()+(newEnd),
+                                              tracklets.at(i)->timage.end());
+                tracklets.at(i)->timestamp.erase(tracklets.at(i)->timestamp.begin()+(newEnd),
+                                              tracklets.at(i)->timestamp.end());
+                                             /* */
+                tracklets.at(i)->setRect(x,y,width,height);
+                ui->graphicsView->scene()->addItem(tr);
             }
         }
-        if(!found){
-            removed_tracks.push_back(ui->listWidget->selectedItems().at(i)->text().toInt());
+    }
+}
+
+void MainWindow::on_pushButton_10_clicked()
+{
+    int currentFrame = ui->horizontalSlider->value();
+    if(currentFrame >= 0 && currentFrame < (int)frame_tracklets.size()){
+        int maxID = -1;
+        for(unsigned int i=0;i<tracklets.size();i++){
+            if(maxID < tracklets.at(i)->antID) maxID = tracklets.at(i)->antID;
+        }
+        for(unsigned int i=0;i<tracklets.size();i++){
+            if(tracklets.at(i)->selected){
+                std::stringstream thisisdumb;
+                thisisdumb<<"New track ID for "<<tracklets.at(i)->antID<<"@("<<tracklets.at(i)->startFrame<<", "<<tracklets.at(i)->endFrame<<")";
+                bool isOk;
+                int newID = QInputDialog::getInt(this,"New trackID",thisisdumb.str().c_str(),tracklets.at(i)->antID,0,2147483647,1,&isOk);
+                if(!isOk) continue;
+                int x,y,width,height;
+                x= tracklets.at(i)->startFrame;
+                y = newID*20;
+                width = tracklets.at(i)->endFrame - tracklets.at(i)->startFrame;
+                height = 19;
+                tracklets.at(i)->setRect(x,y,width,height);
+                tracklets.at(i)->antID = newID;
+                if(newID > maxID){
+                    for(int j=maxID+1;j<=newID;j++){
+                        thisisdumb.str("");
+                        thisisdumb.clear();
+                        thisisdumb<<j;
+                        ui->graphicsView->scene()->addText(thisisdumb.str().c_str())->setPos(0,j*20);
+                    }
+                    maxID = newID;
+                    if(curFrameLine!=NULL){
+                        curFrameLine->setLine(curFrameLine->line().x1(),curFrameLine->line().y1(),curFrameLine->line().x2(),(double)(maxID*20)+19);
+                    }
+                }
+            }
         }
     }
 }

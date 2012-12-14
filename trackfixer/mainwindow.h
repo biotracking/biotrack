@@ -4,6 +4,10 @@
 #include <QtGui/QMainWindow>
 #include <QtGui/QMessageBox>
 #include <QFileDialog>
+#include <QInputDialog>
+#include <QGraphicsScene>
+#include <QGraphicsLineItem>
+#include <QGraphicsRectItem>
 #include <opencv2/opencv.hpp>
 //#include <qthread.h>
 #include <vector>
@@ -13,6 +17,19 @@ namespace Ui
 {
     class MainWindow;
 }
+
+class TrackletRectItem : public QGraphicsRectItem
+{
+public:
+    //TrackletRectItem(qreal x, qreal y, qreal width, qreal height, QGraphicsItem* parent=0, QGraphicsScene* scene=0);
+    bool flipped, selected, nuked;
+    int startFrame, endFrame, antID;
+    std::vector<double> ximage, yimage, timage, timestamp;
+    QColor color;
+protected:
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+};
+
 
 class MainWindow : public QMainWindow
 {
@@ -44,12 +61,16 @@ private:
     cv::Mat share_cvimage;
     cv::VideoCapture cap;
     //std::vector<cv::Mat> loadedVideo;
-    std::vector<std::vector<std::string> > btf_data;
+    //std::vector<std::vector<std::string> > btf_data;
     std::vector<std::string> btf_names;
-    std::vector<std::vector<int> > frame_data;
-	std::vector<std::pair<std::string,int> > flip_data;
-    std::vector<int> removed_tracks;
+    //std::vector<std::vector<int> > frame_data;
+    //std::vector<std::pair<std::string,int> > flip_data;
+    //std::vector<int> removed_tracks;
     QImage Mat2QImage(const cv::Mat3b &src);
+    QGraphicsScene scene;
+    QGraphicsLineItem* curFrameLine;
+    std::vector<TrackletRectItem*> tracklets;
+    std::vector<std::vector<TrackletRectItem*> > frame_tracklets;
 
 protected:
     void timerEvent(QTimerEvent*);  // overide timerEvent function to draw image sequence
@@ -70,6 +91,8 @@ private slots:
     void on_actionLoad_BTF_triggered();
     void on_pushButton_7_clicked();
     void on_pushButton_8_clicked();
+    void on_pushButton_9_clicked();
+    void on_pushButton_10_clicked();
 };
 
 #endif // MAINWINDOW_H

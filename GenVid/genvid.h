@@ -123,10 +123,10 @@ private:
     Ui::GenVid *ui;
     VideoCapture capture;
     QImage qimage;
-    QString idfilepath,xfilepath,yfilepath,anglefilepath,timefilepath,timestampfilepath,videoDir;
+    QString idfilepath,xfilepath,yfilepath,anglefilepath,typefilepath,timefilepath,timestampfilepath,videoDir;
 //    QTextStream idStamp,xStamp,yStamp,angleStamp,timeStamp;
-    QString time,timestamp,xs,ys,ant_id,angle;
-    QStringList timeList,timeStampList,xsList,ysList,ant_List,angleList;
+    QString time,timestamp,xs,ys,ant_id,angle, typeS;
+    QStringList timeList,timeStampList,xsList,ysList,ant_List,angleList, typelist;
 
     void updateImage(Mat img);
     Mat updateFrame();

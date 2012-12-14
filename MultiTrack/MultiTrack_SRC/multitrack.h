@@ -45,7 +45,8 @@ public:
 		void readSettings();
 		void writeSettings();
 
-		
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
 
 	
 

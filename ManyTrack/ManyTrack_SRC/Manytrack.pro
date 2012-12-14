@@ -31,6 +31,8 @@ INCLUDEPATH +=  "/usr/local/include/pcl-1.6/" \
                  "/usr/include/openni/" \
                  "/usr/include/vtk-5.8/" \
           "/usr/lib/libvtkCommon.so.5.8" \
+            "/usr/lib/libvtkWidgets.so.5.8.0"
+
 
 
 
@@ -49,10 +51,11 @@ LIBS += -lpcl_common \
           "/usr/lib/libvtkCommon.so.5.8" \
           "/usr/lib/libvtkFiltering.so.5.8" \
           "/usr/lib/libvtkRendering.so.5.8" \
-          "/usr/lib/libvtkGraphics.so.5.8"
+          "/usr/lib/libvtkGraphics.so.5.8" \
+            "/usr/lib/libvtkWidgets.so.5.8.0"
 
 
-
+ DEFINES += EIGEN_DONT_ALIGN_STATICALLY
 
 ##use the below command when deploying
 
@@ -84,12 +87,15 @@ win32-*{
 SOURCES += main.cpp\
         Manytrack.cpp \
     Track.cpp \
-    ICPTracker.cpp
+    ICPTracker.cpp \
+    icp_color.cpp
 
 HEADERS  += \
     Track.h \
     ICPTracker.h \
-    Manytrack.h
+    Manytrack.h \
+    icp_color.hpp \
+    icp_color.h
 
 FORMS    += Manytrack.ui
 

@@ -6,6 +6,7 @@
 #include <QtGui>
 #include <utility>
 
+
 /** OPENCV INCLUDES**/
 #if defined(WIN32) && !defined(linux)
 #include "opencv.hpp" //FOR WINDOWS
@@ -81,6 +82,9 @@
 #include <QDebug>
 //#include "ui_Manytrack.h"
 
+#include "icp_color.h"
+
+
 using namespace cv;
 using namespace std;
 using namespace pcl;
@@ -96,6 +100,7 @@ typedef struct Model
     int width;
     int height;
     int maxDimension;
+    float rotated;
 
 }
 Model;
@@ -123,7 +128,7 @@ public:
     double getRotationAngle(int idx=-1);
     void getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB>& modelPts, int idx=-1);
     bool isBirthFrame;
-    pcl::PointCloud<pcl::PointXYZRGB> update(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector<Model> modelPTS_clouds,
+    pcl::PointCloud<pcl::PointXYZRGB> updatePosition(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,    vector<Model> modelPTS_clouds,
                                           int areaThreshold,  int separateThreshold, int matchDThresh,
                                           int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST);
 
@@ -151,23 +156,23 @@ public:
     double matchDistanceThreshold;
     double nukeDistanceThreshold; // used when a neighborhood of pts close to a model point is nuked
 
-    float recentFitness;
+    double recentFitness;
 
 //    Correspondences stuff
-    void estimateKeypoints (const PointCloud<PointXYZ>::Ptr &src,
-                       const PointCloud<PointXYZ>::Ptr &tgt,
-                       PointCloud<PointXYZ> &keypoints_src,
-                       PointCloud<PointXYZ> &keypoints_tgt);
-    void estimateNormals (const PointCloud<PointXYZ>::Ptr &src,
-                     const PointCloud<PointXYZ>::Ptr &tgt,
+    void estimateKeypoints (const PointCloud<PointXYZRGB>::Ptr &src,
+                       const PointCloud<PointXYZRGB>::Ptr &tgt,
+                       PointCloud<PointXYZRGB> &keypoints_src,
+                       PointCloud<PointXYZRGB> &keypoints_tgt);
+    void estimateNormals (const PointCloud<PointXYZRGB>::Ptr &src,
+                     const PointCloud<PointXYZRGB>::Ptr &tgt,
                      PointCloud<Normal> &normals_src,
                      PointCloud<Normal> &normals_tgt);
-    void estimateFPFH (const PointCloud<PointXYZ>::Ptr &src,
-                       const PointCloud<PointXYZ>::Ptr &tgt,
+    void estimateFPFH (const PointCloud<PointXYZRGB>::Ptr &src,
+                       const PointCloud<PointXYZRGB>::Ptr &tgt,
                        const PointCloud<Normal>::Ptr &normals_src,
                        const PointCloud<Normal>::Ptr &normals_tgt,
-                       const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                       const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
+                       const PointCloud<PointXYZRGB>::Ptr &keypoints_src,
+                       const PointCloud<PointXYZRGB>::Ptr &keypoints_tgt,
                        PointCloud<FPFHSignature33> &fpfhs_src,
                        PointCloud<FPFHSignature33> &fpfhs_tgt);
   void  findCorrespondences (const PointCloud<FPFHSignature33>::Ptr &fpfhs_src,
@@ -175,18 +180,19 @@ public:
                          Correspondences &all_correspondences);
 
   void  rejectBadCorrespondences (const CorrespondencesPtr &all_correspondences,
-                              const PointCloud<PointXYZ>::Ptr &keypoints_src,
-                              const PointCloud<PointXYZ>::Ptr &keypoints_tgt,
+                              const PointCloud<PointXYZRGB>::Ptr &keypoints_src,
+                              const PointCloud<PointXYZRGB>::Ptr &keypoints_tgt,
                               Correspondences &remaining_correspondences);
 
-  void  computeTransformation (const PointCloud<PointXYZ>::Ptr &src,
-                           const PointCloud<PointXYZ>::Ptr &tgt,
+  void  computeTransformation (const PointCloud<PointXYZRGB>::Ptr &src,
+                           const PointCloud<PointXYZRGB>::Ptr &tgt,
                            Eigen::Matrix4f &transform);
 
   void
   icp (const PointCloud<Point>::Ptr &src,
        const PointCloud<Point>::Ptr &tgt,
        Eigen::Matrix4d &transform);
+  Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud,double *fitness);
 
 private:
     //Ui::ManytrackClass uitrack;
@@ -201,7 +207,6 @@ private:
 
     //ICP alignment
     Eigen::Matrix4f update2DTransformPCL(pcl::PointCloud<pcl::PointXY> data_cloud,pcl::PointCloud<pcl::PointXY> model_cloud);
-    Eigen::Matrix4f updateTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud);
 //        Eigen::Matrix4f updateTransformPCL(pcl::PointCloud<PointT> data_cloud,pcl::PointCloud<PointT> model_cloud);
 
     double matchScore;
@@ -222,6 +227,57 @@ private:
 
 
 protected:
+
+};
+
+class Identify_Parallel : public cv::ParallelLoopBody
+{
+private:
+pcl:: PointCloud<PointXYZRGB> dataPTS_cloud;
+double fit;
+int identitynum;
+vector<pair<int,double> >* idscores;
+
+vector<Model> modelgroup;
+//Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, int* fitness);
+
+Track* atrack;
+
+public:
+    Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores)
+        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack),idscores(idandscores)
+    {
+
+    }
+
+
+    void operator ()(const cv::Range& range) const
+    {
+
+        vector<pair<int,double> > *id_scores = idscores;
+
+
+        ///   Check the fit of different models in parallel
+                for (size_t modelgroupnum = range.start; modelgroupnum!= range.end; ++modelgroupnum){ //Not sure if we need -1?
+
+        //            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
+            PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
+
+            double recentfitness;
+
+            atrack->calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentfitness);
+            pair<int,double> id_score;
+            id_score.first=modelgroupnum;
+            id_score.second=recentfitness;
+
+            id_scores->push_back(id_score);
+
+        }
+
+    }
+
+
+
 
 };
 

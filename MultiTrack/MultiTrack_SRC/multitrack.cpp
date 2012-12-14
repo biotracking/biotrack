@@ -82,7 +82,7 @@ Multitrack::Multitrack(QWidget *parent, Qt::WFlags flags)
 
     readSettings();
 
-    loadNewTracker();
+   loadNewTracker();
 
     on_displaycomboBox_currentIndexChanged(0);
 

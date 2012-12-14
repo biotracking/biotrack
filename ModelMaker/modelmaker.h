@@ -81,6 +81,8 @@ public:
 
     void checkReady();
 
+    void updateFrame();
+
 
 private slots:
     void resizeEvent(QResizeEvent *);
