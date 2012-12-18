@@ -88,14 +88,17 @@ SOURCES += main.cpp\
         Manytrack.cpp \
     Track.cpp \
     ICPTracker.cpp \
-    icp_color.cpp
+    icp_color.cpp \
+    trans_2D/transformation_estimation_2D.cpp
 
 HEADERS  += \
     Track.h \
     ICPTracker.h \
     Manytrack.h \
     icp_color.hpp \
-    icp_color.h
+    icp_color.h \
+    trans_2D/transformation_estimation_2D.hpp \
+    trans_2D/transformation_estimation_2D.h
 
 FORMS    += Manytrack.ui
 

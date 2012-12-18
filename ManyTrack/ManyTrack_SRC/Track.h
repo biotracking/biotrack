@@ -56,6 +56,7 @@
 #include <pcl/registration/correspondence_rejection_median_distance.h>
 #include <pcl/registration/correspondence_rejection_surface_normal.h>
 #include <pcl/registration/transformation_estimation_point_to_plane_lls.h>
+#include <pcl/registration/transformation_estimation.h>
 //#include <pcl/registration/impl/default_convergence_criteria.h>
 
 #include <pcl/visualization/pcl_visualizer.h>
@@ -83,6 +84,8 @@
 //#include "ui_Manytrack.h"
 
 #include "icp_color.h"
+#include "trans_2D/transformation_estimation_2D.h"
+
 
 
 using namespace cv;

@@ -352,6 +352,13 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
     icp.setInputTarget(data_cloud_ptr);
     pcl::PointCloud<pcl::PointXYZRGB> Final;
 
+     pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
+    //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
+     icp.setTransformationEstimation (trans_2D);
+
+//   pcl::registration::TransformationEstimationSVD
+//    icp.setTransformationEstimation();
+
 
 
 
