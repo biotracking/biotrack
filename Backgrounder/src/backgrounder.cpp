@@ -76,6 +76,7 @@ void Backgrounder::on_loadVideoButton_clicked()
         lastpath=videopath;
         ui->videoFileLabel->setText("..."+videopath.right(50));
         loadVideo();
+        qDebug()<<"Load new file";
     }
     else{
         videopath=nopath;
@@ -86,9 +87,15 @@ void Backgrounder::on_loadVideoButton_clicked()
 
 void Backgrounder::loadVideo(){
 
+    qDebug()<<"--In load video-";
+
 
     //Open all Image Assets and check to see if they are OK before creating a new ICPTRACKER object
     if(checkVideo()){
+        qDebug()<<"--Check Video OK!-";
+        capture.release();
+        capture.open(videopath.toStdString());
+
         //All items checked out OK continue!
         updatedisplay_videoin(0);
         TOTALVIDEOFRAMES=capture.get(CV_CAP_PROP_FRAME_COUNT)-1;
@@ -108,6 +115,7 @@ void Backgrounder::loadVideo(){
 
     }
     else{
+        qDebug()<<"--Check Video FALSE-";
 
     }
 }
@@ -162,6 +170,7 @@ bool Backgrounder::checkVideo(){
     QString notprepared="<b>Not Ready!</b>  <br><br><i>Please choose a...</i> <br>";
     if (videopath==nopath){
         notprepared= notprepared+"   Video Source<br>";
+        everythingok = false;
         return everythingok;
     }
 
@@ -178,9 +187,16 @@ bool Backgrounder::checkVideo(){
 
         colour="red";
         //Video Capture
-        if(capture.open(videopath.toStdString()))
+        if(capture.open(videopath.toStdString())){
             return everythingok;
-        else return false;
+            qDebug()<<"Everything is OK";
+        }
+        else{
+
+            return false;
+            qDebug()<<"Everything is BAD could not capture.open";
+
+        }
     }
 }
 

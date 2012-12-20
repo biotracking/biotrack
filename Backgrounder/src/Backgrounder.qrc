@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>res/backgrounder.png</file>
+    </qresource>
+</RCC>

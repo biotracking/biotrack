@@ -152,7 +152,7 @@ double fitnessin;
     qDebug()<<"Removed Points from Track  "<<totalRemovedPoints;
 
     /// For Debugging we can visualize the Pointcloud
-             /**/
+             /**
                 pcl:: PointCloud<PointXYZRGB>::Ptr dataPTS_cloud_ptr (new pcl::PointCloud<PointXYZRGB> (dataPTS_cloud));
               //  copyPointCloud(modelPTS_cloud,)
                 transformPointCloud(modelPTS_clouds[modelIndex].cloud,modelPTS_clouds[modelIndex].cloud,T);
@@ -354,7 +354,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
      pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
     //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
-     icp.setTransformationEstimation (trans_2D);
+//     icp.setTransformationEstimation (trans_2D);
 
 //   pcl::registration::TransformationEstimationSVD
 //    icp.setTransformationEstimation();

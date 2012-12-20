@@ -753,8 +753,8 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
         imgAndPath.filepath=fullpath;
         imgAndPath.rotated = 0.0;
 
-        namedWindow("0");
-        imshow("0", modelImg);
+//        namedWindow("0");
+//        imshow("0", modelImg);
 
         output.push_back(imgAndPath);
 
@@ -771,8 +771,8 @@ vector<Model> ICPTracker::modelFilesToMAT(QString modelFolderPath){
         //Rotate the whole thing 180Degrees
         modelImgF = rotateImage(modelImgF, 180.0);//Rotate full image about this center 180 degrees
 
-        namedWindow("180");
-        imshow("180", modelImgF);
+//        namedWindow("180");
+//        imshow("180", modelImgF);
 
         imgAndPathF.img = modelImgF;
         imgAndPathF.name=current+"_180";

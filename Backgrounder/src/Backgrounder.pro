@@ -52,3 +52,6 @@ FORMS    += backgrounder.ui
 
 OTHER_FILES += \
     Backgrounder.pro.user
+
+RESOURCES += \
+    Backgrounder.qrc
