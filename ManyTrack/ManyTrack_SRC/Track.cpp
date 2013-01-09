@@ -271,7 +271,7 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
     identity=0;
     for (int i=0; i< (id_scores.size());i++){
         qDebug()<<"score checking iterator "<<i<<" id "<< id_scores.at(i).first<<" name "<<modelgroup[id_scores.at(i).first].name<<" scores "<< id_scores.at(i).second <<" current bestfit"<<bestfit;
-
+// TODO fix//This above line breaks on low resolutions. I think if the ID score is too low it gives a crazy big numberand QDebug can't write it, need to find how to make qDebug write it
         if(id_scores.at(i).second<bestfit){
             bestfit= id_scores.at(i).second;
                 identity =        id_scores.at(i).first;
@@ -347,14 +347,17 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
+   //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
+    icp.setTransformationEstimation (trans_2D);
+
+
 //  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
     icp.setInputCloud(model_cloud_ptr);
     icp.setInputTarget(data_cloud_ptr);
     pcl::PointCloud<pcl::PointXYZRGB> Final;
 
-     pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
-    //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
-//     icp.setTransformationEstimation (trans_2D);
+
 
 //   pcl::registration::TransformationEstimationSVD
 //    icp.setTransformationEstimation();

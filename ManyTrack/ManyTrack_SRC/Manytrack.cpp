@@ -500,7 +500,7 @@ void Manytrack::loadSettings(){
         toggleTracking();
     }
 
-    QString loadsetpath = QFileDialog::getOpenFileName (this, tr("Open Settings File"),lastpath);
+    QString loadsetpath = QFileDialog::getOpenFileName (this, tr("Open Settings File (.ini)"),lastpath, tr("Settings files (*.ini)"));
     if ( loadsetpath.isNull() == false )
     {
         QSettings settings(loadsetpath,QSettings::IniFormat);
@@ -562,8 +562,7 @@ void Manytrack::saveSettings(){
     }
 
 
-
-    QString savesetpath = QFileDialog::getSaveFileName (this, tr("Save UI Settings"),ui.projectsavename->text()+".ini",tr("Settings files (*.ini"));
+    QString savesetpath = QFileDialog::getSaveFileName (this, tr("Save UI Settings"),lastpath+ui.projectsavename->text()+".ini",tr("Settings files (*.ini)"));
     if ( savesetpath.isNull() == false )  {
 
         QSettings settings(savesetpath, QSettings::IniFormat);
@@ -779,8 +778,10 @@ bool Manytrack::trackerCheck(){
 
     colour="red";
     //Video Capture
+    capture.release();
+    capturepreview.release();
     capture.open(videopath.toStdString());
-    capturepreview.open(videopath.toStdString());
+    capturepreview.open(videopath.toStdString()); //TODO, this probably isn't right
     ui.framesSlider->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
     ui.framesspinBox->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
 

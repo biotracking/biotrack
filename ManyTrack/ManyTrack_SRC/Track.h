@@ -258,6 +258,12 @@ public:
     {
 
         vector<pair<int,double> > *id_scores = idscores;
+        id_scores->reserve(range.size()-1);
+
+        pair <int,double> id_score_arr[range.size()]; //Is this how to initialize an array of pairs?
+
+
+
 
 
         ///   Check the fit of different models in parallel
@@ -269,11 +275,14 @@ public:
             double recentfitness;
 
             atrack->calcTransformPCLRGB(dataPTS_cloud, modelTOIdentify, &recentfitness);
+
+
             pair<int,double> id_score;
+
             id_score.first=modelgroupnum;
             id_score.second=recentfitness;
 
-            id_scores->push_back(id_score);
+            id_scores->push_back(id_score); // FIX TODO Heads up, this can be a problem point at random times
 
         }
 

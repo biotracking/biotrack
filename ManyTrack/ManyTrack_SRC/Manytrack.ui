@@ -140,8 +140,208 @@
       </item>
      </layout>
     </item>
+    <item row="3" column="0" colspan="4">
+     <layout class="QHBoxLayout" name="playcontrolLayout">
+      <item>
+       <widget class="QPushButton" name="stopButton">
+        <property name="text">
+         <string>||</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resetButton">
+        <property name="text">
+         <string>RESET</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="0" colspan="4">
+     <widget class="QScrollArea" name="scrollArea">
+      <property name="minimumSize">
+       <size>
+        <width>690</width>
+        <height>500</height>
+       </size>
+      </property>
+      <property name="widgetResizable">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <widget class="QWidget" name="scrollAreaWidgetContents">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>53</y>
+         <width>688</width>
+         <height>498</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">background-color: rgb(117, 117, 117);</string>
+       </property>
+       <widget class="QLabel" name="imageLabel">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>640</width>
+          <height>480</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>640</width>
+          <height>480</height>
+         </size>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">background-color: rgb(245, 245, 245);
+border-color: rgb(54, 54, 54);
+font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
+        </property>
+        <property name="text">
+         <string>No video loaded</string>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="visualizationLabel">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>451</width>
+          <height>241</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Visualization Overlay</string>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <zorder>imageLabel</zorder>
+       <zorder>visualizationLabel</zorder>
+       <zorder>toolbartabWidget</zorder>
+      </widget>
+     </widget>
+    </item>
+    <item row="4" column="3">
+     <widget class="QCheckBox" name="visualizationcheckBox">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Visualization</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QCheckBox" name="ThreeDcheckBox">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>3D</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QSlider" name="framesSlider">
+      <property name="maximum">
+       <number>0</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="tickPosition">
+       <enum>QSlider::TicksBelow</enum>
+      </property>
+      <property name="tickInterval">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QSpinBox" name="framesspinBox">
+      <property name="frame">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <property name="prefix">
+       <string>frame: </string>
+      </property>
+      <property name="maximum">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3">
+     <widget class="QPushButton" name="previewtrackingButton">
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>| Preview Tracking |</string>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="4" rowspan="6">
      <widget class="QTabWidget" name="toolbartabWidget">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="sizePolicy">
        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -167,7 +367,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="filesTabWidget">
        <attribute name="title">
@@ -748,6 +948,9 @@
                  </item>
                  <item row="3" column="0">
                   <widget class="QLabel" name="label_8">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="font">
                     <font>
                      <pointsize>8</pointsize>
@@ -760,6 +963,9 @@
                  </item>
                  <item row="3" column="1">
                   <widget class="QSpinBox" name="recheckIDspinBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="suffix">
                     <string> frames</string>
                    </property>
@@ -767,6 +973,9 @@
                  </item>
                  <item row="4" column="0">
                   <widget class="QCheckBox" name="usekeyframecheckBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="font">
                     <font>
                      <pointsize>8</pointsize>
@@ -960,15 +1169,18 @@
        </layout>
       </widget>
       <widget class="QWidget" name="filtersTabWidget">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <attribute name="title">
         <string>Filters</string>
        </attribute>
        <widget class="QSpinBox" name="dilatespinbox">
         <property name="geometry">
          <rect>
-          <x>360</x>
-          <y>40</y>
-          <width>60</width>
+          <x>56</x>
+          <y>9</y>
+          <width>47</width>
           <height>27</height>
          </rect>
         </property>
@@ -976,9 +1188,9 @@
        <widget class="QLabel" name="dilatelabel">
         <property name="geometry">
          <rect>
-          <x>100</x>
-          <y>50</y>
-          <width>66</width>
+          <x>9</x>
+          <y>9</y>
+          <width>41</width>
           <height>17</height>
          </rect>
         </property>
@@ -986,25 +1198,12 @@
          <string>Dilate</string>
         </property>
        </widget>
-       <widget class="QLabel" name="blurlabel">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>130</y>
-          <width>66</width>
-          <height>17</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Blur</string>
-        </property>
-       </widget>
        <widget class="QSpinBox" name="blurspinBox">
         <property name="geometry">
          <rect>
-          <x>360</x>
-          <y>130</y>
-          <width>60</width>
+          <x>56</x>
+          <y>48</y>
+          <width>47</width>
           <height>27</height>
          </rect>
         </property>
@@ -1012,198 +1211,20 @@
          <number>1</number>
         </property>
        </widget>
-      </widget>
-     </widget>
-    </item>
-    <item row="3" column="0" colspan="4">
-     <layout class="QHBoxLayout" name="playcontrolLayout">
-      <item>
-       <widget class="QPushButton" name="stopButton">
-        <property name="text">
-         <string>||</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="resetButton">
-        <property name="text">
-         <string>RESET</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="0" colspan="4">
-     <widget class="QScrollArea" name="scrollArea">
-      <property name="minimumSize">
-       <size>
-        <width>690</width>
-        <height>500</height>
-       </size>
-      </property>
-      <property name="widgetResizable">
-       <bool>false</bool>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <widget class="QWidget" name="scrollAreaWidgetContents">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>53</y>
-         <width>688</width>
-         <height>498</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Ignored" vsizetype="Ignored">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(117, 117, 117);</string>
-       </property>
-       <widget class="QLabel" name="imageLabel">
+       <widget class="QLabel" name="blurlabel">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>640</width>
-          <height>480</height>
+          <x>9</x>
+          <y>48</y>
+          <width>29</width>
+          <height>17</height>
          </rect>
         </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>640</width>
-          <height>480</height>
-         </size>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">background-color: rgb(245, 245, 245);
-border-color: rgb(54, 54, 54);
-font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
-        </property>
         <property name="text">
-         <string>No video loaded</string>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-       <widget class="QLabel" name="visualizationLabel">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>451</width>
-          <height>241</height>
-         </rect>
-        </property>
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>Visualization Overlay</string>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
+         <string>Blur</string>
         </property>
        </widget>
       </widget>
-     </widget>
-    </item>
-    <item row="4" column="3">
-     <widget class="QCheckBox" name="visualizationcheckBox">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-        <strikeout>false</strikeout>
-        <kerning>true</kerning>
-       </font>
-      </property>
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <property name="text">
-       <string>Visualization</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="1">
-     <widget class="QCheckBox" name="ThreeDcheckBox">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>3D</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QSlider" name="framesSlider">
-      <property name="maximum">
-       <number>0</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="tickPosition">
-       <enum>QSlider::TicksBelow</enum>
-      </property>
-      <property name="tickInterval">
-       <number>0</number>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QSpinBox" name="framesspinBox">
-      <property name="frame">
-       <bool>false</bool>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-      </property>
-      <property name="prefix">
-       <string>frame: </string>
-      </property>
-      <property name="maximum">
-       <number>0</number>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="3">
-     <widget class="QPushButton" name="previewtrackingButton">
-      <property name="font">
-       <font>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>| Preview Tracking |</string>
-      </property>
      </widget>
     </item>
    </layout>

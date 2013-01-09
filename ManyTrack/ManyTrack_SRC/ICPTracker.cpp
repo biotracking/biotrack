@@ -428,7 +428,9 @@ void ICPTracker::processFrame(Mat scene_img, int timeIndex)
         }
 
         currentTrackModelPoints = models;
-        track = new Track(timeIndex, data_cloud.points[i], numOfTracks, icpMatchDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
+        PointXYZRGB newcloudtargetpoint = data_cloud.points[i];
+        newcloudtargetpoint.z = 0; // Keep our translations in the 2D spatial plane (z is reserved for color)
+        track = new Track(timeIndex, newcloudtargetpoint, numOfTracks, icpMatchDistanceThreshold,separationThreshold, resolutionFractionMultiplier); // todo: add extra parameter for initial centroid,, MAGIC NUMBER! !! 2/3 is an arbitrary threshold!!!!!
         data_cloud=  track->updatePosition(data_cloud,currentTrackModelPoints, modelTOdataThreshold, separationThreshold, icpMatchDistanceThreshold,Ticp_maxIter, Ticp_transformationEpsilon, Ticp_euclideanDistance);
         if(track->wasBirthed())
         {
