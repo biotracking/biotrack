@@ -260,7 +260,9 @@ public:
         vector<pair<int,double> > *id_scores = idscores;
         id_scores->reserve(range.size()-1);
 
-        pair <int,double> id_score_arr[range.size()]; //Is this how to initialize an array of pairs?
+//        pair <int,double> id_score_arr[range.size()]; //Is this how to initialize an array of pairs?
+
+        pair<int,double> id_score_arr = new pair<int,double>[range.size()]; // or is this more proper?
 
 
 

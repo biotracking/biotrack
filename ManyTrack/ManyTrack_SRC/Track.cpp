@@ -141,10 +141,15 @@ double fitnessin;
       **/
     pcl::PointCloud<pcl::PointXYZRGB> dataPTSreduced_cloud;
 
-//    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
-       removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
+    //TODO< THIS IS ALL SCREWED UP!~ NEED TO HAVE 2D radius of removal
 
-    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
+
+//    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
+//       removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
+
+//    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
+
+    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
     totalRemovedPoints = totalpointsBeforeRemoval - dataPTSreduced_cloud.size();
 
@@ -739,7 +744,9 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
             }
 
 
+//TODO We can make the above PARALLEL (probably!)
 
+            //DESTROY ALL MARKED POINTS
             for(uint q=0; q< point_cloud_for_reduction.size(); q++){
                 if(!marked[q]){
                     point_cloud_for_return.push_back(point_cloud_for_reduction.at(q));
