@@ -185,6 +185,9 @@ pcl::registration::TransformationEstimation2D<PointSource, PointTarget>::getTran
 
   Eigen::Matrix3f R = v * u.transpose ();
 
+
+
+
  /* // Return the correct transformation
   transformation_matrix.topLeftCorner<3, 3> () = R;
   const Eigen::Vector3f Rc (R * centroid_src.head<3> ());
@@ -195,20 +198,24 @@ pcl::registration::TransformationEstimation2D<PointSource, PointTarget>::getTran
  transformation_matrix.topLeftCorner<3, 3> () = R;
   Eigen::Vector3f Rc = R * centroid_src.head<3> ();
   transformation_matrix.block <3, 1> (0, 3) = centroid_tgt.head<3> () -Rc;
+
   double th = atan2(transformation_matrix(1,0),transformation_matrix(0,0));
  double x = transformation_matrix(0,3);
  double y = transformation_matrix(1,3);
   Eigen::Matrix4f final_transformation;
-//   final_transformation << cos(th), -sin(th), 0, x,
-//                          sin(th), cos(th),  0, y,
-//                           0      , 0      ,  1, 0,
-//                          0      , 0      ,  0, 1;
+   final_transformation << cos(th), -sin(th), 0, x,
+                          sin(th), cos(th),  0, y,
+                           0      , 0      ,  1, 0,
+                          0      , 0      ,  0, 1;
 
   //TESTING
-  final_transformation << cos(th), -sin(th), 0, 50,
-                         sin(th), cos(th),  0, 35,
-                          0      , 0      ,  1, 0,
-                         0      , 0      ,  0, 1;
+
+//  final_transformation << cos(th), -sin(th), 0, 50,
+//                         sin(th), cos(th),  0, 35,
+//                          0      , 0      ,  1, 0,
+//                         0      , 0      ,  0, 1;
+
+  transformation_matrix = final_transformation;
 }
 
 //#define PCL_INSTANTIATE_TransformationEstimation2D(T,U) template class PCL_EXPORTS pcl::registration::TransformationEstimation2D<T,U>;

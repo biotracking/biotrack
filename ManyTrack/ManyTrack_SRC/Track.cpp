@@ -383,7 +383,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     typedef pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB> trans_2D;
     boost::shared_ptr<trans_2D> trans2Dptr(new trans_2D);
-//    icp.setTransformationEstimation (trans2Dptr);
+    icp.setTransformationEstimation (trans2Dptr);
 
 
 //  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
