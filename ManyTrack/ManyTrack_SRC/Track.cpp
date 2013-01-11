@@ -377,9 +377,13 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
-   //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
-    icp.setTransformationEstimation (trans_2D);
+//    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
+
+    //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
+
+    typedef pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB> trans_2D;
+    boost::shared_ptr<trans_2D> trans2Dptr(new trans_2D);
+//    icp.setTransformationEstimation (trans2Dptr);
 
 
 //  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
