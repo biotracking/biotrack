@@ -239,30 +239,37 @@ private:
 pcl:: PointCloud<PointXYZRGB> dataPTS_cloud;
 double fit;
 int identitynum;
-vector<pair<int,double> >* idscores;
+pair<int,double>* idscores;
 
 vector<Model> modelgroup;
-//Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud, int* fitness);
 
 Track* atrack;
 
 public:
-    Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,vector<pair<int,double> >* idandscores)
-        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack),idscores(idandscores)
+Identify_Parallel(PointCloud<PointXYZRGB> data_cloud,vector<Model> allmodelgroup, Track* thetrack,pair<int,double>** idandscores, int rangesize)
+        : dataPTS_cloud(data_cloud),  modelgroup( allmodelgroup), atrack(thetrack) //,idscores(idandscores)
     {
+//    idscores = new pair<int,double>*[rangesize];
 
+//    pairArr = new std::pair<double,double> [3];
+
+    *idandscores = new pair<int,double> [rangesize];
+    idscores = *idandscores;
+
+//idscore
     }
 
 
     void operator ()(const cv::Range& range) const
     {
 
-        vector<pair<int,double> > *id_scores = idscores;
-        id_scores->reserve(range.size()-1);
+//        vector<pair<int,double> > *id_scores = idscores;
+//        id_scores->reserve(range.size()-1);
 
-//        pair <int,double> id_score_arr[range.size()]; //Is this how to initialize an array of pairs?
-
-        pair<int,double> id_score_arr = new pair<int,double>[range.size()]; // or is this more proper?
+//        pair <int,double> * id_score_arr[range.size()]; //Is this how to initialize an array of pairs?
+//        pair <int,double> *id_score_arr[];
+pair <int,double> * id_score_arr = idscores;
+//        pair<int,double> id_score_arr = new pair<int,double>[range.size()]; //UPDATE, THIS GIVES ERROS (pointer stuff) or is this more proper?
 
 
 
@@ -271,7 +278,6 @@ public:
         ///   Check the fit of different models in parallel
                 for (size_t modelgroupnum = range.start; modelgroupnum!= range.end; ++modelgroupnum){ //Not sure if we need -1?
 
-        //            qDebug()<<"Model Cloud Parallel "<<modelgroup[modelgroupnum].name<<"  idx "<<modelgroupnum;
             PointCloud<PointXYZRGB> modelTOIdentify = modelgroup[modelgroupnum].cloud;
 
             double recentfitness;
@@ -284,7 +290,13 @@ public:
             id_score.first=modelgroupnum;
             id_score.second=recentfitness;
 
-            id_scores->push_back(id_score); // FIX TODO Heads up, this can be a problem point at random times
+            id_score_arr[modelgroupnum].first = modelgroupnum;
+            id_score_arr[modelgroupnum].second = recentfitness;
+//            qDebug()<<"modegroupnum "<<modelgroupnum<<"    idscore_arr first "<<id_score_arr[modelgroupnum].first<<"  second "<<id_score_arr[modelgroupnum].second;
+
+
+//                    = id_score;
+//            id_scores->push_back(id_score); // FIX TODO Heads up, this can be a problem point at random times
 
         }
 

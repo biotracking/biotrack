@@ -141,15 +141,9 @@ double fitnessin;
       **/
     pcl::PointCloud<pcl::PointXYZRGB> dataPTSreduced_cloud;
 
-    //TODO< THIS IS ALL SCREWED UP!~ NEED TO HAVE 2D radius of removal
+    //Removeclosestdatacloudpoints strips the 3D data and nukes points in the proximitiy of where our model has lined up
+    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
-
-//    removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold );
-//       removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold );
-
-//    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloud, modelToProcess_cloud, nukeDistanceThreshold ),dataPTSreduced_cloud);
-
-    pcl::copyPointCloud(removeClosestDataCloudPoints(dataPTS_cloudStripped, modelPTS_cloudStripped, nukeDistanceThreshold ),dataPTSreduced_cloud);
 
     totalRemovedPoints = totalpointsBeforeRemoval - dataPTSreduced_cloud.size();
 
@@ -261,16 +255,44 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
 
     float fit=DBL_MAX;
     int identity=0;
-    vector<pair<int,double> > id_scores;
+//    vector<pair<int,double> > id_scores;
+
+pair <int,double>* id_score_arr;
+id_score_arr = new pair <int,double>[modelgroup.size()*2];
+
+    cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_score_arr, modelgroup.size()) );
 
 
 
     /**/ // parallel testing
 //    const Identify_Parallel body(dataPTS_cloud, modelgroup, this, &id_scores);
 
-        cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_scores) );
+//        cv::parallel_for_(Range(0, modelgroup.size()),Identify_Parallel(dataPTS_cloud, modelgroup, this, &id_scores) );
+
+        //NO VECTORS ANDY! PARALLEL HATES VECTORS
+        double bestfit = DBL_MAX; // id_scores.at(0).second;
+         identity=0;
+         for (int i=0; i< (modelgroup.size());i++){
+
+             int id = id_score_arr[i].first;
+             double score = id_score_arr[i].second;
+
+             qDebug()<<"score checking iterator "<<i<<" id "<< id<<" name "<<modelgroup[id].name<<" scores "<< score <<" current bestfit"<<bestfit;
+     // TODO fix//This above line breaks on low resolutions. I think if the ID score is too low it gives a crazy big numberand QDebug can't write it, need to find how to make qDebug write it
+             if(score<bestfit){
+                 bestfit= score;
+                     identity = id;
+     //                qDebug()<<"Better Fit!  "<<identity<<" name "<<modelgroup[identity].name;
 
 
+              }
+     //        qDebug()<<"Current Best ID  "<<identity<<" name "<<modelgroup[identity].name;
+
+         }
+
+
+
+/*
     //Compare the Results
    double bestfit = DBL_MAX; // id_scores.at(0).second;
     identity=0;
@@ -287,6 +309,9 @@ int Track::identify (PointCloud<PointXYZRGB> dataPTS_cloud,vector<Model> modelgr
 //        qDebug()<<"Current Best ID  "<<identity<<" name "<<modelgroup[identity].name;
 
     }
+
+    */
+
 
     t = ((double)getTickCount() - t)/getTickFrequency();
     qDebug() << "::: ID parallel time " << t << endl;
