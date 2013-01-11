@@ -492,6 +492,8 @@ void Manytrack::loadDefaults(){
     //Check Boxes
     ui.subtractioncheckBox->setChecked(false);
 
+    ui.colorRegSpinBox->setValue(1.00);
+
 }
 
 void Manytrack::loadSettings(){
@@ -517,6 +519,9 @@ void Manytrack::loadSettings(){
         ui.ICP_MaxIterspinBox->setValue(settings.value("icpmaxiterations",ui.ICP_MaxIterspinBox->value()).toInt());
         ui.ICP_EuclideanDistdoubleSpinBox->setValue(settings.value("icpeuclidean",ui.ICP_EuclideanDistdoubleSpinBox->value()).toDouble());
         ui.ICP_TransEpsilondoubleSpinBox->setValue(settings.value("icpepsilon",ui.ICP_TransEpsilondoubleSpinBox->value()).toDouble());
+
+        ui.colorRegSpinBox->setValue(settings.value("colorRegspinbox",ui.colorRegSpinBox->value()).toDouble());
+
 
         //Check Boxes
         ui.subtractioncheckBox->setChecked(settings.value("bgsubcheck",false).toBool()); // again, the "false" value will be used in case of problem with QSettings
@@ -578,6 +583,9 @@ void Manytrack::saveSettings(){
         settings.setValue("icpeuclidean",ui.ICP_EuclideanDistdoubleSpinBox->value());
         settings.setValue("icpepsilon", ui.ICP_TransEpsilondoubleSpinBox->value());
 
+ settings.setValue("colorRegspinbox",ui.colorRegSpinBox->value());
+
+
 
         //Previously opened files
         settings.setValue("bgpath1",bgpath);
@@ -622,6 +630,9 @@ void Manytrack::writeSettings()
     settings.setValue("icpeuclidean",ui.ICP_EuclideanDistdoubleSpinBox->value());
     settings.setValue("icpepsilon", ui.ICP_TransEpsilondoubleSpinBox->value());
 
+    settings.setValue("colorRegspinbox",ui.colorRegSpinBox->value());
+
+
 
     //Previously opened files
     settings.setValue("bgpath1",bgpath);
@@ -657,6 +668,9 @@ void Manytrack::readSettings()
     ui.ICP_MaxIterspinBox->setValue(settings.value("icpmaxiterations",ui.ICP_MaxIterspinBox->value()).toInt());
     ui.ICP_EuclideanDistdoubleSpinBox->setValue(settings.value("icpeuclidean",ui.ICP_EuclideanDistdoubleSpinBox->value()).toDouble());
     ui.ICP_TransEpsilondoubleSpinBox->setValue(settings.value("icpepsilon",ui.ICP_TransEpsilondoubleSpinBox->value()).toDouble());
+
+    ui.colorRegSpinBox->setValue(settings.value("colorRegspinbox",ui.colorRegSpinBox->value()).toDouble());
+
 
     //Check Boxes
     ui.subtractioncheckBox->setChecked(settings.value("bgsubcheck",false).toBool()); // again, the "false" value will be used in case of problem with QSettings

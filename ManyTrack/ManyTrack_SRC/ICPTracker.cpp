@@ -648,6 +648,8 @@ trackResultImage.setTo(Scalar(0,0,255,0));
 
                                                ));
 
+            //TODO :if rects are flipped 180, then draw the blue line on the other side
+
             Point2f rect_points[4]; boundRect.points( rect_points );
             for( int j = 0; j < 4; j++ )
                 if(j==2){
@@ -1071,7 +1073,10 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
         fprintf(idFP, "%d\n", id);
         x = track->getX(fIndex+1);
         y = track->getY(fIndex+1);
-        angle = (float)(track->getRotationAngle(fIndex+1));
+
+        //Some have been flipped by 180degrees, if that is the case, unflip them!
+//        if(models[track->modelIndex].rotated)
+        angle = (float)(models[track->modelIndex].rotated-track->getRotationAngle(fIndex+1));
         fprintf(xImageFP, "%d\n", x);
         fprintf(yImageFP, "%d\n", y);
         fprintf(angleFP, "%f\n", angle);
@@ -1264,7 +1269,7 @@ Mat ICPTracker::runContourDetection(Mat img){
 }
 
 
-//rotates about center
+//rotates an image about center
 cv::Mat ICPTracker::rotateImage(const Mat& source, double angle)
 {
 //    qDebug()<<"Angle in rad"<<anglerad;

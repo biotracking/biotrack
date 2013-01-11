@@ -87,6 +87,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
     //STRIP 3D data
+    /*
     PointCloud<PointXY> dataPTS_cloud2D;
     copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
     PointCloud<PointXY> modelPTS_cloud2D;
@@ -97,6 +98,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
              PointCloud<PointXYZRGB> modelPTS_cloudStripped;
              copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
+             */
 
 
     //leave open for other possible ICP methods
@@ -119,7 +121,7 @@ double fitnessin;
 
             //Apply the Transformation
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
-            pcl::transformPointCloud(modelPTS_cloudStripped,modelPTS_cloudStripped, T);
+//            pcl::transformPointCloud(modelPTS_cloudStripped,modelPTS_cloudStripped, T);
 
 
         }
@@ -127,8 +129,7 @@ double fitnessin;
     }
 
     else{ //Other Registration implementations
-
-
+        //none right now
     }
 
 
@@ -377,8 +378,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-//    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
 
+    //    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
     //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
 
     typedef pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB> trans_2D;
@@ -701,6 +702,8 @@ void Track::getTemplatePoints(pcl::PointCloud<pcl::PointXYZRGB> &modelPts, int i
   * @param distanceThreshold an integer Euclidean distance
  */
 pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::PointCloud<pcl::PointXYZRGB> point_cloud_for_reduction,pcl::PointCloud<pcl::PointXYZRGB> removal_Cloud, int distanceThreshold){
+
+    //TODO, MAKE THIS PARALLEL
 
         //NOTE: you cannot feed a KNN searcher clouds with 1 or fewer datapoints!
 
