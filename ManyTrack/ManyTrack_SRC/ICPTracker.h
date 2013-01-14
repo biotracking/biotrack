@@ -179,6 +179,7 @@ private slots:
 
 
 
+    void on_previewtrackingButton_clicked();
 };
 
 //try to scan pixels in Parallel

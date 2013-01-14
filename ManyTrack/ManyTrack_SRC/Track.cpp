@@ -35,7 +35,7 @@ Track::~Track()
  */
 pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::PointXYZRGB> dataPTS_cloud,vector<Model> modelPTS_clouds,
                                              int modelTODataThreshold, int separateThreshold, int matchDThresh,
-                                             int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST)
+                                             int ICP_ITERATIONS, double ICP_TRANSEPSILON, double ICP_EUCLIDEANDIST, double ICP_MAXFIT)
 {
 
     matchDistanceThreshold=matchDThresh;
@@ -45,6 +45,10 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     icp_transformationEpsilon=ICP_TRANSEPSILON;
     icp_euclideanDistance=ICP_EUCLIDEANDIST;
 
+    icp_maxfitness = ICP_MAXFIT;
+
+
+
 
     pcl::PointCloud<pcl::PointXYZRGB> modelToProcess_cloud;
 
@@ -53,11 +57,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     T.setIdentity();
 
 
-    double birthAssociationsThreshold = modelPTS_clouds[0].cloud.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
-
-    double healthyAssociationsThreshold = birthAssociationsThreshold*.4; //Still healthy with 40 percent of a whole model
-
-
+//Figure out the identity of the model for this region
     if (frameIndex == birthFrameIndex)
     {
 
@@ -79,15 +79,16 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     }
 
 
+    //    double birthAssociationsThreshold = modelPTS_clouds[0].cloud.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
+        double birthAssociationsThreshold = modelPTS_clouds[modelIndex].cloud.size() * .01 *modelTODataThreshold; //TODO Shouldn't hardcode this to the first!
 
-
-
+        double healthyAssociationsThreshold = birthAssociationsThreshold*.4; //Still healthy with 40 percent of a whole model
 
 
     modelToProcess_cloud = modelPTS_clouds[modelIndex].cloud;
 
     //STRIP 3D data
-    /*
+    /**/
     PointCloud<PointXY> dataPTS_cloud2D;
     copyPointCloud(dataPTS_cloud,dataPTS_cloud2D);
     PointCloud<PointXY> modelPTS_cloud2D;
@@ -98,38 +99,34 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
              PointCloud<PointXYZRGB> modelPTS_cloudStripped;
              copyPointCloud(modelPTS_cloud2D,modelPTS_cloudStripped);
-             */
+            /* */
 
 
     //leave open for other possible ICP methods
-    bool doPCL_ICP=true;
+    bool doPCL_3DICP=true;
+    double fitnessin;
 
     //PCL implementation of ICP
-    if(doPCL_ICP){
+    if(doPCL_3DICP){
 
         if (dataPTS_cloud.size() > 1) //TODO FIX the math will throw an error if there are not enough data points
         {
-
-
-
-double fitnessin;
             // Find transformation from the orgin that will optimize a match between model and target
             T=   calcTransformPCLRGB(dataPTS_cloud, modelToProcess_cloud,&fitnessin); //Use 3D color
-
-//            T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped, &fitnessin); // Just 2D
-
 
             //Apply the Transformation
             pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
 //            pcl::transformPointCloud(modelPTS_cloudStripped,modelPTS_cloudStripped, T);
 
-
         }
 
     }
 
-    else{ //Other Registration implementations
-        //none right now
+    else{
+        //Use the 2D stripped models and data and align them
+                    T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped, &fitnessin); // Just 2D
+                    pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
+
     }
 
 
@@ -379,6 +376,8 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
     //Setup ICP
     pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
+
+    /// Change the transformation estimation to only make use of 2D
     //    pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>::Ptr trans_2D (new  pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB>);
     //online guy uses this:  typedef ConstrainedSVD<pcl::PointXYZ, pcl::PointXYZ> constSVD;  boost::shared_ptr<constSVD> constSVDptr(new constSVD);
 
@@ -386,25 +385,12 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
     boost::shared_ptr<trans_2D> trans2Dptr(new trans_2D);
     icp.setTransformationEstimation (trans2Dptr);
 
-
+/// Set the Input and Target Cloud
 //  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
     icp.setInputCloud(model_cloud_ptr);
     icp.setInputTarget(data_cloud_ptr);
     pcl::PointCloud<pcl::PointXYZRGB> Final;
 
-
-
-//   pcl::registration::TransformationEstimationSVD
-//    icp.setTransformationEstimation();
-
-
-
-
-
-
-
-
-    // if(model_cloud_ptr->is_dense){ //TODO Do we need this?
 
     //////////
     ////Set Parameters
@@ -499,18 +485,20 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     ET=icp.getFinalTransformation();
 
-    recentFitness = icp.getFitnessScore();
-//    recentFitness = icp.colorfitness; // For ColorICP
 
-//    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<recentFitness<<"  RANSAC Iterations: " <<icp.getRANSACIterations()<< "RansacOutlierRejection"<< icp.getRANSACOutlierRejectionThreshold() << " Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
-//    qDebug();
-
-    matchScore = icp.getFitnessScore();
-//    matchScore = icp.colorfitness; // For ColorICP
 
     didConverge = icp.hasConverged();
 
-    *fitness=icp.getFitnessScore();
+    *fitness=icp.getFitnessScore(icp_maxfitness);
+
+//    recentFitness = icp.getFitnessScore();
+//    recentFitness = icp.colorfitness; // For ColorICP
+
+//    qDebug() << "has converged:" << icp.hasConverged() << " score: " <<*fitness<<"   Iterations: " << icp.getMaximumIterations()<<" Transepsilon: " <<icp.getTransformationEpsilon() <<" EuclideanFitnes: " <<icp.getEuclideanFitnessEpsilon()<< "  Data Points in sight: "<<data_cloud.size();
+//    qDebug();
+
+
+//    recentFitness = *fitness;
 
 //     *fitness=icp.getFitnessScore(10.0);
 
@@ -715,7 +703,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
 
-        float point_radius = distanceThreshold;
+        double point_radius = distanceThreshold;
 
         PointCloud<pcl::PointXYZRGB> point_cloud_flattened;//Point cloud with extra Hue Dimension crushed to 0
 
@@ -744,7 +732,17 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
 
+            //PARALLEL VERSION
 
+                cv::parallel_for_(Range(0, removal_Cloud.size()),Remove_Parallel(kdtree, removal_Cloud,point_cloud_for_reduction, pointIdxRadiusSearch, pointRadiusSquaredDistance, point_radius, &marked) );
+
+
+
+
+
+
+//TODO MAKE THIS PARALLLEL
+                /**
             // iterate over points in model and remove those points within a certain distance
             for (unsigned int c=0; c < removal_Cloud.size(); c++)
             {
@@ -774,7 +772,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
 
             }
-
+/**/
 
 //TODO We can make the above PARALLEL (probably!)
 

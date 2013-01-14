@@ -248,9 +248,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
          <bool>true</bool>
         </property>
        </widget>
-       <zorder>imageLabel</zorder>
-       <zorder>visualizationLabel</zorder>
-       <zorder>toolbartabWidget</zorder>
       </widget>
      </widget>
     </item>
@@ -367,7 +364,7 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="filesTabWidget">
        <attribute name="title">
@@ -661,13 +658,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
             </widget>
            </item>
-           <item row="19" column="0">
-            <widget class="QSlider" name="separationSlider">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
            <item row="11" column="0">
             <widget class="QCheckBox" name="trackDistanceViewCheck">
              <property name="font">
@@ -685,27 +675,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
            </item>
            <item row="20" column="0" colspan="2">
             <widget class="Line" name="line_2">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="9" column="0">
-            <widget class="Line" name="line_5">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="16" column="0">
-            <widget class="Line" name="line_4">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="0">
-            <widget class="QSlider" name="matchSlider">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -740,19 +709,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
              <property name="text">
               <string>Model-Data Threshold</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QSlider" name="bgsubSlider">
-             <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>254</number>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
@@ -806,29 +762,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
              <property name="text">
               <string>Analysis Resolution</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="Line" name="line_7">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="14" column="1">
-            <widget class="QSpinBox" name="trackdeathSpinBox">
-             <property name="suffix">
-              <string> frames</string>
-             </property>
-             <property name="maximum">
-              <number>1000</number>
-             </property>
-             <property name="singleStep">
-              <number>1</number>
-             </property>
-             <property name="value">
-              <number>30</number>
              </property>
             </widget>
            </item>
@@ -933,6 +866,9 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
                  </item>
                  <item row="2" column="0" colspan="2">
                   <widget class="QCheckBox" name="DuplicatescheckBox">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
                    <property name="font">
                     <font>
                      <pointsize>8</pointsize>
@@ -1093,6 +1029,28 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
                    </property>
                   </widget>
                  </item>
+                 <item row="6" column="0">
+                  <widget class="QLabel" name="label_9">
+                   <property name="font">
+                    <font>
+                     <pointsize>8</pointsize>
+                    </font>
+                   </property>
+                   <property name="text">
+                    <string>Max Worst Score</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="6" column="1">
+                  <widget class="QDoubleSpinBox" name="icp_maxWorstScore">
+                   <property name="maximum">
+                    <double>99999.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>1000.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
                 </layout>
                </widget>
               </item>
@@ -1111,30 +1069,6 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
              <property name="text">
               <string>Separation Threshold</string>
-             </property>
-            </widget>
-           </item>
-           <item row="15" column="0">
-            <widget class="QSlider" name="deathSlider">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="13" column="0">
-            <widget class="Line" name="line_3">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="12" column="0">
-            <widget class="QSlider" name="searchSlider">
-             <property name="maximum">
-              <number>1000</number>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>
@@ -1160,6 +1094,94 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
              <property name="text">
               <string>Track Search Distance</string>
+             </property>
+            </widget>
+           </item>
+           <item row="14" column="1">
+            <widget class="QSpinBox" name="trackdeathSpinBox">
+             <property name="suffix">
+              <string> frames</string>
+             </property>
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+             <property name="singleStep">
+              <number>1</number>
+             </property>
+             <property name="value">
+              <number>30</number>
+             </property>
+            </widget>
+           </item>
+           <item row="15" column="0" colspan="2">
+            <widget class="QSlider" name="deathSlider">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="12" column="0" colspan="2">
+            <widget class="QSlider" name="searchSlider">
+             <property name="maximum">
+              <number>1000</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="0" colspan="2">
+            <widget class="QSlider" name="matchSlider">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0" colspan="2">
+            <widget class="QSlider" name="bgsubSlider">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>254</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="19" column="0" colspan="2">
+            <widget class="QSlider" name="separationSlider">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="13" column="0" colspan="2">
+            <widget class="Line" name="line_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="16" column="0" colspan="2">
+            <widget class="Line" name="line_4">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="9" column="0" colspan="2">
+            <widget class="Line" name="line_5">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="Line" name="line_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
              </property>
             </widget>
            </item>

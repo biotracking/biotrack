@@ -522,6 +522,8 @@ void Manytrack::loadSettings(){
 
         ui.colorRegSpinBox->setValue(settings.value("colorRegspinbox",ui.colorRegSpinBox->value()).toDouble());
 
+        ui.icp_maxWorstScore->setValue(settings.value("icpmaxworstscore",ui.icp_maxWorstScore->value()).toInt());
+
 
         //Check Boxes
         ui.subtractioncheckBox->setChecked(settings.value("bgsubcheck",false).toBool()); // again, the "false" value will be used in case of problem with QSettings
@@ -585,6 +587,9 @@ void Manytrack::saveSettings(){
 
  settings.setValue("colorRegspinbox",ui.colorRegSpinBox->value());
 
+ settings.setValue("icpmaxworstscore",ui.ICP_MaxIterspinBox->value());
+
+
 
 
         //Previously opened files
@@ -631,6 +636,8 @@ void Manytrack::writeSettings()
     settings.setValue("icpepsilon", ui.ICP_TransEpsilondoubleSpinBox->value());
 
     settings.setValue("colorRegspinbox",ui.colorRegSpinBox->value());
+    settings.setValue("icpmaxworstscore",ui.icp_maxWorstScore->value());
+
 
 
 
@@ -670,6 +677,8 @@ void Manytrack::readSettings()
     ui.ICP_TransEpsilondoubleSpinBox->setValue(settings.value("icpepsilon",ui.ICP_TransEpsilondoubleSpinBox->value()).toDouble());
 
     ui.colorRegSpinBox->setValue(settings.value("colorRegspinbox",ui.colorRegSpinBox->value()).toDouble());
+    ui.icp_maxWorstScore->setValue(settings.value("icpmaxworstscore",ui.icp_maxWorstScore->value()).toInt());
+
 
 
     //Check Boxes
@@ -1111,23 +1120,30 @@ void Manytrack::on_previewtrackingButton_clicked()
 
     Mat img;
 
-    capturepreview.set(CV_CAP_PROP_POS_FRAMES,ui.framesSlider->value());
+
+    capturepreview.set(CV_CAP_PROP_POS_FRAMES,ui.framesspinBox->value());
 
     ui.framesSlider->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
     ui.framesspinBox->setMaximum(capturepreview.get(CV_CAP_PROP_FRAME_COUNT)-1);
 
-        capturepreview.retrieve(img);
-        capturepreview.read(img);
+    capturepreview.grab();
+    if( capturepreview.retrieve(img)){ //capture.read is just grab+retreive, BUT it gives faults for frames <10 WTF?
 
         //Load New preview Tracker
         icpTrackerpreview = new ICPTracker(vidFPS,bgpath,modelfolder,maskpath, ui);
 
 
-  icpTrackerpreview->processFrame(img, (int)capturepreview.get(CV_CAP_PROP_POS_FRAMES));
+  icpTrackerpreview->processFrame(img, ui.framesSlider->value());
 
 
         updateVideoImage(img);
         updateVisualization(icpTrackerpreview->getTrackResultImage());
-delete icpTrackerpreview;
+        delete icpTrackerpreview;
+
+    }
+    else{
+
+        //WAHT
+    }
 
 }
