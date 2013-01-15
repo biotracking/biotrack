@@ -717,7 +717,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
             bool *marked= new bool[point_cloud_for_reduction.size()];
             memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
 
-
+            bool *parmarked= new bool[point_cloud_for_reduction.size()];
+            memset(parmarked,false,sizeof(bool)*point_cloud_for_reduction.size());
             //Make a version of the original data cloud that is flattened to z=0 but with the same indice
             copyPointCloud( point_cloud_for_reduction,point_cloud_flattened);
 
@@ -731,10 +732,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
-
-            //PARALLEL VERSION
-
-                cv::parallel_for_(Range(0, removal_Cloud.size()),Remove_Parallel(kdtree, removal_Cloud,point_cloud_for_reduction, pointIdxRadiusSearch, pointRadiusSquaredDistance, point_radius, &marked) );
 
 
 
@@ -772,9 +769,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
 
             }
-/**/
-
-//TODO We can make the above PARALLEL (probably!)
 
             //DESTROY ALL MARKED POINTS
             for(uint q=0; q< point_cloud_for_reduction.size(); q++){
@@ -785,10 +779,29 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
                 }
 
             }
+/**/
+
+            //PARALLEL VERSION
+
+                cv::parallel_for_(Range(0, removal_Cloud.size()),Remove_Parallel(&kdtree, removal_Cloud,point_cloud_for_reduction, point_radius, &parmarked) );
+
+
+
+                //DESTROY ALL MARKED POINTS
+                for(uint q=0; q< point_cloud_for_reduction.size(); q++){
+                    if(!parmarked[q]){
+                        point_cloud_for_return.push_back(point_cloud_for_reduction.at(q));
+        //                point_cloud_for_return.at(q) = point_cloud_for_reduction.at(q);
+
+                    }
+
+                }
+
 
 
 
             delete[] marked;
+                delete[] parmarked;
         }
 
         //point_cloud_for_reduction.resize();

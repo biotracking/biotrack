@@ -240,20 +240,23 @@ private:
     bool *marked;//= new bool[point_cloud_for_reduction.size()];
 //    memset(marked,false,sizeof(bool)*point_cloud_for_reduction.size());
 
-    pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree;
+    pcl::KdTreeFLANN<pcl::PointXYZRGB> * kdtree;
     pcl::PointCloud<pcl::PointXYZRGB> removal_Cloud,point_cloud_for_reduction;
 
-     std::vector<int> pointIdxRadiusSearch;
-          std::vector<float> pointRadiusSquaredDistance;
+//     std::vector<int> pointIdxRadiusSearch;
+//          std::vector<float> pointRadiusSquaredDistance;
           double point_radius;
 
 public:
 
 
-    Remove_Parallel ( pcl::KdTreeFLANN<pcl::PointXYZRGB> thekdtree, pcl::PointCloud<pcl::PointXYZRGB>  theremoval_Cloud,
-                      pcl::PointCloud<pcl::PointXYZRGB> thepoint_cloud_for_reduction,std::vector<int> thepointIdxRadiusSearch,   std::vector<float> thepointRadiusSquaredDistance, double thepoint_radius, bool** themarked )
+    Remove_Parallel ( pcl::KdTreeFLANN<pcl::PointXYZRGB> * thekdtree, pcl::PointCloud<pcl::PointXYZRGB>  theremoval_Cloud,
+                      pcl::PointCloud<pcl::PointXYZRGB> thepoint_cloud_for_reduction,
+//                      std::vector<int> thepointIdxRadiusSearch,   std::vector<float> thepointRadiusSquaredDistance,
+                      double thepoint_radius, bool** themarked )
         : kdtree(thekdtree), removal_Cloud(theremoval_Cloud), point_cloud_for_reduction(thepoint_cloud_for_reduction),
-          pointIdxRadiusSearch(thepointIdxRadiusSearch), pointRadiusSquaredDistance(thepointRadiusSquaredDistance), point_radius(thepoint_radius)
+//          pointIdxRadiusSearch(thepointIdxRadiusSearch), pointRadiusSquaredDistance(thepointRadiusSquaredDistance),
+          point_radius(thepoint_radius)
 
     {
         *themarked= new bool[point_cloud_for_reduction.size()];
@@ -275,17 +278,17 @@ void operator ()(const cv::Range& range) const
          std::vector<float> pointRadiusSquaredDistance_loop;
          double point_radius_loop;
 
-         pointIdxRadiusSearch_loop = pointIdxRadiusSearch;
-         pointRadiusSquaredDistance_loop = pointRadiusSquaredDistance;
+//         pointIdxRadiusSearch_loop = pointIdxRadiusSearch;
+//         pointRadiusSquaredDistance_loop = pointRadiusSquaredDistance;
          point_radius_loop = point_radius;
-         pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree_loop;
+         pcl::KdTreeFLANN<pcl::PointXYZRGB> * kdtree_loop;
          kdtree_loop=kdtree;
 
 
 
 
                 for (size_t c = range.start; c!=range.end;++c){ // This goes over the size of the cloud
-                    if(point_cloud_for_reduction.size()<2){
+                    if(point_cloud_for_reduction.size()<1){
                         break;
                     }
 
@@ -298,12 +301,16 @@ void operator ()(const cv::Range& range) const
                    searchPoint.z = 0;
 
                     // qDebug() <<"Datapts before incremental remove"<< point_cloud_for_reduction.size();
-                    if ( kdtree_loop.radiusSearch ( searchPoint, point_radius_loop, pointIdxRadiusSearch_loop, pointRadiusSquaredDistance_loop) > 0 )
-                    {
-                        for (size_t i = 0; i < pointIdxRadiusSearch.size (); ++i){
+                   int kdtest=-1;
+                  kdtest= kdtree_loop->radiusSearch ( searchPoint, point_radius_loop, pointIdxRadiusSearch_loop, pointRadiusSquaredDistance_loop);
+
+                  int doanotherthingtest;
+
+                    if ( kdtest>0)  {
+                        for (size_t i = 0; i < pointIdxRadiusSearch_loop.size (); ++i){
                             if(point_cloud_for_reduction.size()>0) ///NOTE CHANGED FROM > 1
 
-                            marked[pointIdxRadiusSearch[i]]=true;
+                            marked[pointIdxRadiusSearch_loop[i]]=true;
             //                        point_cloud_for_reduction.erase(point_cloud_for_reduction.begin()+pointIdxRadiusSearch[i]);// point_cloud_for_reduction.points[ pointIdxRadiusSearch[i] ]
                         }
                     }
