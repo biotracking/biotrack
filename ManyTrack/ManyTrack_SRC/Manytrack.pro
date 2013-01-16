@@ -64,9 +64,9 @@ LIBS += -lpcl_common \
 
 
 #Turn off the messages before you release!
-    CONFIG += qt warn_off release
-    DEFINES += QT_NO_DEBUG_OUTPUT
-    DEFINES += QT_NO_DEBUG
+#    CONFIG += qt warn_off release
+#    DEFINES += QT_NO_DEBUG_OUTPUT
+#    DEFINES += QT_NO_DEBUG
 
 }
 

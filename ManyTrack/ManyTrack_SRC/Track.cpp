@@ -68,6 +68,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
         }
         else{
         modelIndex= identify(dataPTS_cloud,modelPTS_clouds);
+        modelRotated = modelPTS_clouds[modelIndex].rotated;
 }
 
     }
@@ -103,7 +104,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
 
     //leave open for other possible ICP methods
-    bool doPCL_3DICP=false;
+    bool doPCL_3DICP=true;
     double fitnessin;
 
     //PCL implementation of ICP
@@ -641,10 +642,17 @@ double Track::getRotationAngle(int idx)
 
 
     // make the angle match convention of pointing down X axis = 0 degrees, poiting down positive y axis = 90 degrees
-
     pcl::PointXYZ p1,p2;
+
+    if(modelRotated != 180.0){
     p1.x=0; p1.y=0;
     p2.x=100; p2.y=0;
+    }
+    else{ //flip if we are using a backwards model
+        p1.x=0; p1.y=0;
+        p2.x=-100; p2.y=0;
+    }
+
 
     standardcloud.push_back(p1);
     standardcloud.push_back(p2);
@@ -654,7 +662,7 @@ double Track::getRotationAngle(int idx)
     theta = atan2((float)(standardcloud.points[1].y-standardcloud.points[0].y), (float)(standardcloud.points[1].x-standardcloud.points[0].x)); // changed this function to make consistent
     //  cout << " The manually translated angle in degrees : " <<theta*180/3.14157 << endl;
 
-    /* I don't know why this doesn't work for angles between 240 and 360
+    /* I don't know why this following example doesn't work for angles between 240 and 360
     Eigen::Matrix3f m;
      m = T.topLeftCorner(3,3);
      AngleAxisf aa(m);
@@ -713,7 +721,6 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
         PointCloud<pcl::PointXYZRGB> point_cloud_for_return;
         point_cloud_for_return.reserve(point_cloud_for_reduction.size());
 
-        // K nearest neighbor search with Radius
 
         if(point_cloud_for_reduction.size()>1){
 
@@ -725,6 +732,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
             //Make a version of the original data cloud that is flattened to z=0 but with the same indice
             copyPointCloud( point_cloud_for_reduction,point_cloud_flattened);
 
+
             for(int q=0; q<point_cloud_flattened.size();q++){
 
                 point_cloud_flattened.at(q).z=0;
@@ -733,15 +741,17 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
            pcl:: PointCloud<PointXYZRGB>::Ptr point_cloud_for_reduction_ptr (new pcl::PointCloud<PointXYZRGB> (point_cloud_flattened));
 
+           // K nearest neighbor search with Radius
 
             kdtree.setInputCloud (point_cloud_for_reduction_ptr); //Needs to have more than 1 data pt or segfault
 
 
 
 
+            double t = (double)getTickCount();
 
 
-//TODO MAKE THIS PARALLLEL
+//The below has been parallelized,and runs about 2X faster
                 /**
             // iterate over points in model and remove those points within a certain distance
             for (unsigned int c=0; c < removal_Cloud.size(); c++)
@@ -782,12 +792,16 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
                 }
 
             }
+            t = ((double)getTickCount() - t)/getTickFrequency();
+            cout << "::: time serial remove " << t << endl;
 /**/
 
             //PARALLEL VERSION
 
+
+
             /// Timing
-            double t = (double)getTickCount();
+             t = (double)getTickCount();
 
                 cv::parallel_for_(Range(0, removal_Cloud.size()),Remove_Parallel(&kdtree, removal_Cloud,point_cloud_for_reduction, point_radius, &parmarked) );
 
@@ -803,7 +817,8 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 
                 }
 
-
+                t = ((double)getTickCount() - t)/getTickFrequency();
+                cout << "::: time parallel remove " << t << endl;
 
 
             delete[] marked;

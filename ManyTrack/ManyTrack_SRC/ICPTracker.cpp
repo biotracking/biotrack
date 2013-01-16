@@ -652,6 +652,9 @@ trackResultImage.setTo(Scalar(0,0,255,0));
 
             Point2f rect_points[4]; boundRect.points( rect_points );
             for( int j = 0; j < 4; j++ )
+
+
+
                 if(j==2){
                     //Right Side (head) of box
                     line( trackResultImage, rect_points[j], rect_points[(j+1)%4], Scalar(250,200,0,255),3 , 8 );
@@ -660,6 +663,8 @@ trackResultImage.setTo(Scalar(0,0,255,0));
                 else{
                     line( trackResultImage, rect_points[j], rect_points[(j+1)%4], Scalar(0,200,200,255),3 , 8 );
                 }
+
+
             //Draw Optional Bounding Ellipse
             //       cv::ellipse(trackResultImage, boundRect,
             //                     CV_BGR(0,255,255),3  );

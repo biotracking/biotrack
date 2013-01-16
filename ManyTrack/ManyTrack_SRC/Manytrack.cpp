@@ -73,7 +73,6 @@ void Manytrack::timerEvent(QTimerEvent*) {
 
      double   t = (double)getTickCount();
 
-//        Mat img = updateFrame();
         currentFrameImg = updateFrame();
 
         t = ((double)getTickCount() - t)/getTickFrequency();

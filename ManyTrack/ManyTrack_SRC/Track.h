@@ -198,6 +198,8 @@ public:
        Eigen::Matrix4d &transform);
   Eigen::Matrix4f calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> data_cloud,pcl::PointCloud<pcl::PointXYZRGB> model_cloud,double *fitness);
 
+  float modelRotated;
+
 private:
     //Ui::ManytrackClass uitrack;
 
