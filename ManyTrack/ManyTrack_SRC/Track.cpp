@@ -103,7 +103,7 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
 
 
     //leave open for other possible ICP methods
-    bool doPCL_3DICP=true;
+    bool doPCL_3DICP=false;
     double fitnessin;
 
     //PCL implementation of ICP
@@ -123,6 +123,9 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::updatePosition(pcl::PointCloud<pcl::Poi
     }
 
     else{
+
+
+
         //Use the 2D stripped models and data and align them
                     T=   calcTransformPCLRGB(dataPTS_cloudStripped, modelPTS_cloudStripped, &fitnessin); // Just 2D
                     pcl::transformPointCloud(modelToProcess_cloud,modelToProcess_cloud, T);
@@ -383,7 +386,7 @@ Eigen::Matrix4f Track::calcTransformPCLRGB(pcl::PointCloud<pcl::PointXYZRGB> dat
 
     typedef pcl::registration::TransformationEstimation2D<PointXYZRGB, PointXYZRGB> trans_2D;
     boost::shared_ptr<trans_2D> trans2Dptr(new trans_2D);
-    icp.setTransformationEstimation (trans2Dptr);
+//    icp.setTransformationEstimation (trans2Dptr);
 
 /// Set the Input and Target Cloud
 //  IterativeClosestPointColor<pcl::PointXYZRGB, pcl::PointXYZRGB> icp; // Test UV implmentation // Testing Color ICP -- works but the fitness scoring doesn't seem good
@@ -782,6 +785,9 @@ pcl::PointCloud<pcl::PointXYZRGB> Track::removeClosestDataCloudPoints(pcl::Point
 /**/
 
             //PARALLEL VERSION
+
+            /// Timing
+            double t = (double)getTickCount();
 
                 cv::parallel_for_(Range(0, removal_Cloud.size()),Remove_Parallel(&kdtree, removal_Cloud,point_cloud_for_reduction, point_radius, &parmarked) );
 

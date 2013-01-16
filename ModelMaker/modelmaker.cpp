@@ -680,7 +680,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
         //save out Model
         
         //Full Keyframe
-        imwrite(modelfilename.toStdString(),bgra);
+        imwrite(modelfilename.toStdString()+"_keyframe",bgra);
         
         qDebug()<<"Saved out: "<<modelfilename;
         
@@ -715,7 +715,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
         
 
         // Save the Nicely Rotated and Cropped Model File
-        imwrite(modelfilename.toStdString()+"_rotated",bgracropped);
+        imwrite(modelfilename.toStdString(),bgracropped);
         
         
         centroids.clear();
