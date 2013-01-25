@@ -17,16 +17,6 @@ HEADERS  += genvid.h
 
 FORMS    += genvid.ui
 
-INCLUDEPATH += /usr/include/opencv
-
-# INCLUDEPATH += /usr/include/opencv-2.3.1
-
-LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui
-
-##use the below command when deploying
-
-  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN/libs
-  QMAKE_LFLAGS_RPATH=
 
 
 #Turn off the messages before you release!
@@ -34,9 +24,22 @@ LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui
     DEFINES += QT_NO_DEBUG_OUTPUT
     DEFINES += QT_NO_DEBUG
 
-unix {
+linux-*{
         CONFIG += link_pkgconfig
 #        PKGCONFIG += opencv
+		INCLUDEPATH += /usr/include/opencv
+		# INCLUDEPATH += /usr/include/opencv-2.3.1
+		LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui
+
+##use the below command when deploying
+
+  QMAKE_LFLAGS += -Wl,--rpath=\\\$\$ORIGIN/libs
+  QMAKE_LFLAGS_RPATH=
+}
+
+macx {
+	CONFIG += link_pkgconfig
+	PKGCONFIG += opencv
 }
 
 RESOURCES += \
