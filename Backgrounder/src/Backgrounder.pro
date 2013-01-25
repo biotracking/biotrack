@@ -16,13 +16,9 @@ TEMPLATE = app
 
 QMAKE_LFLAGS += -static-libgcc
 
-unix {
+linux-* {
         CONFIG += link_pkgconfig
         PKGCONFIG += opencv
-
-
-}
-
 
 ##use the below command when deploying
 
@@ -30,10 +26,20 @@ unix {
   QMAKE_LFLAGS_RPATH=
 
 
+}
 #Turn off the messages before you release!
     CONFIG += qt warn_off release
     DEFINES += QT_NO_DEBUG_OUTPUT
     DEFINES += QT_NO_DEBUG
+
+macx {
+
+        CONFIG += link_pkgconfig
+        PKGCONFIG += opencv
+}
+
+
+
 
 
 
