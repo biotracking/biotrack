@@ -85,7 +85,7 @@ void MainWindow::loadVideo(std::string fname){
     ui->horizontalSlider->setValue(0);
     cap.read(in);
     out = in.clone();
-    cv::cvtColor(in,out,CV_BGR2RGB);
+//    cv::cvtColor(in,out,CV_BGR2RGB);
     QImage img = Mat2QImage(out);
     ui->imageLabel->setPixmap(QPixmap::fromImage(img));
 }
