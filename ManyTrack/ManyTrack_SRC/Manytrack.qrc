@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/Manytrack">
-        <file>Manytrack.png</file>
+    <qresource prefix="/new/prefix1">
+        <file>res/Manytrack.png</file>
     </qresource>
 </RCC>

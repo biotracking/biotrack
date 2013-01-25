@@ -55,6 +55,9 @@ void ModelMaker::checkReady()
     if (bgpath==nopath)
         notprepared= notprepared+"  ||    Background Image  ||  ";
     if (bgpath!=nopath && videopath!=nopath){
+
+        //TODO Check to make sure that video and background are SAME SIZE!
+
         colour="green"; // you can use also QColor
         QString text="<b>Ready to Make a Model</b> ";
         fonttemplate = tr("<font color='%1'>%2</font>");
@@ -66,6 +69,7 @@ void ModelMaker::checkReady()
         ui->paintwidget->setToolTip("Left click to add mask points | Right click to close masking shape");
         paintCanvas->drawingPolygon = true;
         startpainter();
+        capture.release();
         capture.open(videopath.toStdString());
         bgimg = imread(bgpath.toStdString(),1);
         currentimg=bgimg.clone();
@@ -680,7 +684,7 @@ void ModelMaker::extractModel(cv::Mat origframe)
         //save out Model
         
         //Full Keyframe
-        imwrite(modelfilename.toStdString()+"_keyframe",bgra);
+//        imwrite(modelfilename.toStdString()+"_keyframe",bgra); //Disabled for now
         
         qDebug()<<"Saved out: "<<modelfilename;
         

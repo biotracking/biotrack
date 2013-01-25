@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/new/files">
         <file>font.png</file>
+        <file>res/GenVid.png</file>
     </qresource>
 </RCC>

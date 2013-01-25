@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>GenVid</string>
   </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/new/files/res/GenVid.png</normaloff>:/new/files/res/GenVid.png</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -231,7 +235,7 @@
           <string/>
          </property>
          <property name="icon">
-          <iconset resource="resources.qrc">
+          <iconset>
            <normaloff>:/new/files/font.png</normaloff>:/new/files/font.png</iconset>
          </property>
          <property name="iconSize">
@@ -404,8 +408,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

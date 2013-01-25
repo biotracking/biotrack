@@ -18,7 +18,7 @@ Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
 
     ui.setupUi(this);
 
-    setWindowIcon(QIcon("Manytrack.png"));
+//    setWindowIcon(QIcon("Manytrack.png"));
 
     imageData = NULL;
     icpTracker= NULL;
@@ -586,7 +586,7 @@ void Manytrack::saveSettings(){
 
  settings.setValue("colorRegspinbox",ui.colorRegSpinBox->value());
 
- settings.setValue("icpmaxworstscore",ui.ICP_MaxIterspinBox->value());
+ settings.setValue("icpmaxworstscore",ui.icp_maxWorstScore->value());
 
 
 

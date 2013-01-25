@@ -7,15 +7,15 @@
     <x>0</x>
     <y>0</y>
     <width>1254</width>
-    <height>820</height>
+    <height>841</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Manytrack 1.1</string>
+   <string>Manytrack 1.5</string>
   </property>
   <property name="windowIcon">
    <iconset resource="Manytrack.qrc">
-    <normaloff>:/Manytrack/Manytrack.png</normaloff>:/Manytrack/Manytrack.png</iconset>
+    <normaloff>:/new/prefix1/res/Manytrack.png</normaloff>:/new/prefix1/res/Manytrack.png</iconset>
   </property>
   <property name="animated">
    <bool>true</bool>
@@ -25,139 +25,6 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="3">
-     <widget class="QComboBox" name="displaycomboBox">
-      <item>
-       <property name="text">
-        <string>Fit-to-Window</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>100%</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>50%</string>
-       </property>
-      </item>
-     </widget>
-    </item>
-    <item row="4" column="0">
-     <layout class="QHBoxLayout" name="displayLayout">
-      <property name="rightMargin">
-       <number>10</number>
-      </property>
-      <item>
-       <widget class="QPushButton" name="display_pushButton">
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Update Display</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>40</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="modelViewcheckBox">
-        <property name="font">
-         <font>
-          <pointsize>8</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Model</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="showTrailscheckBox">
-        <property name="font">
-         <font>
-          <pointsize>8</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Trails</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="showBoxcheckBox">
-        <property name="font">
-         <font>
-          <pointsize>8</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Box</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="textCheckBox">
-        <property name="font">
-         <font>
-          <pointsize>8</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>Text</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="3" column="0" colspan="4">
-     <layout class="QHBoxLayout" name="playcontrolLayout">
-      <item>
-       <widget class="QPushButton" name="stopButton">
-        <property name="text">
-         <string>||</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="resetButton">
-        <property name="text">
-         <string>RESET</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
     <item row="0" column="0" colspan="4">
      <widget class="QScrollArea" name="scrollArea">
       <property name="minimumSize">
@@ -176,7 +43,7 @@
        <property name="geometry">
         <rect>
          <x>0</x>
-         <y>53</y>
+         <y>54</y>
          <width>688</width>
          <height>498</height>
         </rect>
@@ -251,29 +118,26 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
       </widget>
      </widget>
     </item>
-    <item row="4" column="3">
-     <widget class="QCheckBox" name="visualizationcheckBox">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-        <strikeout>false</strikeout>
-        <kerning>true</kerning>
-       </font>
-      </property>
-      <property name="layoutDirection">
-       <enum>Qt::LeftToRight</enum>
-      </property>
-      <property name="text">
-       <string>Visualization</string>
-      </property>
-      <property name="checked">
-       <bool>true</bool>
-      </property>
+    <item row="1" column="3">
+     <widget class="QComboBox" name="displaycomboBox">
+      <item>
+       <property name="text">
+        <string>Fit-to-Window</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>100%</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>50%</string>
+       </property>
+      </item>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="6" column="1">
      <widget class="QCheckBox" name="ThreeDcheckBox">
       <property name="enabled">
        <bool>false</bool>
@@ -292,6 +156,9 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
     </item>
     <item row="2" column="0">
      <widget class="QSlider" name="framesSlider">
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
       <property name="maximum">
        <number>0</number>
       </property>
@@ -306,35 +173,25 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
       </property>
      </widget>
     </item>
-    <item row="2" column="1">
-     <widget class="QSpinBox" name="framesspinBox">
-      <property name="frame">
-       <bool>false</bool>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-      </property>
-      <property name="prefix">
-       <string>frame: </string>
-      </property>
-      <property name="maximum">
-       <number>0</number>
-      </property>
-     </widget>
+    <item row="4" column="0" colspan="4">
+     <layout class="QHBoxLayout" name="playcontrolLayout">
+      <item>
+       <widget class="QPushButton" name="stopButton">
+        <property name="text">
+         <string>||</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resetButton">
+        <property name="text">
+         <string>RESET</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
-    <item row="2" column="3">
-     <widget class="QPushButton" name="previewtrackingButton">
-      <property name="font">
-       <font>
-        <pointsize>9</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>| Preview Tracking |</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="4" rowspan="6">
+    <item row="0" column="4" rowspan="8">
      <widget class="QTabWidget" name="toolbartabWidget">
       <property name="enabled">
        <bool>true</bool>
@@ -364,7 +221,7 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="filesTabWidget">
        <attribute name="title">
@@ -430,7 +287,7 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
              </property>
              <property name="icon">
               <iconset resource="Manytrack.qrc">
-               <normaloff>:/Manytrack/Manytrack.png</normaloff>:/Manytrack/Manytrack.png</iconset>
+               <normaloff>:/new/prefix1/res/Manytrack.png</normaloff>:/new/prefix1/res/Manytrack.png</iconset>
              </property>
             </widget>
            </item>
@@ -854,13 +711,16 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
                     </font>
                    </property>
                    <property name="decimals">
-                    <number>6</number>
+                    <number>2</number>
+                   </property>
+                   <property name="maximum">
+                    <double>999.990000000000009</double>
                    </property>
                    <property name="singleStep">
                     <double>0.100000000000000</double>
                    </property>
                    <property name="value">
-                    <double>1.000000000000000</double>
+                    <double>0.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -1198,6 +1058,9 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
         <string>Filters</string>
        </attribute>
        <widget class="QSpinBox" name="dilatespinbox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>56</x>
@@ -1221,6 +1084,9 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
         </property>
        </widget>
        <widget class="QSpinBox" name="blurspinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="geometry">
          <rect>
           <x>56</x>
@@ -1247,6 +1113,166 @@ font: 14pt &quot;MS Shell Dlg 2&quot;;</string>
         </property>
        </widget>
       </widget>
+     </widget>
+    </item>
+    <item row="2" column="3">
+     <widget class="QPushButton" name="previewtrackingButton">
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>| Preview Tracking |</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QSpinBox" name="framesspinBox">
+      <property name="frame">
+       <bool>false</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+      </property>
+      <property name="prefix">
+       <string>frame: </string>
+      </property>
+      <property name="maximum">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="3">
+     <widget class="QCheckBox" name="visualizationcheckBox">
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <strikeout>false</strikeout>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="text">
+       <string>Visualization</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <layout class="QHBoxLayout" name="displayLayout">
+      <property name="rightMargin">
+       <number>10</number>
+      </property>
+      <item>
+       <widget class="QPushButton" name="display_pushButton">
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Update Display</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="modelViewcheckBox">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Model</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showTrailscheckBox">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Trails</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showBoxcheckBox">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Box</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="textCheckBox">
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Text</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="5" column="0" colspan="4">
+     <widget class="Line" name="line_10">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0" colspan="4">
+     <widget class="Line" name="line_11">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
      </widget>
     </item>
    </layout>

@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Backgrounder</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="Backgrounder.qrc">
+    <normaloff>:/resources/res/backgrounder.png</normaloff>:/resources/res/backgrounder.png</iconset>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QSlider" name="startframeSlider">
     <property name="geometry">
@@ -399,6 +403,8 @@ No video loaded</string>
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="Backgrounder.qrc"/>
+ </resources>
  <connections/>
 </ui>
