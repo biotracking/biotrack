@@ -12,7 +12,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>
 #include <pcl/io/pcd_io.h>
-#include <parallel/par_loop.h>
+//#include <parallel/par_loop.h>
 #include "ui_Manytrack.h"
 
 

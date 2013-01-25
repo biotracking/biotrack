@@ -76,6 +76,8 @@ macx {
 
         PKGCONFIG += opencv
         PKGCONFIG += pcl_io-1.6
+		PKGCONFIG += pcl_visualization-1.6
+		INCLUDEPATH += "/usr/include/vtk-5.6/"
 
 }
 
