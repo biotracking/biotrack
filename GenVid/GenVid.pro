@@ -40,6 +40,7 @@ linux-*{
 macx {
 	CONFIG += link_pkgconfig
 	PKGCONFIG += opencv
+	ICON = $${PWD}/res/genicons.icns
 }
 
 RESOURCES += \

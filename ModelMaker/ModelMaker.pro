@@ -46,6 +46,7 @@ LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui
 macx {
 		CONFIG += link_pkgconfig
 		PKGCONFIG += opencv
+		ICON = $${PWD}/res/modelicons.icns
 }
 
 RESOURCES += \

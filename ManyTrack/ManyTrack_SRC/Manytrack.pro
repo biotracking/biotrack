@@ -73,7 +73,7 @@ LIBS += -lpcl_common \
 macx {
 
         CONFIG += link_pkgconfig
-
+		ICON = $${PWD}/res/manyicons.icns
         PKGCONFIG += opencv
         PKGCONFIG += pcl_io-1.6
 		PKGCONFIG += pcl_visualization-1.6

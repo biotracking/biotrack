@@ -36,6 +36,7 @@ macx {
 
         CONFIG += link_pkgconfig
         PKGCONFIG += opencv
+		ICON = $${PWD}/res/bgicons.icns
 }
 
 
