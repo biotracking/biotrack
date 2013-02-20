@@ -6,19 +6,38 @@
 
 using namespace std;
 
-QString prefix("../data/B166/Feeder_1.6M/");
+//QString prefix("../data/B166/Feeder_1.6M/");
 int maxFrames = 22000;
-string fileIDs = string("----,BBGY,BGBY,BPPO,")+
-                 string("BPWP,GBGP,GO-B,GG-O,")+
-                 string("GO-B,GOYP,GPBW,GW--,")+
-                 string("GWBG,GWOW,GWPB,OGPG,")+
-                 string("OOO-,OOOW,OP--,OPYO,")+
-                 string("OWGW,P---,PGOP,PP--,")+
-                 string("PYWB,WPWO,");
+string fileIDs = string("");
+//string fileIDs = string("----,BBGY,BGBY,BPPO,")+
+//                 string("BPWP,GBGP,GO-B,GG-O,")+
+//                 string("GO-B,GOYP,GPBW,GW--,")+
+//                 string("GWBG,GWOW,GWPB,OGPG,")+
+//                 string("OOO-,OOOW,OP--,OPYO,")+
+//                 string("OWGW,P---,PGOP,PP--,")+
+//                 string("PYWB,WPWO,");
 int frameAccumulator = 0;
 int numAgents = fileIDs.length()/5;
 
-bool processClip(int clipNum) {
+void fix_fileIDstr(){
+    QString header = "../data/KNNtraining/";
+    QDir preDir(header);
+    QStringList fileList = preDir.entryList(QStringList("????"));
+    int numKnownAnts = fileList.length();
+    if(fileIDs.length() != 0){
+        fileIDs = string("");
+        numAgents = 0;
+    }
+    QStringList::const_iterator iterator;
+    for (iterator = fileList.constBegin(); iterator != fileList.constEnd(); ++iterator){
+        fileIDs += string((*iterator).toStdString()+",");
+        numAgents++;
+    }
+    /* */
+    cout<<fileIDs<<endl;
+    /* */
+}
+bool processClip(int clipNum, QString prefix) {
 
     //Open the file
     QString fileName(prefix+"filtered"+QString::number(clipNum)+".csv");
@@ -78,9 +97,9 @@ bool processClip(int clipNum) {
 }
 
 int main(int argc, char *argv[]) {
-
+    fix_fileIDstr();
     int clip = 1;
-    while(processClip(clip)) clip++;
+    while(processClip(clip,QString(argv[1]))) clip++;
 
     qDebug()<<"Done";
 }
