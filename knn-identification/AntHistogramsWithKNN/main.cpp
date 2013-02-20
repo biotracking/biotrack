@@ -13,13 +13,15 @@ int main(int argc, char *argv[])
     QString header = "/media/8865399a-a349-43cd-8cc0-2b719505efaf/"+activeFolder;
     QDir unkDir(header);
     QStringList fileList = unkDir.entryList(QStringList("FeederMugshots_*"));
+    //QStringList fileList = unkDir.entryList(QStringList("clip?_*"));
     QStringList::const_iterator unkIterator;
     for (unkIterator = fileList.constBegin(); unkIterator != fileList.constEnd(); ++unkIterator){
         clipNum++;
         identifyClip(activeFolder+(*unkIterator)+"/", clipNum);
     }
 
-    return a.exec();
+    //return a.exec();
+    return 0;
 }
 
 void identifyClip(QString activeFolder, int clipNum){
