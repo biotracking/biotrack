@@ -41,6 +41,7 @@ int **spotIDs; //[frame, spot] => ID
 //        QString("GWPB"),
 //        QString("BBGY"),
 //        QString("GO-B")};
+/*
 QString IDbuff[ ] = {
         QString("-ER-"),
         QString("----"),
@@ -105,7 +106,8 @@ QString IDbuff[ ] = {
         QString("RYRP"),
         QString("RYYG"),
         QString("WPWO")};
-
+*/
+QString* IDbuff = NULL;
 CvScalar colors[ ] = {
         cvScalar(0, 0, 0, 0),
         cvScalar(255, 0, 0, 0),
@@ -278,8 +280,10 @@ void processClip(int clipNum){
     outFile << "Frame Number, Spot Number, ID, Confidence (unused), Similarity (unused), \n";
 	for(int i=0; i<numFrames; i++){
 		for(int j=0; j<numParkingSpots; j++){
-			if(spotIDs[i][j] >= 0)
-                outFile << i << "," << j << "," << IDbuff[spotIDs[i][j]].toStdString() << "," << 0 << "," << 0 << ", \n"; //better values than 0 would be nice
+			if(spotIDs[i][j] >= 0){
+                            //cout<<"("<<i<<", "<<j<<") == "<<spotIDs[i][j]<<endl;
+                            outFile << i << "," << j << "," << IDbuff[spotIDs[i][j]].toStdString() << "," << 0 << "," << 0 << ", \n"; //better values than 0 would be nice
+                        }
 		}
 	}
 	outFile.close();
@@ -415,9 +419,33 @@ void processClip(int clipNum){
 	qDebug()<<"Done";
 }
 
+void fixIDbuff(){
+    QString header = "../data/KNNtraining/";
+    QDir preDir(header);
+    QStringList fileList = preDir.entryList(QStringList("????"));
+    int numKnownAnts = fileList.length();
+    if(IDbuff != NULL){
+        delete[] IDbuff;
+    }
+    IDbuff = new QString[numKnownAnts+1];
+    QStringList::const_iterator iterator;
+    unsigned int i=1;
+    IDbuff[0] = "ERROR";
+    for (iterator = fileList.constBegin(); iterator != fileList.constEnd(); ++iterator){
+        IDbuff[i++] = *iterator;
+    }
+    /* */
+    for(unsigned int j=0;j<i;j++){
+        cout<<IDbuff[j].toStdString()<<endl;
+    }
+    /* */
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    fixIDbuff();
+    //return 0;
     if(argc == 2)
         prefix+=argv[1];
     else
@@ -426,5 +454,6 @@ int main(int argc, char *argv[])
     for(int clip=1; clip<=8; clip++)
         processClip(clip);
 
-    return a.exec();
+    //return a.exec();
+    return 0;
 }

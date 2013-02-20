@@ -2,6 +2,7 @@ TEMPLATE = app
 TARGET = ParkingSpotOverlay 
 
 QT        += core 
+CONFIG    += debug
 
 HEADERS   +=
 SOURCES   += main.cpp
