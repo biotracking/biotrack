@@ -269,5 +269,6 @@ int main(int argc, char *argv[])
     for(int clip=6; clip<=8; clip++) //don't have human data for all clips
         evaluateClip(clip);
 
-    return a.exec();
+    //return a.exec();
+    return 0;
 }
