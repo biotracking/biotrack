@@ -166,7 +166,8 @@ int main(int argc, char *argv[])
         std::cout<<"Done with clip "<<name.toStdString()<<std::endl;
     }
     std::cout<<"Done"<<std::endl;
-    return a.exec();
+    //return a.exec();
+    return 0;
 }
 
 
