@@ -108,7 +108,13 @@ void MainWindow::loadBTF(std::string dname){
         btf_names.push_back(files.at(i).toStdString());
         if(files.at(i).toStdString().compare("timestamp.btf")==0){
             timestamp_idx = i;
-        } else if (files.at(i).toStdString().compare("id.btf")==0){
+        } else if (files.at(i).toStdString().compare("timestamp_frames.btf")==0){
+            timestamp_frames_idx = i;
+        }
+        else if (files.at(i).toStdString().compare("type.btf")==0){
+                   type_idx = i;
+               }
+        else if (files.at(i).toStdString().compare("id.btf")==0){
             id_idx = i;
         } else if (files.at(i).toStdString().compare("ximage.btf")==0){
             x_idx = i;
@@ -130,8 +136,10 @@ void MainWindow::loadBTF(std::string dname){
         btf_data.push_back(fdata);
         std::cout<<"\t"<<fdata.size()<<" lines loaded"<<std::endl;
     }
+
+    //Load time data  -from millis
     std::string lastTS = "33";
-    std::vector<int> linenos;
+    std::vector<int> linenos; //AQ -Line Numbers?
     for(unsigned int i=0;i<btf_data.at(timestamp_idx).size();i++){
         if(btf_data.at(timestamp_idx).at(i).compare(lastTS)!=0){
             frame_data.push_back(linenos);
@@ -415,6 +423,8 @@ void MainWindow::on_pushButton_7_clicked()
     }
     std::cout<<"]"<<std::endl;
     std::vector<std::fstream* > files;
+
+    //For all the BTF files (inlcuding type and frames!)
     for(unsigned int i=0;i<btf_names.size();i++){
         std::fstream *a_file = new std::fstream();
         a_file->open((dir_name+btf_names.at(i).c_str()).toStdString().c_str(),std::fstream::out);
@@ -432,6 +442,9 @@ void MainWindow::on_pushButton_7_clicked()
             //flip theta?
             (*(files.at(t_idx)))<<((frame_tracklets.at(i).at(j)->flipped)?M_PI:0)+frame_tracklets.at(i).at(j)->timage.at(i-trackletStart)<<std::endl;
             (*(files.at(timestamp_idx)))<<frame_tracklets.at(i).at(j)->timestamp.at(i-trackletStart)<<std::endl;
+            (*(files.at(timestamp_frames_idx)))<<frame_tracklets.at(i).at(j)->timestamp.at(i-trackletStart)/33<<std::endl;
+            (*(files.at(type_idx)))<<frame_tracklets.at(i).at(j)->timestamp.at(i-trackletStart)/33<<std::endl;
+
             (*(files.at(id_idx)))<<frame_tracklets.at(i).at(j)->antID<<std::endl;
         }
     }

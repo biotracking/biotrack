@@ -51,7 +51,7 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    int timestamp_idx, id_idx, x_idx, y_idx, t_idx;
+    int timestamp_idx,timestamp_frames_idx,type_idx,  id_idx, x_idx, y_idx, t_idx;
     int timerID;
     int frame_count;
     double scaleFactor, fps;

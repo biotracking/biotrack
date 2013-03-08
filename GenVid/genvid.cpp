@@ -35,6 +35,7 @@ GenVid::GenVid(QWidget *parent) :
     boxOn =false;
     arrowOn=true;
     idOn =true;
+    uniqueidOn=true;
     trailOn =true;
     cirOn = false;
     cirU =false;
@@ -395,13 +396,20 @@ void GenVid::processFiles()
         qDebug()<<timeList.size()<<" "<<timeStampList.size()<<" "<<xsList.size()<<" "<<ysList.size()<<" "<<angleList.size()<<" "<<ant_List.size()<<typelist;
 
         qDebug()<<"Final Frame  "<<timeStampList.at(timeStampList.size()-2).toInt(); // The very last value of all these is a "" or 0 in Int for some reason
-        btfLength = timeStampList.at(timeStampList.size()-2).toInt();
+        btfLength = timeStampList.at(timeStampList.size()-2).toInt()-1;
         // MSec data structure: A vector of every MSec, for a particular MSec a vector of ants, each ant is a qstringlist of parameters.
 
         int currentMSec =-33;
         for (std::vector<int>::size_type i = 0; i<timeList.size();i++){
             if(currentMSec == timeList.at(i).toInt()){
-                tempant << timeList.at(i)<<xsList.at(i)<<ysList.at(i)<<angleList.at(i)<<ant_List.at(i)<<typelist.at(i);
+                tempant
+                        <<timeList.at(i)
+                        <<xsList.at(i)
+                       <<ysList.at(i)
+                      <<angleList.at(i)
+                     <<ant_List.at(i)
+                    <<typelist.at(i);
+
                 antsAtMsec.push_back(tempant);
                 tempant.clear();
                 // currentMSec = timeList.at(i).toInt();
@@ -558,13 +566,22 @@ Mat GenVid::checkFile(Mat img){
         //attach ant name
         //TODO, fix up this crazy crap. Just synthesize a single string then use CV::putText
         //TODO make more than one font size that isn't hard coded and adjusts to the resolution
-        if(idOn){
+
+        if(uniqueidOn){
             if(fontSize==1){
-                putText( img,tempant.at(5).toStdString()+" ("+tempant.at(4).toStdString()+")", Point(org.x,org.y), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+                putText( img,tempant.at(4).toStdString(), Point(org.x,org.y), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
             } else {
-                putText( img,tempant.at(5).toStdString()+" ("+tempant.at(4).toStdString()+")", Point(org.x,org.y-15), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+                putText( img,tempant.at(4).toStdString(), Point(org.x,org.y-15), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
             }
         }
+        if(idOn){
+            if(fontSize==1){
+                putText( img," ("+tempant.at(5).toStdString()+")", Point(org.x+30,org.y), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+            } else {
+                putText( img," ("+tempant.at(5).toStdString()+")", Point(org.x+30,org.y-15), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
+            }
+        }
+
         if(xyOn){
             if(fontSize==1){
                 putText( img,"("+tempant.at(1).toStdString()+","+tempant.at(2).toStdString()+")", Point(org.x,org.y+30), fontSize, 1.5, Scalar( 255, 255, 255 ),2, CV_AA);
@@ -717,6 +734,12 @@ void GenVid::on_checkBox_clicked()
     boxOn=!boxOn;
     refresh();
 
+}
+
+void GenVid::on_checkUniqueID_clicked()
+{
+    uniqueidOn=!uniqueidOn;
+    refresh();
 }
 
 void GenVid::on_checkID_clicked()
@@ -948,3 +971,5 @@ void GenVid::refresh(){
         }
     }
 }
+
+

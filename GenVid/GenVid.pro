@@ -20,9 +20,9 @@ FORMS    += genvid.ui
 
 
 #Turn off the messages before you release!
-    CONFIG += qt warn_off release
-    DEFINES += QT_NO_DEBUG_OUTPUT
-    DEFINES += QT_NO_DEBUG
+#    CONFIG += qt warn_off release
+#    DEFINES += QT_NO_DEBUG_OUTPUT
+#    DEFINES += QT_NO_DEBUG
 
 linux-*{
         CONFIG += link_pkgconfig

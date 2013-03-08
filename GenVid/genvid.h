@@ -42,7 +42,7 @@ public:
     Point rot2d(Point p,Point org,double t);
 
     Point org, r1,r2,r3,r4,arrowPTtip,a2,a3,a4,rparam,antXY;
-    bool cmd,isPlaying,isExporting, everythingok,ok,boxOn,arrowOn,idOn,trailOn, cirOn,xyOn,angleOn,cirU,trailU,arrU;
+    bool cmd,isPlaying,isExporting, everythingok,ok,boxOn,arrowOn,uniqueidOn,idOn,trailOn, cirOn,xyOn,angleOn,cirU,trailU,arrU;
     double fontSize, scrubRatio;
     int currentFrame, trailSize, boxStroke, lineType, r,g,b,rad,cirStroke,trailStroke, arrowSize, arrowStroke;
     QColor tempcolor;
@@ -116,6 +116,8 @@ private slots:
 
     void on_videopathpushButton_2_clicked();
     void refresh();
+
+    void on_checkUniqueID_clicked();
 
 signals:
 
