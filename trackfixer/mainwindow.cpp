@@ -347,7 +347,7 @@ void MainWindow::on_horizontalSlider_valueChanged(int value)
     cap.read(in);
     
     out = in.clone();
-    cv::cvtColor(in,out,CV_BGR2RGB);
+//    cv::cvtColor(in,out,CV_BGR2RGB);
     if(value<((int)frame_tracklets.size())){
         for(unsigned int j=0;j<frame_tracklets.at(value).size();j++){
             if(frame_tracklets.at(value).at(j)->nuked) continue;
