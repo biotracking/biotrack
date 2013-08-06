@@ -59,6 +59,57 @@ Manytrack::~Manytrack()
 
 }
 
+void Manytrack::startTracking(){
+    isTracking = true;
+}
+
+bool Manytrack::isTrackingCompleted(){
+    return !isTracking || completedTracking;
+}
+
+void Manytrack::track(){
+    double   t = (double)getTickCount();
+
+    currentFrameImg = updateFrame();
+
+    t = ((double)getTickCount() - t)/getTickFrequency();
+    cout << "::: Get updateFrame() " << t << endl;
+
+
+    if(completedTracking==false){
+
+        t = (double)getTickCount();
+
+        icpTracker->processFrame(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
+
+        t = ((double)getTickCount() - t)/getTickFrequency();
+        cout << "::: ICPTracker processFrame() " << t << endl;
+
+
+        if(ui.display_pushButton->isChecked()){
+
+            t = (double)getTickCount();
+
+        updateVideoImage(currentFrameImg);
+
+        t = ((double)getTickCount() - t)/getTickFrequency();
+        cout << "::: updateVideoImage() " << t << endl;
+
+
+        t = (double)getTickCount();
+
+        updateVisualization(icpTracker->getTrackResultImage());
+
+        t = ((double)getTickCount() - t)/getTickFrequency();
+
+        cout << "::: updateVisualization ()  " << t << endl;
+       }
+    }
+
+
+    updateStatusBar();
+}
+
 void Manytrack::timerEvent(QTimerEvent*) {
     if (!isTracking){
         return;} //Don't run the timer
@@ -70,41 +121,8 @@ void Manytrack::timerEvent(QTimerEvent*) {
         // go through every frame of the video,
         // track each frame
         // and stop at the end, ready to repeat or let the user change parameters
+        track();
 
-     double   t = (double)getTickCount();
-
-        currentFrameImg = updateFrame();
-
-        t = ((double)getTickCount() - t)/getTickFrequency();
-        cout << "::: Get updateFrame() " << t << endl;
-
-        if(completedTracking==false){
-
-            t = (double)getTickCount();
-
-            icpTracker->processFrame(currentFrameImg, (int)capture.get(CV_CAP_PROP_POS_FRAMES));
-
-            t = ((double)getTickCount() - t)/getTickFrequency();
-            cout << "::: ICPTracker processFrame() " << t << endl;
-
-
-            if(ui.display_pushButton->isChecked()){
-
-                t = (double)getTickCount();
-
-            updateVideoImage(currentFrameImg);
-
-            t = ((double)getTickCount() - t)/getTickFrequency();
-            cout << "::: updateVideoImage() " << t << endl;
-
-
-            t = (double)getTickCount();
-                      updateVisualization(icpTracker->getTrackResultImage());
-                       t = ((double)getTickCount() - t)/getTickFrequency();
-            cout << "::: updateVisualization ()  " << t << endl;
-           }
-        }
-        updateStatusBar();
     }
 }
 
@@ -496,12 +514,15 @@ void Manytrack::loadDefaults(){
 }
 
 void Manytrack::loadSettings(){
+    loadSettings(QFileDialog::getOpenFileName (this, tr("Open Settings File (.ini)"),lastpath, tr("Settings files (*.ini)")));
+}
+
+void Manytrack::loadSettings(QString loadsetpath){
 
     if(isTracking){
         toggleTracking();
     }
 
-    QString loadsetpath = QFileDialog::getOpenFileName (this, tr("Open Settings File (.ini)"),lastpath, tr("Settings files (*.ini)"));
     if ( loadsetpath.isNull() == false )
     {
         QSettings settings(loadsetpath,QSettings::IniFormat);

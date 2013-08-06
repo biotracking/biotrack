@@ -36,19 +36,23 @@ public:
     Manytrack(QWidget *parent = 0, Qt::WFlags flags = 0);
     ~Manytrack();
 	QString projectSaveDirectory;
-		QString videopath;
+    QString videopath;
 
-        QString modelfolder;
-		QString maskpath;
-		QString bgpath;
-		QString nopath;
-		QString lastpath;
-		void readSettings();
-		void writeSettings();
+    QString modelfolder;
+    QString maskpath;
+    QString bgpath;
+    QString nopath;
+    QString lastpath;
+    void readSettings();
+    void writeSettings();
 
-		
+    // Methods for CLI access
+    void loadSettings(QString);
+    bool isTrackingCompleted();
+    void track();
+    void startTracking();
 
-	
+    void saveBTF();
 
 public slots:
     void toggleTracking();
@@ -61,15 +65,14 @@ public slots:
 	void separationValueChanged();
 	void nextFrame();
     void saveHTMLinteractions();
-	void saveBTF();
     void loadBackgroundFile();
-	void loadVideoFile();
-	void loadModelFile();
-	void chooseMaskFile();
-	void chooseProjectDirectory();
+    void loadVideoFile();
+    void loadModelFile();
+    void chooseMaskFile();
+    void chooseProjectDirectory();
 	void icpReset();
 
-	void loadSettings();
+    void loadSettings();
 	void loadDefaults();
 	void saveSettings();
 

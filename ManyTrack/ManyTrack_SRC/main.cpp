@@ -30,13 +30,27 @@ Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Syst
 
 int main(int argc, char *argv[])
 {
+
     QApplication a(argc, argv);
     Manytrack w;
-    w.show();
+    if(argc<=1){
+        w.show();
+        return a.exec();
+    }else{
+        w.loadSettings(QString(argv[1]));
+        w.startTracking();
+        cout << "Started tacking" << endl;
+        while(!w.isTrackingCompleted())
+            w.track();
+        cout << "Finished tracking" << endl;
+        w.saveBTF();
+        cout << "Saved" << endl;
+        return 0;
+    }
 
     //Shows Path for current environment
    // cout<<getenv("PATH")<<endl;
-    return a.exec();
+
 }
 
 
