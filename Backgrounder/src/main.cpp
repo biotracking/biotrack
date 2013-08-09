@@ -1,5 +1,10 @@
 #include <QtGui/QApplication>
+#include "BackgroundCalculator.h"
+#include "BackgroundCalculatorAverage.h"
+#include "BackgroundCalculatorMode.h"
 #include "backgrounder.h"
+#include <cstdio>
+#include <string>
 /***
 
 Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Systems Lab
@@ -23,7 +28,47 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     Backgrounder w;
-    w.show();
-    
-    return a.exec();
+    if(argc<=1){
+        w.show();
+        return a.exec();
+    }else{
+
+        if(argc<3){
+            cout << "Backgrounder - computes the video's' background image" << endl;
+            cout << endl;
+            cout << "usage: Backgrounder VIDEO_FILE OUTPUT_FILE [average|mode|median]" << endl;
+            cout << endl;
+            cout << "Program computes the VIDEO_FILE's background image using average (default), mode or median of frames pixels, and saves it to the OUTPUT_FILE." << endl;
+            cout << endl;
+            return 0;
+        }
+
+        QString videopath = QString(argv[1]);
+        VideoCapture capture;
+        capture.open(videopath.toStdString());
+        int frames=capture.get(CV_CAP_PROP_FRAME_COUNT)-1;
+
+        BackgroundCalculator* backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames );
+
+        if(argc==4){
+            if(QString(argv[3]) == QString("mode")){
+                delete(backgroundCalculator);
+                backgroundCalculator = new BackgroundCalculatorMode(&capture,0,frames,Mode);
+                cout << "Using MODE mode" << endl;
+            }else if(QString(argv[3]) == QString("median")){
+                delete(backgroundCalculator);
+                backgroundCalculator = new BackgroundCalculatorMode(&capture,0,frames,Median);
+                cout << "Using MEDIAN mode" << endl;
+            }else cout << "Using AVERAGE mode" << endl;
+        }else cout << "Using AVERAGE mode" << endl;
+        cout << "Starting background calulcation" << endl;
+
+        do{
+            backgroundCalculator->step();
+        }while((!backgroundCalculator->isFinished()));
+
+        cout << "Finished background calulcation" << endl;
+
+        cv::imwrite(QString(argv[2]).toStdString(), backgroundCalculator->currentBackground);
+    }
 }
