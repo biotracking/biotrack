@@ -43,7 +43,10 @@ int main(int argc, char *argv[])
 
         QString videopath = QString(argv[1]);
         VideoCapture capture;
-        capture.open(videopath.toStdString());
+        if (!capture.open(videopath.toStdString())) {
+            cout << "Could not open " << videopath.toStdString() << endl;
+            return 1;
+        }
         int frames=capture.get(CV_CAP_PROP_FRAME_COUNT)-1;
 
         BackgroundCalculator* backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames );
@@ -59,14 +62,14 @@ int main(int argc, char *argv[])
                 cout << "Using MEDIAN mode" << endl;
             }else cout << "Using AVERAGE mode" << endl;
         }else cout << "Using AVERAGE mode" << endl;
-        cout << "Starting background calulcation" << endl;
+        cout << "Starting background calculation" << endl;
 
         do{
             backgroundCalculator->step();
         }while((!backgroundCalculator->isFinished()));
 
-        cout << "Finished background calulcation" << endl;
-
+        cout << "Finished background calculation" << endl;
+        cout << "Saving to file" << endl;
         cv::imwrite(QString(argv[2]).toStdString(), backgroundCalculator->currentBackground);
     }
 }
