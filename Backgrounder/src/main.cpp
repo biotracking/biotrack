@@ -3,8 +3,6 @@
 #include "BackgroundCalculatorAverage.h"
 #include "BackgroundCalculatorMode.h"
 #include "backgrounder.h"
-#include <cstdio>
-#include <string>
 /***
 
 Copyright 2012 Andrew Quitmeyer and Georgia Tech's Multi Agent Robotics and Systems Lab
