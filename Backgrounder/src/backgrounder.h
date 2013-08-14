@@ -21,19 +21,25 @@
 
 #include <QTime>
 #include <QDir>
-#include <QtGui/QFileDialog>
+//#include <QtGui/QFileDialog>
+#include <QFileDialog> //qt5 includes moved
 #include <QSettings>
 #include <QtCore/QCoreApplication>
 #include <QtCore>
 
 
-#include <QtGui/QMainWindow>
-#include <QtGui/QPushButton>
-#include <QtGui/QPixmap>
+//#include <QtGui/QMainWindow>
+//#include <QtGui/QPushButton>
+//#include <QtGui/QPixmap>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QPixmap>
 
-#include <QtGui/QLabel>
+//#include <QtGui/QLabel>
+#include <QLabel>
 
-#include <QtGui/QImage>
+//#include <QtGui/QImage>
+#include <QImage>
  #include <QDebug>
 #include "BackgroundCalculator.h"
 using namespace cv;

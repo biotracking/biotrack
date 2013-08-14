@@ -4,14 +4,17 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore>
 
-
-#include <QtGui/QMainWindow>
-#include <QtGui/QPushButton>
-#include <QtGui/QPixmap>
-
-#include <QtGui/QLabel>
-
-#include <QtGui/QImage>
+//BPH: qt5 moved these headers
+//#include <QtGui/QMainWindow>
+//#include <QtGui/QPushButton>
+//#include <QtGui/QPixmap>
+//#include <QtGui/QLabel>
+//#include <QtGui/QImage>
+#include <QMainWindow>
+#include <QPushButton>
+#include <QPixmap>
+#include <QLabel>
+#include <QImage>
 
 //Possible Windows Includes
 //#include <C:\opencv\include\opencv\cv.h>
@@ -22,7 +25,8 @@
 #include "ICPTracker.h"
 #include <QTime>
 #include <QDir>
-#include <QtGui/QFileDialog>
+//#include <QtGui/QFileDialog>
+#include <QFileDialog>
 #include <QSettings>
 #include "ui_Manytrack.h"
 
@@ -33,7 +37,8 @@ class Manytrack : public QMainWindow
 	Q_OBJECT
 
 public:
-    Manytrack(QWidget *parent = 0, Qt::WFlags flags = 0);
+    Manytrack(QWidget *parent = 0, Qt::WindowFlags flags = 0);
+	//Qt::WFLags is now Qt::WindowFlags
     ~Manytrack();
 	QString projectSaveDirectory;
     QString videopath;

@@ -1,4 +1,5 @@
-#include <QtGui/QApplication>
+//#include <QtGui/QApplication>
+#include <QApplication> //TODO: make sure this is backwards compat, at least with  qt4
 #include "BackgroundCalculator.h"
 #include "BackgroundCalculatorAverage.h"
 #include "BackgroundCalculatorMode.h"

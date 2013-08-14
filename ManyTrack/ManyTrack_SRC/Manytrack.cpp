@@ -1,7 +1,7 @@
 #include "Manytrack.h"
 
-
-Manytrack::Manytrack(QWidget *parent, Qt::WFlags flags)
+//BPH Qt::WFlags is now Qt::WindowFlags
+Manytrack::Manytrack(QWidget *parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags)
 {
 
@@ -191,7 +191,8 @@ void Manytrack::updateStatusBar()
 
 void Manytrack::messageToStatusBar(QString message)
 {
-    statusBar()->showMessage(tr(message.toAscii()));
+	//QString.toAscii() is now toLatin1()
+    statusBar()->showMessage(tr(message.toLatin1()));
 }
 
 void Manytrack::nextFrame()
@@ -214,7 +215,8 @@ void Manytrack::saveBTF()
     messageToStatusBar("saving BTF report...");
     icpTracker->outputBTF(projectSaveDirectory,ui.projectsavename->text());
     QString messageo= "done saving BTF data for project: " +ui.projectsavename->text();
-    messageToStatusBar(messageo.toAscii());
+	//BPH: QString.toAscii() is now toLatin1()
+    messageToStatusBar(messageo.toLatin1());
 }
 
 void Manytrack::bgThresholdSpinValueChanged(int value)

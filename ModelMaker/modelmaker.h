@@ -6,12 +6,15 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore>
 #include <QtGui>
-#include <QtGui/QMainWindow>
-#include <QtGui/QPushButton>
+//#include <QtGui/QMainWindow>
+//#include <QtGui/QPushButton>
+#include <QPushButton>
 #include <QtGui/QPixmap>
-#include <QtGui/QLabel>
+//#include <QtGui/QLabel>
+#include <QLabel>
 #include <QtGui/QImage>
-#include <QtGui/QFileDialog>
+//#include <QtGui/QFileDialog>
+#include <QFileDialog>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <paintcanvas.h>
@@ -22,6 +25,12 @@
 #include <QWidget>
 #include<QDebug>
 #include<QFile>
+//hooray for Qt5 shuffling 
+//header files around for no sane reason. >:(
+#include <QGraphicsScene>
+#include <QGraphicsRectItem>
+#include <QGraphicsPixmapItem>
+#include <QInputDialog>
 
 using namespace cv;
 

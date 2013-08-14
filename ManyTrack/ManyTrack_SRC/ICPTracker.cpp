@@ -998,14 +998,15 @@ void ICPTracker::outputBTF(QString projectdirectory,QString icpprojectname)
     QString timagename=projectdirectory+icpprojectname+"/"+"timage.btf";
 
 
-    FILE* timeStampFP = fopen(tsname.toAscii(),"w");
-    FILE* timeStampFP_f = fopen(tsname_f.toAscii(),"w");
+	//toAscii() is now toLatin1()
+    FILE* timeStampFP = fopen(tsname.toLatin1(),"w");
+    FILE* timeStampFP_f = fopen(tsname_f.toLatin1(),"w");
 
-    FILE* xImageFP = fopen(ximagename.toAscii(),"w");
-    FILE* yImageFP = fopen(yimagename.toAscii(),"w");
-    FILE* angleFP = fopen(timagename.toAscii(),"w");
-    FILE* idFP = fopen(idname.toAscii(),"w");
-    FILE* typeFP = fopen(modelname.toAscii(),"w");
+    FILE* xImageFP = fopen(ximagename.toLatin1(),"w");
+    FILE* yImageFP = fopen(yimagename.toLatin1(),"w");
+    FILE* angleFP = fopen(timagename.toLatin1(),"w");
+    FILE* idFP = fopen(idname.toLatin1(),"w");
+    FILE* typeFP = fopen(modelname.toLatin1(),"w");
 
     int startFrame = 0;
     int endFrame = 0;
