@@ -8,7 +8,7 @@ Georgia Tech - Multi Agent Robotics and Systems Lab (bio-tracking.org)
 
 ---README---
 To learn how to use this software effectively visit the wiki at:
-http://wiki.bio-tracking.org/wiki/BioTrack_Pack
+https://github.com/biotracking/biotrack/wiki
 
 
 ---Changelog---
