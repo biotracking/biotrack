@@ -88,7 +88,7 @@ void BackgroundCalculatorMode::step()
 
     frameCount++;
 
-    //printf("background uses %i frames\n", frameCount);
+	printf("BG uses %i frames\n", frameCount);
 
     if(gotOutFrame())
     {

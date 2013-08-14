@@ -50,19 +50,26 @@ int main(int argc, char *argv[])
         }
         int frames=capture.get(CV_CAP_PROP_FRAME_COUNT)-1;
 
-        BackgroundCalculator* backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames );
+        //BackgroundCalculator* backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames );
+        BackgroundCalculator* backgroundCalculator = NULL;
 
         if(argc==4){
             if(QString(argv[3]) == QString("mode")){
-                delete(backgroundCalculator);
+                //delete(backgroundCalculator);
                 backgroundCalculator = new BackgroundCalculatorMode(&capture,0,frames,Mode);
                 cout << "Using MODE mode" << endl;
             }else if(QString(argv[3]) == QString("median")){
-                delete(backgroundCalculator);
+                //delete(backgroundCalculator);
                 backgroundCalculator = new BackgroundCalculatorMode(&capture,0,frames,Median);
                 cout << "Using MEDIAN mode" << endl;
-            }else cout << "Using AVERAGE mode" << endl;
-        }else cout << "Using AVERAGE mode" << endl;
+            }else {
+				backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames);
+				cout << "Using AVERAGE mode" << endl;
+			}
+        }else {
+			backgroundCalculator = new BackgroundCalculatorAverage(&capture,0,frames);
+			cout << "Using AVERAGE mode" << endl;
+		}
         cout << "Starting background calculation" << endl;
 
         do{
